@@ -1,0 +1,28 @@
+backend/
+├── server.js
+├── superadmin.js
+├── .env
+├── prisma/
+│   ├── schema.prisma
+│   └── prisma.config.ts
+└── src/
+    ├── _Db/
+    │   └── db.js
+    ├── generated/
+    │   └── prisma/client/
+    ├── rutas/
+    │   ├── login/
+    │   │   └── rutaLogin.js
+    │   └── superadmin/
+    │       ├── header/
+    │       │   └── rutaHeader.js
+    │       └── dashboard/
+    │           └── rutaDashboard.js
+    └── servicios/
+        ├── login/
+        │   └── servicioLogin.js
+        └── superadmin/
+            ├── header/
+            │   └── servicioHeader.js
+            └── dashboard/
+                └── servicioDashboard.js
