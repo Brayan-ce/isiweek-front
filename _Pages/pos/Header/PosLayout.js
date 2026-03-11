@@ -11,8 +11,8 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 const PRIMER_SLUG_POR_GRUPO = [
   "mis-ventas",
-  "creditos-dashboard",
-  "ventas-online-pedidos",
+  "creditos/dashboard",
+  "ventas-online/pedidos",
   "dashboard",
 ]
 
@@ -60,7 +60,7 @@ export default function PosLayout({ children }) {
     localStorage.setItem("isiweek_theme", next ? "dark" : "light")
   }
 
-  const slug   = pathname.split("/")[2] ?? ""
+  const slug = pathname.split("/")[2] ?? ""
 
   return (
     <div className={s.layout}>

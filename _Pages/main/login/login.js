@@ -15,19 +15,19 @@ import s from "./login.module.css"
 export default function LoginPage() {
   const router = useRouter()
 
-  const [dark, setDark]             = useState(false)
-  const [tab, setTab]               = useState("email")
-  const [cargando, setCargando]     = useState(false)
+  const [dark, setDark]                   = useState(false)
+  const [tab, setTab]                     = useState("email")
+  const [cargando, setCargando]           = useState(false)
   const [googleCargando, setGoogleCargando] = useState(false)
-  const [alerta, setAlerta]         = useState(null)
-  const [verPass, setVerPass]       = useState(false)
-  const [modal, setModal]           = useState(null)
-  const [footerOn, setFooterOn]     = useState(true)
-  const [hora, setHora]             = useState("")
-  const [countryInfo, setCountry]   = useState(null)
-  const [otpEnviado, setOtpEnviado] = useState(false)
-  const [otpTimer, setOtpTimer]     = useState(0)
-  const [config, setConfig]         = useState({})
+  const [alerta, setAlerta]               = useState(null)
+  const [verPass, setVerPass]             = useState(false)
+  const [modal, setModal]                 = useState(null)
+  const [footerOn, setFooterOn]           = useState(true)
+  const [hora, setHora]                   = useState("")
+  const [countryInfo, setCountry]         = useState(null)
+  const [otpEnviado, setOtpEnviado]       = useState(false)
+  const [otpTimer, setOtpTimer]           = useState(0)
+  const [config, setConfig]               = useState({})
 
   const emailRef     = useRef()
   const passRef      = useRef()
@@ -64,23 +64,19 @@ export default function LoginPage() {
   }
 
   const CURRENCY_SYMBOL = {
-    USD:"$", EUR:"€", GBP:"£", JPY:"¥", CNY:"¥", BRL:"R$", MXN:"$", ARS:"$",
-    COP:"$", CLP:"CLP$", PEN:"S/", DOP:"RD$", CRC:"₡", HNL:"L", GTQ:"Q",
-    PYG:"₲", BOB:"Bs", UYU:"$U", VES:"Bs.S", NIO:"C$", CUP:"₱", PAB:"B/.",
-    INR:"₹", PKR:"₨", BDT:"৳", LKR:"₨", NPR:"₨", MMK:"K", THB:"฿", VND:"₫",
-    IDR:"Rp", PHP:"₱", MYR:"RM", SGD:"S$", KRW:"₩", TWD:"NT$", HKD:"HK$",
-    AUD:"A$", NZD:"NZ$", CAD:"CA$", CHF:"Fr", NOK:"kr", SEK:"kr", DKK:"kr",
-    PLN:"zł", CZK:"Kč", HUF:"Ft", RON:"lei", BGN:"лв", RUB:"₽", UAH:"₴",
-    TRY:"₺", ILS:"₪", SAR:"﷼", AED:"د.إ", KWD:"د.ك", QAR:"﷼", BHD:".د.ب",
-    EGP:"£", MAD:"د.م.", ZAR:"R", NGN:"₦", KES:"KSh", GHS:"₵",
+    USD:"$",EUR:"€",GBP:"£",JPY:"¥",CNY:"¥",BRL:"R$",MXN:"$",ARS:"$",
+    COP:"$",CLP:"CLP$",PEN:"S/",DOP:"RD$",CRC:"₡",HNL:"L",GTQ:"Q",
+    PYG:"₲",BOB:"Bs",UYU:"$U",VES:"Bs.S",NIO:"C$",CUP:"₱",PAB:"B/.",
+    INR:"₹",PKR:"₨",BDT:"৳",LKR:"₨",NPR:"₨",MMK:"K",THB:"฿",VND:"₫",
+    IDR:"Rp",PHP:"₱",MYR:"RM",SGD:"S$",KRW:"₩",TWD:"NT$",HKD:"HK$",
+    AUD:"A$",NZD:"NZ$",CAD:"CA$",CHF:"Fr",NOK:"kr",SEK:"kr",DKK:"kr",
+    PLN:"zł",CZK:"Kč",HUF:"Ft",RON:"lei",BGN:"лв",RUB:"₽",UAH:"₴",
+    TRY:"₺",ILS:"₪",SAR:"﷼",AED:"د.إ",KWD:"د.ك",QAR:"﷼",BHD:".د.ب",
+    EGP:"£",MAD:"د.م.",ZAR:"R",NGN:"₦",KES:"KSh",GHS:"₵",
   }
 
   function getCountryFromTz(tz) {
     try {
-      const locale = Intl.supportedValuesOf
-        ? Intl.supportedValuesOf("timeZone").includes(tz) ? tz : null
-        : tz
-      if (!locale) throw new Error()
       const tzToCountry = {
         "America/Santo_Domingo":"DO","America/New_York":"US","America/Chicago":"US",
         "America/Denver":"US","America/Los_Angeles":"US","America/Bogota":"CO",
@@ -113,11 +109,11 @@ export default function LoginPage() {
         "Pacific/Auckland":"NZ","Pacific/Sydney":"AU","Pacific/Honolulu":"US",
         "Australia/Sydney":"AU","Australia/Melbourne":"AU","Australia/Perth":"AU",
       }
-      const cc = tzToCountry[tz] ?? tz.split("/").pop().slice(0,2).toUpperCase() ?? "PE"
+      const cc = tzToCountry[tz] ?? tz.split("/").pop().slice(0, 2).toUpperCase() ?? "PE"
       const currency = CURRENCY_MAP[cc] ?? "USD"
-      const symbol = CURRENCY_SYMBOL[currency] ?? currency
-      const nameEs = new Intl.DisplayNames(["es"], { type: "region" }).of(cc) ?? cc
-      const flag = [...cc].map(c => String.fromCodePoint(0x1F1E0 - 65 + c.charCodeAt(0))).join("")
+      const symbol   = CURRENCY_SYMBOL[currency] ?? currency
+      const nameEs   = new Intl.DisplayNames(["es"], { type: "region" }).of(cc) ?? cc
+      const flag     = [...cc].map(c => String.fromCodePoint(0x1F1E0 - 65 + c.charCodeAt(0))).join("")
       return { flag, nombre: nameEs, moneda: symbol, codigo: currency, cc }
     } catch {
       return { flag: "🇵🇪", nombre: "Peru", moneda: "S/", codigo: "PEN", cc: "PE" }
@@ -271,18 +267,13 @@ export default function LoginPage() {
       </div>
 
       <button className={s.themeBtn} onClick={toggleDark} aria-label="Cambiar tema" title={dark ? "Modo claro" : "Modo oscuro"}>
-        <span className={s.themeBtnKnob}>
-          <ion-icon name={dark ? "moon" : "sunny"} />
-        </span>
+        <span className={s.themeBtnKnob} />
       </button>
 
       <div className={s.container}>
         <div className={s.card}>
           <div className={s.header}>
-            <div className={s.logoWrap}>
-              <span className={s.logoIcon}><ion-icon name="flash" /></span>
-              <div className={s.brand}>{config.sistema_nombre ?? "IsiWeek"}</div>
-            </div>
+            <div className={s.brand}>{config.sistema_nombre ?? "IsiWeek"}</div>
             <div className={s.subtitle}>Sistema Multi Empresa</div>
             <div className={s.dividerAccent} />
           </div>
@@ -301,7 +292,6 @@ export default function LoginPage() {
 
           {alerta && (
             <div className={`${s.alert} ${alerta.tipo === "error" ? s.alertError : s.alertSuccess}`}>
-              <ion-icon name={alerta.tipo === "error" ? "alert-circle" : "checkmark-circle"} />
               {alerta.msg}
             </div>
           )}
@@ -310,18 +300,14 @@ export default function LoginPage() {
             <form className={s.form} onSubmit={handleEmailLogin} noValidate>
               <div className={s.field}>
                 <label className={s.label}>Correo Electronico</label>
-                <div className={s.inputWrap}>
-                  <span className={s.inputIcon}><ion-icon name="mail-outline" /></span>
-                  <input ref={emailRef} type="email" placeholder="tu@correo.com" className={s.input} required autoComplete="email" />
-                </div>
+                <input ref={emailRef} type="email" placeholder="tu@correo.com" className={s.input} required autoComplete="email" />
               </div>
               <div className={s.field}>
                 <label className={s.label}>Contrasena</label>
                 <div className={s.inputWrap}>
-                  <span className={s.inputIcon}><ion-icon name="lock-closed-outline" /></span>
-                  <input ref={passRef} type={verPass ? "text" : "password"} placeholder="••••••••" className={s.input} required autoComplete="current-password" style={{ paddingRight: 40 }} />
+                  <input ref={passRef} type={verPass ? "text" : "password"} placeholder="••••••••" className={s.input} required autoComplete="current-password" />
                   <button type="button" className={s.eyeBtn} onClick={() => setVerPass(p => !p)}>
-                    <ion-icon name={verPass ? "eye-off-outline" : "eye-outline"} />
+                    {verPass ? "Ocultar" : "Ver"}
                   </button>
                 </div>
               </div>
@@ -335,7 +321,7 @@ export default function LoginPage() {
                 </button>
               </div>
               <button type="submit" className={s.submitBtn} disabled={cargando}>
-                {cargando ? <span className={s.spinner} /> : <><ion-icon name="log-in-outline" /> Ingresar</>}
+                {cargando ? <span className={s.spinner} /> : "Ingresar"}
               </button>
             </form>
           )}
@@ -344,10 +330,7 @@ export default function LoginPage() {
             <form className={s.form} onSubmit={otpEnviado ? handleVerificarOTP : handleEnviarOTP} noValidate>
               <div className={s.field}>
                 <label className={s.label}>Correo Electronico</label>
-                <div className={s.inputWrap}>
-                  <span className={s.inputIcon}><ion-icon name="mail-outline" /></span>
-                  <input ref={otpEmailRef} type="email" placeholder="tu@correo.com" className={s.input} required autoComplete="email" disabled={otpEnviado} />
-                </div>
+                <input ref={otpEmailRef} type="email" placeholder="tu@correo.com" className={s.input} required autoComplete="email" disabled={otpEnviado} />
               </div>
               {otpEnviado && (
                 <div className={s.field}>
@@ -361,7 +344,7 @@ export default function LoginPage() {
                 </div>
               )}
               <button type="submit" className={s.submitBtn} disabled={cargando}>
-                {cargando ? <span className={s.spinner} /> : <><ion-icon name={otpEnviado ? "checkmark-circle-outline" : "send-outline"} />{otpEnviado ? "Verificar Codigo" : "Enviar Codigo"}</>}
+                {cargando ? <span className={s.spinner} /> : otpEnviado ? "Verificar Codigo" : "Enviar Codigo"}
               </button>
             </form>
           )}
@@ -392,19 +375,16 @@ export default function LoginPage() {
       {modal && (
         <div className={s.overlay} onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className={s.modal}>
-            <button className={s.closeBtn} onClick={() => setModal(null)}><ion-icon name="close-outline" /></button>
+            <button className={s.closeBtn} onClick={() => setModal(null)}>x</button>
             {modal === "forgot" && (
               <>
                 <div className={s.modalTitle}>Recuperar Contrasena</div>
                 <form className={s.form} onSubmit={handleRecuperar}>
                   <div className={s.field}>
                     <label className={s.label}>Tu correo registrado</label>
-                    <div className={s.inputWrap}>
-                      <span className={s.inputIcon}><ion-icon name="mail-outline" /></span>
-                      <input ref={recoveryRef} type="email" placeholder="tu@correo.com" className={s.input} required />
-                    </div>
+                    <input ref={recoveryRef} type="email" placeholder="tu@correo.com" className={s.input} required />
                   </div>
-                  <button type="submit" className={s.submitBtn}><ion-icon name="send-outline" /> Enviar Codigo</button>
+                  <button type="submit" className={s.submitBtn}>Enviar Codigo</button>
                 </form>
               </>
             )}
@@ -415,7 +395,7 @@ export default function LoginPage() {
                   Para registrar tu empresa contacta al administrador o escribenos por WhatsApp.
                 </p>
                 <Link href={waUrl} target="_blank" rel="noopener noreferrer" className={s.submitBtn} style={{ display: "flex", textDecoration: "none" }}>
-                  <ion-icon name="logo-whatsapp" /> Contactar por WhatsApp
+                  Contactar por WhatsApp
                 </Link>
               </>
             )}
@@ -434,7 +414,6 @@ export default function LoginPage() {
               </div>
             </div>
             <div className={s.footerChip}>
-              <ion-icon name="time-outline" />
               <span className={s.footerTime}>{hora}</span>
             </div>
           </div>
@@ -442,11 +421,11 @@ export default function LoginPage() {
       )}
 
       <button className={s.toggleFooterBtn} onClick={toggleFooter}>
-        <ion-icon name={footerOn ? "eye-off-outline" : "eye-outline"} />
+        {footerOn ? "−" : "+"}
       </button>
 
       <Link href={waUrl} target="_blank" rel="noopener noreferrer" className={s.whatsappBtn}>
-        <ion-icon name="logo-whatsapp" />
+        WA
       </Link>
     </div>
   )

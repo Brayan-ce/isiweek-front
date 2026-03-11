@@ -113,23 +113,14 @@
   height: 20px;
   border-radius: 50%;
   background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   transition: transform 0.3s ease;
   transform: translateX(0px);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-  color: #f59e0b;
-  line-height: 1;
 }
-
-.themeBtnKnob ion-icon { font-size: 13px; display: block; }
 
 :global([data-theme="dark"]) .themeBtnKnob {
   transform: translateX(22px);
-  background: #1e3a5f;
-  color: #93c5fd;
+  background: #60a5fa;
 }
 
 .container {
@@ -163,28 +154,12 @@
   margin-bottom: 28px;
 }
 
-.logoWrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-
-.logoIcon {
-  font-size: 28px;
-  color: #1d6fce;
-  display: flex;
-  align-items: center;
-}
-
-:global([data-theme="dark"]) .logoIcon { color: #60a5fa; }
-
 .brand {
   font-size: 26px;
   font-weight: 800;
   color: #1d6fce;
   letter-spacing: -0.5px;
+  margin-bottom: 6px;
 }
 
 :global([data-theme="dark"]) .brand { color: #60a5fa; }
@@ -249,15 +224,12 @@
   margin-bottom: 16px;
   animation: slideDown 0.25s ease;
   font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
-.alertError { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.alertError   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 .alertSuccess { background: #eff6ff; color: #1d6fce; border: 1px solid #bfdbfe; }
 
-:global([data-theme="dark"]) .alertError { background: rgba(220,38,38,0.1); color: #f87171; border: 1px solid rgba(220,38,38,0.2); }
+:global([data-theme="dark"]) .alertError   { background: rgba(220,38,38,0.1);   color: #f87171; border: 1px solid rgba(220,38,38,0.2); }
 :global([data-theme="dark"]) .alertSuccess { background: rgba(29,111,206,0.12); color: #60a5fa; border: 1px solid rgba(29,111,206,0.25); }
 
 @keyframes slideDown {
@@ -265,8 +237,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.form { display: flex; flex-direction: column; gap: 16px; }
-
+.form  { display: flex; flex-direction: column; gap: 16px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 
 .label { font-size: 12px; font-weight: 700; color: #374151; letter-spacing: 0.2px; }
@@ -274,19 +245,9 @@
 
 .inputWrap { position: relative; display: flex; align-items: center; }
 
-.inputIcon {
-  position: absolute;
-  left: 12px;
-  font-size: 16px;
-  color: #94a3b8;
-  display: flex;
-  align-items: center;
-  pointer-events: none;
-}
-
 .input {
   width: 100%;
-  padding: 11px 12px 11px 38px;
+  padding: 11px 14px;
   border: 1.5px solid #e2e8f0;
   border-radius: 10px;
   font-size: 14px;
@@ -295,6 +256,7 @@
   transition: all 0.2s;
   font-family: inherit;
   outline: none;
+  box-sizing: border-box;
 }
 
 .input:focus { border-color: #1d6fce; background: white; box-shadow: 0 0 0 3px rgba(29,111,206,0.1); }
@@ -309,10 +271,9 @@
   border: none;
   cursor: pointer;
   color: #94a3b8;
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  font-size: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 4px;
   transition: color 0.2s;
 }
 
@@ -320,12 +281,31 @@
 
 .rememberRow { display: flex; justify-content: space-between; align-items: center; }
 
-.checkLabel { display: flex; align-items: center; gap: 7px; cursor: pointer; color: #64748b; font-size: 13px; user-select: none; }
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 13px;
+  user-select: none;
+}
+
 :global([data-theme="dark"]) .checkLabel { color: #94a3b8; }
 
 .checkbox { width: 15px; height: 15px; accent-color: #1d6fce; cursor: pointer; }
 
-.forgotLink { color: #1d6fce; font-weight: 600; font-size: 13px; cursor: pointer; background: none; border: none; padding: 0; transition: color 0.2s; }
+.forgotLink {
+  color: #1d6fce;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: color 0.2s;
+}
+
 .forgotLink:hover { color: #0ea5e9; }
 :global([data-theme="dark"]) .forgotLink { color: #60a5fa; }
 
@@ -348,8 +328,8 @@
   gap: 8px;
 }
 
-.submitBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(29,111,206,0.35); }
-.submitBtn:active { transform: translateY(0); }
+.submitBtn:hover   { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(29,111,206,0.35); }
+.submitBtn:active  { transform: translateY(0); }
 .submitBtn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
 .spinner {
@@ -398,7 +378,7 @@
   transition: all 0.2s;
 }
 
-.sendOtpBtn:hover { background: #1d6fce; color: white; }
+.sendOtpBtn:hover    { background: #1d6fce; color: white; }
 .sendOtpBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .dividerText {
@@ -412,7 +392,8 @@
   letter-spacing: 0.5px;
 }
 
-.dividerText::before, .dividerText::after {
+.dividerText::before,
+.dividerText::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -444,7 +425,7 @@
   transition: all 0.22s;
 }
 
-.googleBtnCustom:hover { border-color: #4285F4; box-shadow: 0 4px 14px rgba(66,133,244,0.15); transform: translateY(-2px); }
+.googleBtnCustom:hover    { border-color: #4285F4; box-shadow: 0 4px 14px rgba(66,133,244,0.15); transform: translateY(-2px); }
 .googleBtnCustom:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
 :global([data-theme="dark"]) .googleBtnCustom { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.09); color: #cbd5e1; }
@@ -454,7 +435,17 @@
 .signupText { text-align: center; color: #64748b; font-size: 13px; margin-top: 20px; }
 :global([data-theme="dark"]) .signupText { color: #94a3b8; }
 
-.signupLink { color: #1d6fce; font-weight: 700; cursor: pointer; background: none; border: none; padding: 0; font-size: 13px; transition: color 0.2s; }
+.signupLink {
+  color: #1d6fce;
+  font-weight: 700;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  transition: color 0.2s;
+}
+
 .signupLink:hover { color: #0ea5e9; }
 
 .overlay {
@@ -494,11 +485,11 @@
   border: none;
   cursor: pointer;
   color: #94a3b8;
-  display: flex;
-  align-items: center;
-  padding: 4px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 8px;
   border-radius: 6px;
-  font-size: 20px;
   transition: color 0.2s;
 }
 
@@ -543,10 +534,10 @@
   gap: 8px;
 }
 
-.footerChipFlag { font-size: 18px; }
+.footerChipFlag  { font-size: 18px; }
 .footerChipLabel { font-weight: 700; font-size: 12px; }
-.footerChipSub { font-size: 10px; opacity: 0.75; }
-.footerTime { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+.footerChipSub   { font-size: 10px; opacity: 0.75; }
+.footerTime      { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
 
 .toggleFooterBtn {
   position: fixed;
@@ -563,7 +554,8 @@
   justify-content: center;
   cursor: pointer;
   z-index: 60;
-  font-size: 15px;
+  font-size: 18px;
+  font-weight: 700;
   transition: transform 0.2s;
 }
 
@@ -582,7 +574,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
   box-shadow: 0 4px 16px rgba(37,211,102,0.4);
   transition: all 0.25s;
   z-index: 60;
