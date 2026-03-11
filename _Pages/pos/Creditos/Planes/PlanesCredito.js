@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { getPlanes, crearPlan, editarPlan, eliminarPlan, toggleActivoPlan } from "./servidor"
 import s from "./PlanesCredito.module.css"
 
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
 
 const FORM_VACIO = {
@@ -21,15 +21,63 @@ function fmt(n) {
   return `RD$ ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+async function getPlanes(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/creditos/planes/${empresaId}`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function crearPlan(empresaId, data) {
+  try {
+    const res = await fetch(`${API}/api/pos/creditos/planes/${empresaId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function editarPlan(id, data) {
+  try {
+    const res = await fetch(`${API}/api/pos/creditos/planes/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function eliminarPlan(id) {
+  try {
+    const res = await fetch(`${API}/api/pos/creditos/planes/${id}`, { method: "DELETE" })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function toggleActivoPlan(id, activo) {
+  try {
+    const res = await fetch(`${API}/api/pos/creditos/planes/${id}/toggle`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ activo }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
 export default function PlanesCredito() {
-  const [planes, setPlanes]       = useState([])
-  const [cargando, setCargando]   = useState(true)
-  const [alerta, setAlerta]       = useState(null)
+  const [planes, setPlanes]         = useState([])
+  const [cargando, setCargando]     = useState(true)
+  const [alerta, setAlerta]         = useState(null)
   const [procesando, setProcesando] = useState(false)
-  const [modal, setModal]         = useState(null)
-  const [form, setForm]           = useState(FORM_VACIO)
-  const [modalElim, setModalElim] = useState(null)
-  const [expandido, setExpandido] = useState(null)
+  const [modal, setModal]           = useState(null)
+  const [form, setForm]             = useState(FORM_VACIO)
+  const [modalElim, setModalElim]   = useState(null)
+  const [expandido, setExpandido]   = useState(null)
 
   const cargar = useCallback(async () => {
     setCargando(true)
@@ -53,19 +101,19 @@ export default function PlanesCredito() {
 
   function abrirEditar(p) {
     setForm({
-      nombre:                      p.nombre ?? "",
-      codigo:                      p.codigo ?? "",
-      descripcion:                 p.descripcion ?? "",
-      mora_pct:                    String(p.mora_pct ?? "5"),
-      dias_gracia:                 String(p.dias_gracia ?? "5"),
-      descuento_anticipado_pct:    String(p.descuento_anticipado_pct ?? "0"),
-      cuotas_minimas_anticipadas:  String(p.cuotas_minimas_anticipadas ?? "0"),
-      monto_minimo:                String(p.monto_minimo ?? "0"),
-      monto_maximo:                p.monto_maximo ? String(p.monto_maximo) : "",
-      requiere_fiador:             p.requiere_fiador ?? false,
-      permite_anticipado:          p.permite_anticipado ?? true,
-      activo:                      p.activo ?? true,
-      opciones:                    (p.opciones ?? []).map(o => ({
+      nombre:                     p.nombre ?? "",
+      codigo:                     p.codigo ?? "",
+      descripcion:                p.descripcion ?? "",
+      mora_pct:                   String(p.mora_pct ?? "5"),
+      dias_gracia:                String(p.dias_gracia ?? "5"),
+      descuento_anticipado_pct:   String(p.descuento_anticipado_pct ?? "0"),
+      cuotas_minimas_anticipadas: String(p.cuotas_minimas_anticipadas ?? "0"),
+      monto_minimo:               String(p.monto_minimo ?? "0"),
+      monto_maximo:               p.monto_maximo ? String(p.monto_maximo) : "",
+      requiere_fiador:            p.requiere_fiador ?? false,
+      permite_anticipado:         p.permite_anticipado ?? true,
+      activo:                     p.activo ?? true,
+      opciones: (p.opciones ?? []).map(o => ({
         meses:          String(o.meses),
         tasa_anual_pct: String(o.tasa_anual_pct ?? "0"),
         inicial_pct:    String(o.inicial_pct ?? "0"),
@@ -89,9 +137,9 @@ export default function PlanesCredito() {
 
   async function handleGuardar() {
     if (!form.nombre.trim()) return mostrarAlerta("error", "El nombre es obligatorio")
-    if (form.opciones.length === 0) return mostrarAlerta("error", "Agrega al menos una opción de plazo")
+    if (form.opciones.length === 0) return mostrarAlerta("error", "Agrega al menos una opcion de plazo")
     for (const o of form.opciones) {
-      if (!o.meses || Number(o.meses) <= 0) return mostrarAlerta("error", "Todos los plazos deben tener meses válidos")
+      if (!o.meses || Number(o.meses) <= 0) return mostrarAlerta("error", "Todos los plazos deben tener meses validos")
     }
     setProcesando(true)
     const payload = {
@@ -170,7 +218,7 @@ export default function PlanesCredito() {
       ) : planes.length === 0 ? (
         <div className={s.empty}>
           <ion-icon name="document-text-outline" />
-          <p>No hay planes de crédito creados</p>
+          <p>No hay planes de credito creados</p>
           <button className={s.btnNuevo} onClick={abrirCrear}>
             <ion-icon name="add-outline" /> Crear primer plan
           </button>
@@ -241,9 +289,9 @@ export default function PlanesCredito() {
                 <div className={s.planRango}>
                   <ion-icon name="cash-outline" />
                   <span>
-                    {plan.monto_minimo > 0 ? fmt(plan.monto_minimo) : "Sin mínimo"}
+                    {plan.monto_minimo > 0 ? fmt(plan.monto_minimo) : "Sin minimo"}
                     {" — "}
-                    {plan.monto_maximo ? fmt(plan.monto_maximo) : "Sin máximo"}
+                    {plan.monto_maximo ? fmt(plan.monto_maximo) : "Sin maximo"}
                   </span>
                 </div>
               ) : null}
@@ -271,7 +319,7 @@ export default function PlanesCredito() {
                         <span>{Number(o.tasa_anual_pct)}%</span>
                         <span>{Number(o.inicial_pct)}%</span>
                         <span className={`${s.opcionTipo} ${o.tipo === "cash" ? s.tipoCash : s.tipoCredito}`}>
-                          {o.tipo === "cash" ? "Contado" : "Crédito"}
+                          {o.tipo === "cash" ? "Contado" : "Credito"}
                         </span>
                       </div>
                     ))}
@@ -291,24 +339,24 @@ export default function PlanesCredito() {
             </button>
             <div className={s.modalTitulo}>
               <ion-icon name="document-text-outline" />
-              {modal === "crear" ? "Nuevo plan de crédito" : "Editar plan"}
+              {modal === "crear" ? "Nuevo plan de credito" : "Editar plan"}
             </div>
 
             <div className={s.modalScroll}>
               <div className={s.seccion}>
-                <div className={s.seccionLabel}>Información básica</div>
+                <div className={s.seccionLabel}>Informacion basica</div>
                 <div className={s.modalGrid}>
                   <div className={`${s.field} ${s.spanFull}`}>
                     <label>Nombre *</label>
-                    <input className={s.input} value={form.nombre} onChange={e => setF("nombre", e.target.value)} placeholder="Ej: Plan Estándar" autoFocus />
+                    <input className={s.input} value={form.nombre} onChange={e => setF("nombre", e.target.value)} placeholder="Ej: Plan Estandar" autoFocus />
                   </div>
                   <div className={s.field}>
-                    <label>Código</label>
+                    <label>Codigo</label>
                     <input className={s.input} value={form.codigo} onChange={e => setF("codigo", e.target.value)} placeholder="Ej: PLN-01" />
                   </div>
                   <div className={`${s.field} ${s.spanFull}`}>
-                    <label>Descripción</label>
-                    <input className={s.input} value={form.descripcion} onChange={e => setF("descripcion", e.target.value)} placeholder="Descripción opcional" />
+                    <label>Descripcion</label>
+                    <input className={s.input} value={form.descripcion} onChange={e => setF("descripcion", e.target.value)} placeholder="Descripcion opcional" />
                   </div>
                 </div>
               </div>
@@ -324,16 +372,16 @@ export default function PlanesCredito() {
                     </div>
                   </div>
                   <div className={s.field}>
-                    <label>Días de gracia</label>
+                    <label>Dias de gracia</label>
                     <input className={s.input} type="number" min="0" value={form.dias_gracia} onChange={e => setF("dias_gracia", e.target.value)} />
                   </div>
                   <div className={s.field}>
-                    <label>Monto mínimo</label>
+                    <label>Monto minimo</label>
                     <input className={s.input} type="number" min="0" value={form.monto_minimo} onChange={e => setF("monto_minimo", e.target.value)} placeholder="0" />
                   </div>
                   <div className={s.field}>
-                    <label>Monto máximo</label>
-                    <input className={s.input} type="number" min="0" value={form.monto_maximo} onChange={e => setF("monto_maximo", e.target.value)} placeholder="Sin límite" />
+                    <label>Monto maximo</label>
+                    <input className={s.input} type="number" min="0" value={form.monto_maximo} onChange={e => setF("monto_maximo", e.target.value)} placeholder="Sin limite" />
                   </div>
                   <div className={s.field}>
                     <label>% Descuento anticipado</label>
@@ -343,7 +391,7 @@ export default function PlanesCredito() {
                     </div>
                   </div>
                   <div className={s.field}>
-                    <label>Cuotas mín. anticipadas</label>
+                    <label>Cuotas min. anticipadas</label>
                     <input className={s.input} type="number" min="0" value={form.cuotas_minimas_anticipadas} onChange={e => setF("cuotas_minimas_anticipadas", e.target.value)} />
                   </div>
                 </div>
@@ -413,7 +461,7 @@ export default function PlanesCredito() {
                           value={o.tipo}
                           onChange={e => setOpcion(i, "tipo", e.target.value)}
                         >
-                          <option value="credito">Crédito</option>
+                          <option value="credito">Credito</option>
                           <option value="cash">Contado</option>
                         </select>
                         <button className={s.btnQuitarOpcion} onClick={() => quitarOpcion(i)}>
@@ -442,7 +490,7 @@ export default function PlanesCredito() {
             <div className={s.elimIcono}><ion-icon name="warning-outline" /></div>
             <div className={s.elimTitulo}>Eliminar plan</div>
             <div className={s.elimSub}>
-              ¿Seguro que deseas eliminar <strong>{modalElim.nombre}</strong>? Esta acción no se puede deshacer.
+              Seguro que deseas eliminar <strong>{modalElim.nombre}</strong>? Esta accion no se puede deshacer.
             </div>
             <div className={s.modalFooter}>
               <button className={s.btnSecundario} onClick={() => setModalElim(null)}>Cancelar</button>

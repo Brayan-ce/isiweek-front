@@ -1,15 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import {
-  getConfigCatalogo, guardarConfigCatalogo,
-  getProductosCatalogo, toggleProductoCatalogo,
-  subirLogoCatalogo, generarQR, generarSlug,
-} from "./servidor"
 import s from "./CatalogoOnline.module.css"
 
-const EMPRESA_ID   = 1
-const BACKEND      = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const EMPRESA_ID = 1
 const BASE_URL_CAT = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/catalogo/`
 
 const CONFIG_VACIA = {
@@ -22,19 +17,88 @@ function fmt(n) {
   return `RD$ ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+async function getConfigCatalogo(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/config/${empresaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function guardarConfigCatalogo(empresaId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/config/${empresaId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function getProductosCatalogo(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/productos/${empresaId}`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function toggleProductoCatalogo(empresaId, productoId, campo, valor) {
+  try {
+    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/productos/${empresaId}/${productoId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [campo]: valor }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function subirLogoCatalogo(empresaId, formData) {
+  try {
+    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/logo/${empresaId}`, {
+      method: "POST",
+      body: formData,
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo subir el logo" } }
+}
+
+async function generarQR(url) {
+  try {
+    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/qr`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo generar el QR" } }
+}
+
+function generarSlug(nombre) {
+  return nombre
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+}
+
 export default function CatalogoOnline() {
-  const [tab, setTab]                   = useState("config")
-  const [config, setConfig]             = useState(CONFIG_VACIA)
-  const [productos, setProductos]       = useState([])
-  const [cargando, setCargando]         = useState(true)
-  const [guardando, setGuardando]       = useState(false)
-  const [alerta, setAlerta]             = useState(null)
-  const [qrData, setQrData]             = useState(null)
-  const [generandoQR, setGenerandoQR]   = useState(false)
-  const [logoPreview, setLogoPreview]   = useState(null)
-  const [logoFile, setLogoFile]         = useState(null)
-  const [dragOver, setDragOver]         = useState(false)
-  const fileRef                         = useRef(null)
+  const [tab, setTab]                 = useState("config")
+  const [config, setConfig]           = useState(CONFIG_VACIA)
+  const [productos, setProductos]     = useState([])
+  const [cargando, setCargando]       = useState(true)
+  const [guardando, setGuardando]     = useState(false)
+  const [alerta, setAlerta]           = useState(null)
+  const [qrData, setQrData]           = useState(null)
+  const [generandoQR, setGenerandoQR] = useState(false)
+  const [logoPreview, setLogoPreview] = useState(null)
+  const [logoFile, setLogoFile]       = useState(null)
+  const [dragOver, setDragOver]       = useState(false)
+  const fileRef                       = useRef(null)
 
   const urlCompleta = `${BASE_URL_CAT}${config.url_slug}`
 
@@ -46,7 +110,7 @@ export default function CatalogoOnline() {
     ])
     if (cfg) {
       setConfig(cfg)
-      if (cfg.logo) setLogoPreview(`${BACKEND}${cfg.logo}`)
+      if (cfg.logo) setLogoPreview(`${API}${cfg.logo}`)
     }
     setProductos(prods)
     setCargando(false)
@@ -61,19 +125,17 @@ export default function CatalogoOnline() {
 
   function set(campo, val) { setConfig(p => ({ ...p, [campo]: val })) }
 
-  async function handleGenerarSlug() {
+  function handleGenerarSlug() {
     if (!config.nombre.trim()) return mostrarAlerta("error", "Escribe el nombre primero")
-    const slug = await generarSlug(config.nombre)
-    set("url_slug", slug)
+    set("url_slug", generarSlug(config.nombre))
   }
 
   async function handleGuardar() {
-    if (!config.nombre.trim()) return mostrarAlerta("error", "El nombre es obligatorio")
-    if (!config.url_slug.trim()) return mostrarAlerta("error", "La URL del catálogo es obligatoria")
+    if (!config.nombre.trim())    return mostrarAlerta("error", "El nombre es obligatorio")
+    if (!config.url_slug.trim())  return mostrarAlerta("error", "La URL del catalogo es obligatoria")
     setGuardando(true)
 
     let logoUrl = config.logo
-
     if (logoFile) {
       const fd = new FormData()
       fd.append("logo", logoFile)
@@ -90,15 +152,11 @@ export default function CatalogoOnline() {
 
   async function handleToggleProducto(productoId, campo, valorActual) {
     const nuevoValor = !valorActual
-    setProductos(p => p.map(pr =>
-      pr.id === productoId ? { ...pr, [campo]: nuevoValor } : pr
-    ))
+    setProductos(p => p.map(pr => pr.id === productoId ? { ...pr, [campo]: nuevoValor } : pr))
     const res = await toggleProductoCatalogo(EMPRESA_ID, productoId, campo, nuevoValor)
     if (res?.error) {
       mostrarAlerta("error", res.error)
-      setProductos(p => p.map(pr =>
-        pr.id === productoId ? { ...pr, [campo]: valorActual } : pr
-      ))
+      setProductos(p => p.map(pr => pr.id === productoId ? { ...pr, [campo]: valorActual } : pr))
     }
   }
 
@@ -160,7 +218,7 @@ export default function CatalogoOnline() {
           <ion-icon name={config.activo ? "radio-button-on-outline" : "radio-button-off-outline"} />
           <div>
             <span className={s.statLabel}>Estado</span>
-            <span className={s.statVal}>{config.activo ? "Catálogo publicado" : "Catálogo oculto"}</span>
+            <span className={s.statVal}>{config.activo ? "Catalogo publicado" : "Catalogo oculto"}</span>
           </div>
         </div>
         <div className={s.statCard}>
@@ -181,7 +239,7 @@ export default function CatalogoOnline() {
           <ion-icon name="analytics-outline" />
           <div>
             <span className={s.statLabel}>Visitas</span>
-            <span className={s.statVal}>— últimos 7 días</span>
+            <span className={s.statVal}>— ultimos 7 dias</span>
           </div>
         </div>
       </div>
@@ -189,7 +247,7 @@ export default function CatalogoOnline() {
       <div className={s.tabs}>
         <button className={`${s.tab} ${tab === "config" ? s.tabActivo : ""}`} onClick={() => setTab("config")}>
           <ion-icon name="settings-outline" />
-          Configuración
+          Configuracion
         </button>
         <button className={`${s.tab} ${tab === "productos" ? s.tabActivo : ""}`} onClick={() => setTab("productos")}>
           <ion-icon name="cube-outline" />
@@ -200,17 +258,17 @@ export default function CatalogoOnline() {
       {tab === "config" && (
         <div className={s.configGrid}>
           <div className={s.card}>
-            <div className={s.cardTitulo}><ion-icon name="information-circle-outline" />Información Básica</div>
+            <div className={s.cardTitulo}><ion-icon name="information-circle-outline" />Informacion Basica</div>
             <div className={s.formGrupo}>
-              <label className={s.label}>Nombre del Catálogo *</label>
+              <label className={s.label}>Nombre del Catalogo *</label>
               <input className={s.input} value={config.nombre} onChange={e => set("nombre", e.target.value)} placeholder="Ej: Mi Tienda" />
             </div>
             <div className={s.formGrupo}>
-              <label className={s.label}>Descripción Corta</label>
-              <textarea className={s.textarea} value={config.descripcion ?? ""} onChange={e => set("descripcion", e.target.value)} placeholder="Descripción corta del catálogo" rows={2} />
+              <label className={s.label}>Descripcion Corta</label>
+              <textarea className={s.textarea} value={config.descripcion ?? ""} onChange={e => set("descripcion", e.target.value)} placeholder="Descripcion corta del catalogo" rows={2} />
             </div>
             <div className={s.formGrupo}>
-              <label className={s.label}>URL del Catálogo</label>
+              <label className={s.label}>URL del Catalogo</label>
               <div className={s.slugRow}>
                 <span className={s.slugBase}>{BASE_URL_CAT}</span>
                 <input
@@ -224,7 +282,7 @@ export default function CatalogoOnline() {
                   Generar
                 </button>
               </div>
-              <span className={s.slugHint}>Solo letras minúsculas, números y guiones</span>
+              <span className={s.slugHint}>Solo letras minusculas, numeros y guiones</span>
             </div>
             <div className={s.formGrupo}>
               <label className={s.label}>WhatsApp</label>
@@ -235,7 +293,7 @@ export default function CatalogoOnline() {
               <input className={s.input} value={config.horario ?? ""} onChange={e => set("horario", e.target.value)} placeholder="Lun-Vie: 9AM-6PM" />
             </div>
             <div className={s.formGrupo}>
-              <label className={s.label}>Dirección</label>
+              <label className={s.label}>Direccion</label>
               <input className={s.input} value={config.direccion ?? ""} onChange={e => set("direccion", e.target.value)} placeholder="Calle Principal" />
             </div>
           </div>
@@ -257,7 +315,7 @@ export default function CatalogoOnline() {
                   ) : (
                     <>
                       <ion-icon name="image-outline" />
-                      <span>Arrastra tu logo aquí o haz clic para subir</span>
+                      <span>Arrastra tu logo aqui o haz clic para subir</span>
                       <span className={s.dropHint}>PNG, JPG hasta 2MB</span>
                     </>
                   )}
@@ -283,11 +341,11 @@ export default function CatalogoOnline() {
             </div>
 
             <div className={s.card}>
-              <div className={s.cardTitulo}><ion-icon name="megaphone-outline" />Publicación</div>
+              <div className={s.cardTitulo}><ion-icon name="megaphone-outline" />Publicacion</div>
               <div className={s.toggleRow}>
                 <div>
-                  <span className={s.toggleLabel}>Estado del Catálogo</span>
-                  <span className={s.toggleSub}>{config.activo ? "Tu catálogo está visible públicamente" : "Tu catálogo está oculto"}</span>
+                  <span className={s.toggleLabel}>Estado del Catalogo</span>
+                  <span className={s.toggleSub}>{config.activo ? "Tu catalogo esta visible publicamente" : "Tu catalogo esta oculto"}</span>
                 </div>
                 <button className={`${s.toggle} ${config.activo ? s.toggleOn : ""}`} onClick={() => set("activo", !config.activo)}>
                   <span className={s.toggleThumb} />
@@ -296,7 +354,7 @@ export default function CatalogoOnline() {
               {config.url_slug && (
                 <>
                   <div className={s.formGrupo} style={{ marginTop: "14px" }}>
-                    <label className={s.label}>Compartir Catálogo</label>
+                    <label className={s.label}>Compartir Catalogo</label>
                     <div className={s.shareRow}>
                       <span className={s.shareUrl}>{urlCompleta}</span>
                       <button className={s.copyBtn} onClick={() => { navigator.clipboard.writeText(urlCompleta); mostrarAlerta("ok", "URL copiada") }}>
@@ -306,7 +364,7 @@ export default function CatalogoOnline() {
                   </div>
                   <div className={s.shareAcciones}>
                     <button className={s.qrBtn} onClick={handleGenerarQR} disabled={generandoQR}>
-                      {generandoQR ? <span className={s.spinner} /> : <><ion-icon name="qr-code-outline" />Generar Código QR</>}
+                      {generandoQR ? <span className={s.spinner} /> : <><ion-icon name="qr-code-outline" />Generar Codigo QR</>}
                     </button>
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(urlCompleta)}`}
@@ -333,7 +391,7 @@ export default function CatalogoOnline() {
             <div className={s.card}>
               <div className={s.cardTitulo}><ion-icon name="bulb-outline" />Consejo</div>
               <p className={s.consejoText}>
-                Activa productos destacados para mostrarlos en la portada. Los productos con ofertas atraen más atención de los clientes.
+                Activa productos destacados para mostrarlos en la portada. Los productos con ofertas atraen mas atencion de los clientes.
               </p>
             </div>
           </div>
@@ -361,7 +419,7 @@ export default function CatalogoOnline() {
                 <div key={p.id} className={`${s.fila} ${i % 2 === 1 ? s.filaAlterna : ""}`}>
                   <div className={s.colImagen}>
                     {p.imagen
-                      ? <img src={`${BACKEND}${p.imagen}`} alt={p.nombre} className={s.prodImg} />
+                      ? <img src={`${API}${p.imagen}`} alt={p.nombre} className={s.prodImg} />
                       : <div className={s.prodImgVacio}><ion-icon name="image-outline" /></div>
                     }
                   </div>

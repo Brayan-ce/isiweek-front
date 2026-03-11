@@ -2,15 +2,72 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { getDatosVender, getProductos as fetchProductos, getProductoPorCodigo, crearVenta, crearClienteRapido, actualizarStock } from "./servidor"
 import s from "./Vender.module.css"
 
 const EMPRESA_ID = 1
 const USUARIO_ID = 2
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function fmt(n, simbolo = "RD$") {
   return `${simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+async function getDatosVender(empresaId, usuarioId) {
+  try {
+    const res = await fetch(`${API}/api/pos/vender/datos/${empresaId}/${usuarioId}`)
+    if (!res.ok) return null
+    return res.json()
+  } catch { return null }
+}
+
+async function fetchProductos(empresaId, busqueda = "", pagina = 1, limite = 20) {
+  try {
+    const params = new URLSearchParams({ busqueda, pagina, limite })
+    const res = await fetch(`${API}/api/pos/vender/productos/${empresaId}?${params}`)
+    if (!res.ok) return { productos: [], total: 0, paginas: 1 }
+    return res.json()
+  } catch { return { productos: [], total: 0, paginas: 1 } }
+}
+
+async function getProductoPorCodigo(empresaId, codigo) {
+  try {
+    const res = await fetch(`${API}/api/pos/vender/codigo/${empresaId}/${encodeURIComponent(codigo)}`)
+    if (!res.ok) return null
+    return res.json()
+  } catch { return null }
+}
+
+async function crearClienteRapido(empresaId, nombre) {
+  try {
+    const res = await fetch(`${API}/api/pos/vender/cliente-rapido/${empresaId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre }),
+    })
+    return res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function actualizarStock(empresaId, productoId, stock) {
+  try {
+    const res = await fetch(`${API}/api/pos/vender/stock/${empresaId}/${productoId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stock: Number(stock) }),
+    })
+    return res.json()
+  } catch { return { error: "No se pudo actualizar el stock" } }
+}
+
+async function crearVenta(empresaId, usuarioId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/vender/crear/${empresaId}/${usuarioId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
 }
 
 export default function Vender() {
@@ -39,10 +96,9 @@ export default function Vender() {
   const [pagoMixto, setPagoMixto]           = useState(false)
   const [pagos, setPagos]                   = useState([{ metodo_pago_id: "", monto: "" }])
   const [editandoStock, setEditandoStock]   = useState(null)
-  const router = useRouter()
   const [nuevoStock, setNuevoStock]         = useState("")
   const [guardandoStock, setGuardandoStock] = useState(false)
-
+  const router     = useRouter()
   const scanBuffer = useRef("")
   const scanTimer  = useRef(null)
 
@@ -193,11 +249,11 @@ export default function Vender() {
     setEfectivo(""); setModalCobrar(true)
   }
 
-  const simbolo  = datos?.moneda?.simbolo ?? "RD$"
-  const subtotal = carrito.reduce((a, i) => a + Number(i.precio) * i.cantidad, 0)
-  const itbis    = carrito.reduce((a, i) => a + Number(i.precio) * i.cantidad * (Number(i.itbis_pct) / 100), 0)
-  const desc     = Number(descuento) || 0
-  const total    = subtotal + itbis - desc
+  const simbolo      = datos?.moneda?.simbolo ?? "RD$"
+  const subtotal     = carrito.reduce((a, i) => a + Number(i.precio) * i.cantidad, 0)
+  const itbis        = carrito.reduce((a, i) => a + Number(i.precio) * i.cantidad * (Number(i.itbis_pct) / 100), 0)
+  const desc         = Number(descuento) || 0
+  const total        = subtotal + itbis - desc
   const totalPagado  = pagoMixto ? pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0) : Number(efectivo) || 0
   const faltaMixto   = pagoMixto ? total - totalPagado : 0
   const cambioSimple = !pagoMixto && Number(efectivo) > 0 ? Number(efectivo) - total : 0
@@ -230,8 +286,6 @@ export default function Vender() {
       }
       const venta = await crearVenta(EMPRESA_ID, USUARIO_ID, body)
       if (venta.error) return mostrarAlerta("error", venta.error)
-
-      // Primero cerrar modal y limpiar, luego navegar
       setModalCobrar(false)
       limpiarVenta()
       router.push(`/pos/vender/imprimir/${venta.id}`)
@@ -240,7 +294,6 @@ export default function Vender() {
     } finally {
       setCargando(false)
     }
-
   }
 
   if (!datos) return <div className={s.loading}><span className={s.spinner} /></div>
@@ -253,7 +306,6 @@ export default function Vender() {
 
   return (
     <div className={s.page}>
-
       {alerta && (
         <div className={`${s.toast} ${s["toast_" + alerta.tipo]}`}>
           <ion-icon name={alerta.tipo === "error" ? "alert-circle-outline" : alerta.tipo === "ok" ? "checkmark-circle-outline" : "warning-outline"} />
@@ -312,11 +364,11 @@ export default function Vender() {
                   <div className={s.prodCellInfo}>
                     <div className={s.prodThumb}>
                       {p.imagen
-                        ? <img src={`${BACKEND}${p.imagen}`} alt={p.nombre} />
+                        ? <img src={`${API}${p.imagen}`} alt={p.nombre} />
                         : <ion-icon name="cube-outline" />
                       }
                     </div>
-                    <div className={s.prodTexts}>
+                    <div className={s.prodTextos}>
                       <span className={s.prodNombre}>{p.nombre}</span>
                       {p.marca && <span className={s.prodMarca}>{p.marca.nombre}</span>}
                       {p.codigo && <span className={s.prodCodigo}>{p.codigo}</span>}
@@ -324,7 +376,6 @@ export default function Vender() {
                   </div>
 
                   <span className={s.prodCategoria}>{p.categoria?.nombre ?? "—"}</span>
-
                   <span className={s.prodPrecio}>{fmt(p.precio, simbolo)}</span>
 
                   <div className={s.stockCell}>

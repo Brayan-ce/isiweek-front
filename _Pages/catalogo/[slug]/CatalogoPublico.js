@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
+import { useParams } from "next/navigation"
 import s from "./CatalogoPublico.module.css"
 
 const POR_PAGINA = 12
-const BACKEND    = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function img(url) {
   if (!url) return null
   if (url.startsWith("http")) return url
-  return `${BACKEND}${url}`
+  return `${API}${url}`
 }
 
 function fmt(n, simbolo = "RD$") {
@@ -173,7 +174,7 @@ function CarritoDrawer({ items, onCerrar, onCambiarCant, onEliminar, onPedido, c
             <div className={s.enviadoIcon} style={{ color: config.color_primario }}>
               <ion-icon name="checkmark-circle-outline" />
             </div>
-            <h3 className={s.enviadoTitulo}>¡Pedido enviado!</h3>
+            <h3 className={s.enviadoTitulo}>Pedido enviado</h3>
             <p className={s.enviadoDesc}>Nos pondremos en contacto contigo pronto para confirmar tu pedido.</p>
             {config.whatsapp && (
               <a
@@ -190,7 +191,7 @@ function CarritoDrawer({ items, onCerrar, onCambiarCant, onEliminar, onPedido, c
         ) : items.length === 0 ? (
           <div className={s.carritoVacio}>
             <ion-icon name="bag-outline" />
-            <p>Tu carrito está vacío</p>
+            <p>Tu carrito esta vacio</p>
           </div>
         ) : paso === 1 ? (
           <>
@@ -243,12 +244,12 @@ function CarritoDrawer({ items, onCerrar, onCambiarCant, onEliminar, onPedido, c
                 <input className={s.formInput} value={form.nombre} onChange={e => set("nombre", e.target.value)} placeholder="Tu nombre completo" />
               </div>
               <div className={s.formGrupo}>
-                <label className={s.formLabel}>Teléfono *</label>
-                <input className={s.formInput} value={form.telefono} onChange={e => set("telefono", e.target.value)} placeholder="Tu número de teléfono" />
+                <label className={s.formLabel}>Telefono *</label>
+                <input className={s.formInput} value={form.telefono} onChange={e => set("telefono", e.target.value)} placeholder="Tu numero de telefono" />
               </div>
               <div className={s.formGrupo}>
-                <label className={s.formLabel}>Dirección de entrega</label>
-                <input className={s.formInput} value={form.direccion} onChange={e => set("direccion", e.target.value)} placeholder="¿Dónde te lo enviamos?" />
+                <label className={s.formLabel}>Direccion de entrega</label>
+                <input className={s.formInput} value={form.direccion} onChange={e => set("direccion", e.target.value)} placeholder="Donde te lo enviamos?" />
               </div>
               <div className={s.formGrupo}>
                 <label className={s.formLabel}>Notas del pedido</label>
@@ -276,7 +277,29 @@ function CarritoDrawer({ items, onCerrar, onCambiarCant, onEliminar, onPedido, c
   )
 }
 
-export default function CatalogoPublico({ config, productos }) {
+function SkeletonCatalogo() {
+  return (
+    <div className={s.root}>
+      <div className={s.skeletonHeader} />
+      <main className={s.main}>
+        <div className={s.grid}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className={s.skeletonTarjeta} />
+          ))}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default function CatalogoPublico() {
+  const { slug } = useParams()
+
+  const [config, setConfig]     = useState(null)
+  const [productos, setProductos] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError]       = useState(null)
+
   const [carrito, setCarrito]     = useState([])
   const [drawerOpen, setDrawer]   = useState(false)
   const [busqueda, setBusqueda]   = useState("")
@@ -284,6 +307,29 @@ export default function CatalogoPublico({ config, productos }) {
   const [preview, setPreview]     = useState(null)
   const [paginaDest, setPagDest]  = useState(1)
   const [paginaResto, setPagResto] = useState(1)
+
+  useEffect(() => {
+    async function cargarDatos() {
+      try {
+        const [resConfig, resProductos] = await Promise.all([
+          fetch(`${API}/api/catalogo/${slug}/config`),
+          fetch(`${API}/api/catalogo/${slug}/productos`),
+        ])
+        if (!resConfig.ok) { setError("Catalogo no encontrado"); return }
+        const [dataConfig, dataProductos] = await Promise.all([
+          resConfig.json(),
+          resProductos.ok ? resProductos.json() : Promise.resolve([]),
+        ])
+        setConfig(dataConfig)
+        setProductos(dataProductos)
+      } catch {
+        setError("No se pudo cargar el catalogo")
+      } finally {
+        setCargando(false)
+      }
+    }
+    if (slug) cargarDatos()
+  }, [slug])
 
   const visibles  = useMemo(() => productos.filter(p => p.visible), [productos])
   const filtrados = useMemo(() =>
@@ -327,7 +373,6 @@ export default function CatalogoPublico({ config, productos }) {
   }
 
   async function enviarPedido(datos) {
-    const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
     try {
       await fetch(`${API}/api/catalogo/pedido`, {
         method: "POST",
@@ -350,6 +395,19 @@ export default function CatalogoPublico({ config, productos }) {
       })
       setCarrito([])
     } catch {}
+  }
+
+  if (cargando) return <SkeletonCatalogo />
+
+  if (error) {
+    return (
+      <div className={s.root}>
+        <div className={s.empty}>
+          <ion-icon name="alert-circle-outline" />
+          <p>{error}</p>
+        </div>
+      </div>
+    )
   }
 
   return (

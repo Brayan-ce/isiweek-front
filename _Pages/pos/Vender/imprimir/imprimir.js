@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { getVenta } from "./servidor"
 import {
   printerConnect,
   printerPrint,
@@ -12,6 +11,8 @@ import {
   buildRawBTText,
 } from "./extras/printerService"
 import s from "./imprimir.module.css"
+
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 const OPCIONES_DEFAULT = {
   mostrarDatosEmpresa:  true,
@@ -28,6 +29,14 @@ function fmt(n, simbolo = "RD$") {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
+}
+
+async function getVenta(id) {
+  try {
+    const res = await fetch(`${API}/api/pos/vender/recibo/${id}`)
+    if (!res.ok) return null
+    return res.json()
+  } catch { return null }
 }
 
 export default function ImprimirVentaPage({ id }) {

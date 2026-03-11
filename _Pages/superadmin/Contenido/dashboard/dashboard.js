@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { obtenerDatosDashboard } from "./servidor"
 import s from "./dashboard.module.css"
+
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function fmtFecha(fecha) {
   if (!fecha) return ""
@@ -14,15 +15,23 @@ function fmtMonto(n) {
   return new Intl.NumberFormat("es-DO", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n ?? 0)
 }
 
-const ESTADO_EMPRESA   = { activa:     { label: "Activa",    cls: "chipGreen" }, inactiva:  { label: "Inactiva",   cls: "chipRed"   } }
-const ESTADO_SOLICITUD = { pendiente:  { label: "Pendiente", cls: "chipAmber" }, aprobada:  { label: "Aprobada",   cls: "chipGreen" }, rechazada: { label: "Rechazada", cls: "chipRed" } }
-const ESTADO_USUARIO   = { activo:     { label: "Activo",    cls: "chipGreen" }, inactivo:  { label: "Inactivo",   cls: "chipRed"   } }
-const ESTADO_VENTA     = { completada: { label: "Pagada",    cls: "chipGreen" }, cancelada: { label: "Cancelada",  cls: "chipRed"   }, pendiente: { label: "Pendiente", cls: "chipAmber" } }
+const ESTADO_EMPRESA   = { activa:     { label: "Activa",    cls: "chipGreen" }, inactiva:  { label: "Inactiva",  cls: "chipRed"   } }
+const ESTADO_SOLICITUD = { pendiente:  { label: "Pendiente", cls: "chipAmber" }, aprobada:  { label: "Aprobada",  cls: "chipGreen" }, rechazada: { label: "Rechazada", cls: "chipRed" } }
+const ESTADO_USUARIO   = { activo:     { label: "Activo",    cls: "chipGreen" }, inactivo:  { label: "Inactivo",  cls: "chipRed"   } }
+const ESTADO_VENTA     = { completada: { label: "Pagada",    cls: "chipGreen" }, cancelada: { label: "Cancelada", cls: "chipRed"   }, pendiente: { label: "Pendiente", cls: "chipAmber" } }
+
+async function obtenerDatosDashboard() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/dashboard/datos`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
 
 export default function DashboardSuperAdmin() {
-  const [datos, setDatos]   = useState(null)
+  const [datos, setDatos]       = useState(null)
   const [cargando, setCargando] = useState(true)
-  const [fecha, setFecha]   = useState("")
+  const [fecha, setFecha]       = useState("")
 
   useEffect(() => {
     setFecha(new Date().toLocaleDateString("es-DO", { weekday: "long", day: "numeric", month: "long" }))

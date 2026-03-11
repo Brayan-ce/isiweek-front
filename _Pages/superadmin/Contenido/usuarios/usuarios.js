@@ -2,8 +2,34 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { obtenerUsuarios, obtenerEmpresasActivas, eliminarUsuario } from "./servidor"
 import s from "./usuarios.module.css"
+
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+async function obtenerUsuarios({ busqueda = "", estado = "", tipo = "", empresaId = "", pagina = 1 } = {}) {
+  try {
+    const p = new URLSearchParams({ busqueda, estado, tipo, empresaId, pagina, limite: 12 })
+    const res = await fetch(`${API}/api/superadmin/usuarios?${p}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function obtenerEmpresasActivas() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios/empresas`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function eliminarUsuario(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios/${id}`, { method: "DELETE" })
+    if (!res.ok) return { error: "Error al eliminar usuario" }
+    return { ok: true }
+  } catch { return { error: "Error de conexion" } }
+}
 
 function fmtFecha(f) {
   if (!f) return ""
@@ -11,9 +37,9 @@ function fmtFecha(f) {
 }
 
 const TIPO_COLOR = {
-  "Super Admin":   { bg: "rgba(139,92,246,0.1)",  color: "#7c3aed" },
-  "Administrador": { bg: "rgba(29,111,206,0.1)",   color: "#1d6fce" },
-  "Vendedor":      { bg: "rgba(34,197,94,0.1)",    color: "#16a34a" },
+  "Super Admin":   { bg: "rgba(139,92,246,0.1)", color: "#7c3aed" },
+  "Administrador": { bg: "rgba(29,111,206,0.1)",  color: "#1d6fce" },
+  "Vendedor":      { bg: "rgba(34,197,94,0.1)",   color: "#16a34a" },
 }
 
 const ESTADO_COLOR = {
@@ -23,18 +49,18 @@ const ESTADO_COLOR = {
 
 export default function UsuariosPage() {
   const router = useRouter()
-  const [empresas, setEmpresas]       = useState([])
-  const [empresaId, setEmpresaId]     = useState("")
-  const [empresa, setEmpresa]         = useState(null)
-  const [data, setData]               = useState(null)
-  const [cargandoEmpresas, setCargandoEmpresas] = useState(true)
-  const [cargando, setCargando]       = useState(false)
-  const [busqueda, setBusqueda]       = useState("")
-  const [estado, setEstado]           = useState("")
-  const [tipo, setTipo]               = useState("")
-  const [pagina, setPagina]           = useState(1)
-  const [confirmId, setConfirmId]     = useState(null)
-  const [eliminando, setEliminando]   = useState(false)
+  const [empresas, setEmpresas]                   = useState([])
+  const [empresaId, setEmpresaId]                 = useState("")
+  const [empresa, setEmpresa]                     = useState(null)
+  const [data, setData]                           = useState(null)
+  const [cargandoEmpresas, setCargandoEmpresas]   = useState(true)
+  const [cargando, setCargando]                   = useState(false)
+  const [busqueda, setBusqueda]                   = useState("")
+  const [estado, setEstado]                       = useState("")
+  const [tipo, setTipo]                           = useState("")
+  const [pagina, setPagina]                       = useState(1)
+  const [confirmId, setConfirmId]                 = useState(null)
+  const [eliminando, setEliminando]               = useState(false)
 
   useEffect(() => {
     obtenerEmpresasActivas().then(list => {
@@ -71,12 +97,11 @@ export default function UsuariosPage() {
     cargar()
   }
 
-  const usuarios      = data?.usuarios ?? []
-  const totalPaginas  = data?.paginas ?? 1
+  const usuarios     = data?.usuarios ?? []
+  const totalPaginas = data?.paginas  ?? 1
 
   return (
     <div className={s.page}>
-      {/* ── HEADER ── */}
       <div className={s.topRow}>
         <div>
           <div className={s.pageSubtitle}>
@@ -90,7 +115,6 @@ export default function UsuariosPage() {
         )}
       </div>
 
-      {/* ── SELECTOR DE EMPRESA ── */}
       <div className={s.empresaSelector}>
         <div className={s.empresaSelectorLabel}>
           <ion-icon name="business-outline" /> Empresa
@@ -113,7 +137,6 @@ export default function UsuariosPage() {
         </div>
       </div>
 
-      {/* ── SIN EMPRESA ── */}
       {!empresaId && (
         <div className={s.emptyEmpresa}>
           <ion-icon name="people-outline" />
@@ -121,7 +144,6 @@ export default function UsuariosPage() {
         </div>
       )}
 
-      {/* ── FILTROS + LISTA ── */}
       {empresaId && (
         <>
           <div className={s.filtros}>
@@ -236,13 +258,12 @@ export default function UsuariosPage() {
         </>
       )}
 
-      {/* ── MODAL ELIMINAR ── */}
       {confirmId && (
         <div className={s.overlay} onClick={() => setConfirmId(null)}>
           <div className={s.modal} onClick={e => e.stopPropagation()}>
             <div className={s.modalIcon}><ion-icon name="warning-outline" /></div>
             <div className={s.modalTitle}>Eliminar usuario</div>
-            <div className={s.modalText}>Esta acción es irreversible. Se eliminará el usuario permanentemente.</div>
+            <div className={s.modalText}>Esta accion es irreversible. Se eliminara el usuario permanentemente.</div>
             <div className={s.modalBtns}>
               <button className={s.modalCancelar} onClick={() => setConfirmId(null)}>Cancelar</button>
               <button className={s.modalConfirmar} onClick={handleEliminar} disabled={eliminando}>

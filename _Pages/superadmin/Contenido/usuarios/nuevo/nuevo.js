@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { obtenerTiposUsuario, obtenerModosSistema, obtenerEmpresasActivas, obtenerEmpresa, crearUsuario } from "../servidor"
 import s from "./nuevo.module.css"
 
+const API            = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const SUPER_ADMIN_ID = 1
 
 const MODO_MODULOS = {
@@ -12,6 +12,51 @@ const MODO_MODULOS = {
   OBRAS:         ["mis-obras", "asistencia-diaria"],
   CREDITOS:      ["creditos-dashboard"],
   VENTAS_ONLINE: ["ventas-online-pedidos"],
+}
+
+async function obtenerTiposUsuario() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios/tipos`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function obtenerModosSistema() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios/modos`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function obtenerEmpresasActivas() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios/empresas`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function obtenerEmpresa(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/empresas/${id}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function crearUsuario(data) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (!res.ok) return { error: json.error ?? "Error al crear usuario" }
+    return { ok: true, usuario: json }
+  } catch { return { error: "Error de conexion" } }
 }
 
 export default function NuevoUsuarioPage() {
@@ -88,7 +133,7 @@ export default function NuevoUsuarioPage() {
     setError("")
     if (!form.nombre_completo.trim()) { setError("El nombre es obligatorio"); return }
     if (!form.email.trim())           { setError("El email es obligatorio"); return }
-    if (!form.password.trim())        { setError("La contraseña es obligatoria"); return }
+    if (!form.password.trim())        { setError("La contrasena es obligatoria"); return }
     if (!form.tipo_usuario_id)        { setError("Selecciona el tipo de usuario"); return }
     if (requiereEmpresa && !form.empresa_id) { setError("Este tipo de usuario requiere una empresa asignada"); return }
 
@@ -132,13 +177,13 @@ export default function NuevoUsuarioPage() {
               <input className={s.input} type="email" name="email" value={form.email} onChange={handleChange} placeholder="correo@empresa.com" />
             </div>
             <div className={s.field}>
-              <label className={s.label}>Cédula</label>
+              <label className={s.label}>Cedula</label>
               <input className={s.input} name="cedula" value={form.cedula} onChange={handleChange} placeholder="000-0000000-0" />
             </div>
             <div className={s.field}>
-              <label className={s.label}>Contraseña <span className={s.req}>*</span></label>
+              <label className={s.label}>Contrasena <span className={s.req}>*</span></label>
               <div className={s.passWrap}>
-                <input className={s.input} type={verPass ? "text" : "password"} name="password" value={form.password} onChange={handleChange} placeholder="Contraseña" />
+                <input className={s.input} type={verPass ? "text" : "password"} name="password" value={form.password} onChange={handleChange} placeholder="Contrasena" />
                 <button type="button" className={s.passToggle} onClick={() => setVerPass(v => !v)}>
                   <ion-icon name={verPass ? "eye-off-outline" : "eye-outline"} />
                 </button>

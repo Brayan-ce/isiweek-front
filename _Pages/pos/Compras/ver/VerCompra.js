@@ -2,10 +2,18 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { getCompra } from "./servidor"
 import s from "./VerCompra.module.css"
 
 const EMPRESA_ID = 1
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+async function getCompra(empresaId, compraId) {
+  try {
+    const res = await fetch(`${API}/api/pos/compras/ver/${empresaId}/${compraId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
 
 function fmt(n) {
   return `RD$ ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -24,7 +32,7 @@ const ESTADO_META = {
 
 export default function VerCompra({ id }) {
   const router = useRouter()
-  const [compra, setCompra] = useState(null)
+  const [compra, setCompra]   = useState(null)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -46,7 +54,7 @@ export default function VerCompra({ id }) {
     </div>
   )
 
-  const meta = ESTADO_META[compra.estado] ?? ESTADO_META.pendiente
+  const meta     = ESTADO_META[compra.estado] ?? ESTADO_META.pendiente
   const subtotal = compra.compra_detalles.reduce((a, d) => a + Number(d.subtotal), 0)
 
   return (

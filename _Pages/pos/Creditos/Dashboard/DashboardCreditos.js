@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { getDashboardCreditos } from "./servidor"
 import s from "./DashboardCreditos.module.css"
 
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
 
 const ESTADO_META = {
@@ -15,6 +15,14 @@ const ESTADO_META = {
   vencida:        { color: s.badgeVencida,        label: "Vencida"        },
   pendiente:      { color: s.badgePendiente,      label: "Pendiente"      },
   parcial:        { color: s.badgeParcial,        label: "Parcial"        },
+}
+
+async function getDashboardCreditos(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/creditos/dashboard/${empresaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
 }
 
 function fmt(n) {
@@ -30,10 +38,10 @@ function diasRestantes(fecha) {
   const hoy  = new Date(); hoy.setHours(0,0,0,0)
   const d    = new Date(fecha); d.setHours(0,0,0,0)
   const diff = Math.round((d - hoy) / 86400000)
-  if (diff < 0)  return { label: `Vencida hace ${Math.abs(diff)}d`, clase: s.diasVencida }
-  if (diff === 0) return { label: "Vence hoy",                       clase: s.diasHoy    }
-  if (diff <= 3)  return { label: `Vence en ${diff}d`,               clase: s.diasUrgente }
-  return              { label: `En ${diff} días`,                    clase: s.diasNormal  }
+  if (diff < 0)   return { label: `Vencida hace ${Math.abs(diff)}d`, clase: s.diasVencida  }
+  if (diff === 0) return { label: "Vence hoy",                       clase: s.diasHoy      }
+  if (diff <= 3)  return { label: `Vence en ${diff}d`,               clase: s.diasUrgente  }
+  return              { label: `En ${diff} dias`,                    clase: s.diasNormal   }
 }
 
 function MiniBar({ data }) {
@@ -57,8 +65,8 @@ function MiniBar({ data }) {
 }
 
 export default function DashboardCreditos() {
-  const [data, setData]       = useState(null)
-  const [cargando, setCarga]  = useState(true)
+  const [data, setData]      = useState(null)
+  const [cargando, setCarga] = useState(true)
 
   const cargar = useCallback(async () => {
     setCarga(true)
@@ -142,7 +150,7 @@ export default function DashboardCreditos() {
           <div className={s.card}>
             <div className={s.cardTitulo}>
               <ion-icon name="bar-chart-outline" />
-              Pagos últimos 6 meses
+              Pagos ultimos 6 meses
             </div>
             {pagos_grafica?.length > 0
               ? <MiniBar data={pagos_grafica} />
@@ -187,13 +195,13 @@ export default function DashboardCreditos() {
           <div className={s.card}>
             <div className={s.cardTitulo}>
               <ion-icon name="time-outline" />
-              Próximas a vencer
+              Proximas a vencer
               {cuotas_proximas.length > 0 && (
                 <span className={s.cardBadge}>{cuotas_proximas.length}</span>
               )}
             </div>
             {cuotas_proximas.length === 0 ? (
-              <div className={s.empty}><ion-icon name="checkmark-circle-outline" /><p>Sin cuotas próximas</p></div>
+              <div className={s.empty}><ion-icon name="checkmark-circle-outline" /><p>Sin cuotas proximas</p></div>
             ) : cuotas_proximas.map(c => {
               const dias = diasRestantes(c.fecha_vencimiento)
               return (

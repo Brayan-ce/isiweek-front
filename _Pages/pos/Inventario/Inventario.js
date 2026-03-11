@@ -1,17 +1,53 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getInventario, getCategoriasMarcas, ajustarStock } from "./servidor"
 import s from "./Inventario.module.css"
 
 const EMPRESA_ID = 1
 const LIMITE     = 20
-const API_URL    = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function imgSrc(imagen) {
   if (!imagen) return null
   if (imagen.startsWith("http://") || imagen.startsWith("https://")) return imagen
-  return `${API_URL}${imagen.startsWith("/") ? "" : "/"}${imagen}`
+  return `${API}${imagen.startsWith("/") ? "" : "/"}${imagen}`
+}
+
+async function getInventario(empresaId, filtros = {}) {
+  try {
+    const params = new URLSearchParams()
+    Object.entries(filtros).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") params.set(k, v)
+    })
+    const res = await fetch(`${API}/api/pos/inventario/lista/${empresaId}?${params}`)
+    if (!res.ok) return { productos: [], total: 0, paginas: 1, pagina: 1 }
+    return await res.json()
+  } catch {
+    return { productos: [], total: 0, paginas: 1, pagina: 1 }
+  }
+}
+
+async function getCategoriasMarcas(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/inventario/filtros/${empresaId}`)
+    if (!res.ok) return { categorias: [], marcas: [] }
+    return await res.json()
+  } catch {
+    return { categorias: [], marcas: [] }
+  }
+}
+
+async function ajustarStock(empresaId, productoId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/inventario/ajustar/${empresaId}/${productoId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cantidad: body.cantidad }),
+    })
+    return await res.json()
+  } catch {
+    return { error: "No se pudo conectar con el servidor" }
+  }
 }
 
 function ModalAjuste({ producto, onClose, onGuardado, mostrarAlerta }) {
@@ -150,9 +186,9 @@ export default function Inventario() {
   const paginasArr = () => {
     if (paginas <= 7) return Array.from({ length: paginas }, (_, i) => i + 1)
     const arr = []
-    if (pagina <= 4)             arr.push(1, 2, 3, 4, 5, "...", paginas)
+    if (pagina <= 4)                arr.push(1, 2, 3, 4, 5, "...", paginas)
     else if (pagina >= paginas - 3) arr.push(1, "...", paginas - 4, paginas - 3, paginas - 2, paginas - 1, paginas)
-    else arr.push(1, "...", pagina - 1, pagina, pagina + 1, "...", paginas)
+    else                            arr.push(1, "...", pagina - 1, pagina, pagina + 1, "...", paginas)
     return arr
   }
 

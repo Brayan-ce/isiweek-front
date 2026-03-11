@@ -1,12 +1,63 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getClientes, crearCliente, editarCliente, eliminarCliente } from "./servidor"
 import s from "./Clientes.module.css"
 
 const EMPRESA_ID = 1
 const LIMITE = 20
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const FORM_VACIO = { nombre: "", cedula_rnc: "", telefono: "", email: "", direccion: "" }
+
+async function getClientes(empresaId, filtros = {}) {
+  try {
+    const params = new URLSearchParams()
+    Object.entries(filtros).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") params.set(k, v)
+    })
+    const res = await fetch(`${API}/api/pos/clientes/lista/${empresaId}?${params}`)
+    if (!res.ok) return { clientes: [], total: 0, paginas: 1, pagina: 1 }
+    return await res.json()
+  } catch {
+    return { clientes: [], total: 0, paginas: 1, pagina: 1 }
+  }
+}
+
+async function crearCliente(empresaId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/clientes/crear/${empresaId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch {
+    return { error: "No se pudo conectar con el servidor" }
+  }
+}
+
+async function editarCliente(empresaId, clienteId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/clientes/editar/${empresaId}/${clienteId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch {
+    return { error: "No se pudo conectar con el servidor" }
+  }
+}
+
+async function eliminarCliente(empresaId, clienteId) {
+  try {
+    const res = await fetch(`${API}/api/pos/clientes/eliminar/${empresaId}/${clienteId}`, {
+      method: "DELETE",
+    })
+    return await res.json()
+  } catch {
+    return { error: "No se pudo conectar con el servidor" }
+  }
+}
 
 function ModalCliente({ inicial, onClose, onGuardado, mostrarAlerta }) {
   const esEditar = !!inicial
@@ -340,7 +391,7 @@ export default function Clientes() {
         <div className={s.overlay} onClick={e => e.target === e.currentTarget && setConfirmEliminar(null)}>
           <div className={s.modalConfirm}>
             <div className={s.confirmIcon}><ion-icon name="warning-outline" /></div>
-            <div className={s.confirmTitle}>¿Eliminar cliente?</div>
+            <div className={s.confirmTitle}>Eliminar cliente?</div>
             <p className={s.confirmDesc}>
               Se eliminará <strong>{confirmEliminar.nombre}</strong>. Solo se pueden eliminar clientes sin ventas, cotizaciones ni pedidos registrados.
             </p>

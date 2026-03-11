@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { getDatosCaja, abrirCaja, cerrarCaja, registrarGasto, getHistorialCajas } from "./servidor"
 import s from "./Cajas.module.css"
 
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
 const USUARIO_ID = 2
 
@@ -22,28 +22,78 @@ function fmtHora(f) {
   return new Date(f).toLocaleTimeString("es-DO", { hour: "2-digit", minute: "2-digit" })
 }
 
+async function getDatosCaja(usuarioId, empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/cajas/datos/${usuarioId}/${empresaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function abrirCaja(usuarioId, empresaId, montoInicial) {
+  try {
+    const res = await fetch(`${API}/api/pos/cajas/abrir`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuarioId, empresaId, montoInicial }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function cerrarCaja(sesionId, usuarioId, montoFinalManual = null, notas = "") {
+  try {
+    const res = await fetch(`${API}/api/pos/cajas/cerrar`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sesionId, usuarioId, montoFinalManual, notas }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function registrarGasto(usuarioId, empresaId, concepto, monto, tipo) {
+  try {
+    const res = await fetch(`${API}/api/pos/cajas/gasto`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuarioId, empresaId, concepto, monto, tipo }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function getHistorialCajas(usuarioId, empresaId, pagina = 1, limite = 10) {
+  try {
+    const params = new URLSearchParams({ pagina, limite })
+    const res = await fetch(`${API}/api/pos/cajas/historial/${usuarioId}/${empresaId}?${params}`)
+    if (!res.ok) return { sesiones: [], total: 0, paginas: 1 }
+    return await res.json()
+  } catch { return { sesiones: [], total: 0, paginas: 1 } }
+}
+
 export default function Cajas() {
   const router = useRouter()
 
-  const [datos, setDatos]                       = useState(null)
-  const [cargando, setCargando]                 = useState(true)
-  const [tab, setTab]                           = useState("caja")
-  const [alerta, setAlerta]                     = useState(null)
-  const [procesando, setProcesando]             = useState(false)
-  const [modalAbrir, setModalAbrir]             = useState(false)
-  const [modalCerrar, setModalCerrar]           = useState(false)
-  const [modalGasto, setModalGasto]             = useState(false)
-  const [montoInicial, setMontoInicial]         = useState("")
-  const [gastoConcepto, setGastoConcepto]       = useState("")
-  const [gastoMonto, setGastoMonto]             = useState("")
-  const [gastoTipo, setGastoTipo]               = useState("")
-  const [historial, setHistorial]               = useState([])
-  const [histPagina, setHistPagina]             = useState(1)
-  const [histPaginas, setHistPaginas]           = useState(1)
-  const [cargandoHist, setCargandoHist]         = useState(false)
-  const [montoManual, setMontoManual]           = useState(false)
+  const [datos, setDatos]                         = useState(null)
+  const [cargando, setCargando]                   = useState(true)
+  const [tab, setTab]                             = useState("caja")
+  const [alerta, setAlerta]                       = useState(null)
+  const [procesando, setProcesando]               = useState(false)
+  const [modalAbrir, setModalAbrir]               = useState(false)
+  const [modalCerrar, setModalCerrar]             = useState(false)
+  const [modalGasto, setModalGasto]               = useState(false)
+  const [montoInicial, setMontoInicial]           = useState("")
+  const [gastoConcepto, setGastoConcepto]         = useState("")
+  const [gastoMonto, setGastoMonto]               = useState("")
+  const [gastoTipo, setGastoTipo]                 = useState("")
+  const [historial, setHistorial]                 = useState([])
+  const [histPagina, setHistPagina]               = useState(1)
+  const [histPaginas, setHistPaginas]             = useState(1)
+  const [cargandoHist, setCargandoHist]           = useState(false)
+  const [montoManual, setMontoManual]             = useState(false)
   const [montoCierreManual, setMontoCierreManual] = useState("")
-  const [notasCierre, setNotasCierre]           = useState("")
+  const [notasCierre, setNotasCierre]             = useState("")
 
   const cargar = useCallback(async () => {
     setCargando(true)
@@ -165,8 +215,8 @@ export default function Cajas() {
           {!cajaAbierta && (
             <div className={s.sinCajaWrap}>
               <div className={s.sinCajaIcon}><ion-icon name="wallet-outline" /></div>
-              <div className={s.sinCajaTitulo}>Tu caja está cerrada</div>
-              <div className={s.sinCajaSub}>Puedes abrir una nueva sesión cuando quieras</div>
+              <div className={s.sinCajaTitulo}>Tu caja esta cerrada</div>
+              <div className={s.sinCajaSub}>Puedes abrir una nueva sesion cuando quieras</div>
               <button className={s.btnAbrir} onClick={() => setModalAbrir(true)}>
                 <ion-icon name="lock-open-outline" /> Abrir nueva caja
               </button>
@@ -213,7 +263,7 @@ export default function Cajas() {
                   <span className={s.resumenValor}>{fmt(resumen?.montoInicial, simbolo)}</span>
                 </div>
                 <div className={s.resumenCard}>
-                  <span className={s.resumenLabel}>Ventas del Día</span>
+                  <span className={s.resumenLabel}>Ventas del Dia</span>
                   <span className={`${s.resumenValor} ${s.resumenPos}`}>{fmt(resumen?.totalVentas, simbolo)}</span>
                 </div>
                 <div className={s.resumenCard}>
@@ -229,7 +279,7 @@ export default function Cajas() {
               <div className={s.bottomGrid}>
                 <div className={s.seccionCard}>
                   <div className={s.seccionTitulo}>
-                    <ion-icon name="pie-chart-outline" /> Desglose por Método de Pago
+                    <ion-icon name="pie-chart-outline" /> Desglose por Metodo de Pago
                   </div>
                   {!resumen?.ventasPorMetodo?.length ? (
                     <div className={s.seccionVacio}>Sin ventas registradas</div>
@@ -253,7 +303,7 @@ export default function Cajas() {
 
                 <div className={s.seccionCard}>
                   <div className={s.seccionTitulo}>
-                    <ion-icon name="information-circle-outline" /> Información del Turno
+                    <ion-icon name="information-circle-outline" /> Informacion del Turno
                   </div>
                   <div className={s.turnoInfo}>
                     <div className={s.turnoRow}>
@@ -290,7 +340,7 @@ export default function Cajas() {
                     <ion-icon name="receipt-outline" /> Ventas del turno
                   </div>
                   <div className={s.ventasTableHeader}>
-                    <span>#</span><span>Cliente</span><span>Método</span><span>Total</span><span>Hora</span><span>Estado</span>
+                    <span>#</span><span>Cliente</span><span>Metodo</span><span>Total</span><span>Hora</span><span>Estado</span>
                   </div>
                   {ventas.map(v => (
                     <div key={v.id} className={s.ventasTableRow}>
@@ -412,7 +462,7 @@ export default function Cajas() {
 
             <div className={s.modalResumenCierre}>
               <div className={s.cierreRow}><span>Monto inicial</span><span>{fmt(resumen?.montoInicial, simbolo)}</span></div>
-              <div className={s.cierreRow}><span>Ventas del día</span><span className={s.cierrePos}>{fmt(resumen?.totalVentas, simbolo)}</span></div>
+              <div className={s.cierreRow}><span>Ventas del dia</span><span className={s.cierrePos}>{fmt(resumen?.totalVentas, simbolo)}</span></div>
               <div className={s.cierreRow}><span>Gastos</span><span className={s.cierreNeg}>-{fmt(resumen?.totalGastos, simbolo)}</span></div>
               <div className={`${s.cierreRow} ${s.cierreTotal}`}><span>Total esperado</span><span>{fmt(montoCalculado, simbolo)}</span></div>
             </div>
@@ -420,7 +470,7 @@ export default function Cajas() {
             <div className={s.switchRow}>
               <div className={s.switchInfo}>
                 <span className={s.switchLabel}>Ingresar monto final manualmente</span>
-                <span className={s.switchSub}>Activa si el cliente realizó ajustes en caja</span>
+                <span className={s.switchSub}>Activa si el cliente realizo ajustes en caja</span>
               </div>
               <button
                 className={`${s.switchBtn} ${montoManual ? s.switchOn : ""}`}

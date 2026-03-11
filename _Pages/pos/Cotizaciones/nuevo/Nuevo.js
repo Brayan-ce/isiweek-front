@@ -2,11 +2,30 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { getDatos, crearCotizacion } from "./servidor"
 import s from "./Nuevo.module.css"
 
 const EMPRESA_ID = 1
 const USUARIO_ID = 2
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+async function getDatos(empresaId, usuarioId) {
+  try {
+    const res = await fetch(`${API}/api/pos/cotizaciones/datos/${empresaId}/${usuarioId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function crearCotizacion(empresaId, usuarioId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/cotizaciones/crear/${empresaId}/${usuarioId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
 
 function fmt(n, simbolo = "RD$") {
   return `${simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`

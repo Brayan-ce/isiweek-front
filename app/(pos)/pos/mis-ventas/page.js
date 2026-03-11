@@ -1,4 +1,4 @@
-import MisVentas from "../../../../_Pages/pos/MisVentas/MisVentas"
+import MisVentas from "@/_Pages/pos/MisVentas/MisVentas"
 export default function Page(){
     return(
         <div>

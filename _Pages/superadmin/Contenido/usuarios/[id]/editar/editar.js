@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { obtenerUsuario, obtenerTiposUsuario, obtenerModosSistema, obtenerEmpresasActivas, obtenerEmpresa, actualizarUsuario } from "../../servidor"
 import s from "./editar.module.css"
 
+const API            = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const SUPER_ADMIN_ID = 1
 
 const MODO_MODULOS = {
@@ -12,6 +12,59 @@ const MODO_MODULOS = {
   OBRAS:         ["mis-obras", "asistencia-diaria"],
   CREDITOS:      ["creditos-dashboard"],
   VENTAS_ONLINE: ["ventas-online-pedidos"],
+}
+
+async function obtenerUsuario(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios/${id}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function obtenerTiposUsuario() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios/tipos`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function obtenerModosSistema() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios/modos`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function obtenerEmpresasActivas() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios/empresas`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function obtenerEmpresa(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/empresas/${id}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function actualizarUsuario(id, data) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (!res.ok) return { error: json.error ?? "Error al actualizar usuario" }
+    return { ok: true, usuario: json }
+  } catch { return { error: "Error de conexion" } }
 }
 
 export default function EditarUsuarioPage({ id }) {
@@ -142,13 +195,13 @@ export default function EditarUsuarioPage({ id }) {
               <input className={s.input} type="email" name="email" value={form.email} onChange={handleChange} placeholder="correo@empresa.com" />
             </div>
             <div className={s.field}>
-              <label className={s.label}>Cédula</label>
+              <label className={s.label}>Cedula</label>
               <input className={s.input} name="cedula" value={form.cedula} onChange={handleChange} placeholder="000-0000000-0" />
             </div>
             <div className={s.field}>
-              <label className={s.label}>Nueva contraseña</label>
+              <label className={s.label}>Nueva contrasena</label>
               <div className={s.passWrap}>
-                <input className={s.input} type={verPass ? "text" : "password"} name="password" value={form.password} onChange={handleChange} placeholder="Dejar vacío para no cambiar" />
+                <input className={s.input} type={verPass ? "text" : "password"} name="password" value={form.password} onChange={handleChange} placeholder="Dejar vacio para no cambiar" />
                 <button type="button" className={s.passToggle} onClick={() => setVerPass(v => !v)}>
                   <ion-icon name={verPass ? "eye-off-outline" : "eye-outline"} />
                 </button>

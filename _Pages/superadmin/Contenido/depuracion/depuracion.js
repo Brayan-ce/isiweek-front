@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { obtenerEstadoBD, obtenerLogs, limpiarLogs } from "./servidor"
 import s from "./depuracion.module.css"
+
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function fmtTs(ts) {
   if (!ts) return ""
@@ -14,26 +15,45 @@ function fmtFecha(ts) {
   return new Date(ts).toLocaleDateString("es-DO", { day: "2-digit", month: "short", year: "numeric" })
 }
 
-const STATUS_COLOR = {
-  2: "#16a34a",
-  3: "#d97706",
-  4: "#dc2626",
-  5: "#7c3aed",
-}
+const STATUS_COLOR = { 2: "#16a34a", 3: "#d97706", 4: "#dc2626", 5: "#7c3aed" }
 
 function statusColor(code) {
   return STATUS_COLOR[Math.floor(code / 100)] ?? "#64748b"
 }
 
-const TABS = ["bd", "peticiones", "errores"]
+const TABS      = ["bd", "peticiones", "errores"]
 const TAB_LABEL = { bd: "Estado BD", peticiones: "Peticiones HTTP", errores: "Errores" }
 const TAB_ICON  = { bd: "server-outline", peticiones: "swap-horizontal-outline", errores: "bug-outline" }
 
+async function obtenerEstadoBD() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/depuracion/bd`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function obtenerLogs() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/depuracion/logs`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function limpiarLogs() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/depuracion/logs`, { method: "DELETE" })
+    if (!res.ok) return { error: "Error al limpiar" }
+    return { ok: true }
+  } catch { return { error: "Error de conexion" } }
+}
+
 export default function DepuracionPage() {
-  const [tab, setTab]           = useState("bd")
-  const [bd, setBd]             = useState(null)
-  const [logs, setLogs]         = useState(null)
-  const [cargando, setCargando] = useState(true)
+  const [tab, setTab]             = useState("bd")
+  const [bd, setBd]               = useState(null)
+  const [logs, setLogs]           = useState(null)
+  const [cargando, setCargando]   = useState(true)
   const [limpiando, setLimpiando] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(false)
 
@@ -109,9 +129,7 @@ export default function DepuracionPage() {
             <div className={s.bdGrid}>
               {(bd ?? []).map(row => (
                 <div key={row.tabla} className={s.bdCard}>
-                  <div className={s.bdIconWrap}>
-                    <ion-icon name="server-outline" />
-                  </div>
+                  <div className={s.bdIconWrap}><ion-icon name="server-outline" /></div>
                   <div className={s.bdInfo}>
                     <div className={s.bdTabla}>{row.tabla}</div>
                     <div className={s.bdTotal}>
@@ -127,7 +145,7 @@ export default function DepuracionPage() {
           {tab === "peticiones" && (
             <div className={s.logTable}>
               <div className={s.logHeader}>
-                <span>Método</span>
+                <span>Metodo</span>
                 <span>URL</span>
                 <span>Status</span>
                 <span>Tiempo</span>
@@ -162,9 +180,7 @@ export default function DepuracionPage() {
                       <span className={s.errorTs}>{fmtFecha(e.timestamp)} {fmtTs(e.timestamp)}</span>
                     </div>
                     <div className={s.errorMsg}>{e.mensaje}</div>
-                    {e.stack && (
-                      <pre className={s.errorStack}>{e.stack}</pre>
-                    )}
+                    {e.stack && <pre className={s.errorStack}>{e.stack}</pre>}
                   </div>
                 ))
               )}

@@ -1,10 +1,50 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getCategorias, crearCategoria, editarCategoria, eliminarCategoria } from "./servidor"
 import s from "./Categorias.module.css"
 
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
+
+async function getCategorias(empresaId, busqueda = "", pagina = 1, limite = 20) {
+  try {
+    const params = new URLSearchParams({ busqueda, pagina, limite })
+    const res = await fetch(`${API}/api/pos/categorias/${empresaId}?${params}`)
+    if (!res.ok) return { categorias: [], total: 0, paginas: 1 }
+    return await res.json()
+  } catch { return { categorias: [], total: 0, paginas: 1 } }
+}
+
+async function crearCategoria(empresaId, nombre) {
+  try {
+    const res = await fetch(`${API}/api/pos/categorias/${empresaId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function editarCategoria(id, nombre) {
+  try {
+    const res = await fetch(`${API}/api/pos/categorias/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function eliminarCategoria(id) {
+  try {
+    const res = await fetch(`${API}/api/pos/categorias/${id}`, {
+      method: "DELETE",
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
 
 export default function Categorias() {
   const [categorias, setCategorias] = useState([])
@@ -61,7 +101,7 @@ export default function Categorias() {
       : await editarCategoria(modal.id, nombre)
     setProcesando(false)
     if (res.error) return mostrarAlerta("error", res.error)
-    mostrarAlerta("ok", modal === "crear" ? "Categoría creada" : "Categoría actualizada")
+    mostrarAlerta("ok", modal === "crear" ? "Categoria creada" : "Categoria actualizada")
     setModal(null)
     cargar(busqueda, pagina)
   }
@@ -75,7 +115,7 @@ export default function Categorias() {
     if (res.error) return mostrarAlerta("error", res.error)
     setCategorias(prev => prev.map(c => c.id === cat.id ? { ...c, nombre: res.nombre } : c))
     setEditInline(null)
-    mostrarAlerta("ok", "Categoría actualizada")
+    mostrarAlerta("ok", "Categoria actualizada")
   }
 
   async function handleEliminar() {
@@ -84,7 +124,7 @@ export default function Categorias() {
     const res = await eliminarCategoria(modalElim.id)
     setProcesando(false)
     if (res.error) return mostrarAlerta("error", res.error)
-    mostrarAlerta("ok", "Categoría eliminada")
+    mostrarAlerta("ok", "Categoria eliminada")
     setModalElim(null)
     cargar(busqueda, pagina)
   }
@@ -103,7 +143,7 @@ export default function Categorias() {
 
       <div className={s.topBar}>
         <div className={s.topBarLeft}>
-          <span className={s.subtitulo}>{total} categoría{total !== 1 ? "s" : ""} registrada{total !== 1 ? "s" : ""}</span>
+          <span className={s.subtitulo}>{total} categoria{total !== 1 ? "s" : ""} registrada{total !== 1 ? "s" : ""}</span>
         </div>
         <div className={s.topBarRight}>
           <div className={s.searchWrap}>
@@ -111,7 +151,7 @@ export default function Categorias() {
             <input
               ref={searchRef}
               className={s.searchInput}
-              placeholder="Buscar categoría..."
+              placeholder="Buscar categoria..."
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
@@ -123,7 +163,7 @@ export default function Categorias() {
           </div>
           <button className={s.btnNuevo} onClick={abrirCrear}>
             <ion-icon name="add-outline" />
-            <span>Nueva categoría</span>
+            <span>Nueva categoria</span>
           </button>
         </div>
       </div>
@@ -140,10 +180,10 @@ export default function Categorias() {
         ) : categorias.length === 0 ? (
           <div className={s.empty}>
             <ion-icon name="pricetags-outline" />
-            <p>{busqueda ? `Sin resultados para "${busqueda}"` : "Sin categorías registradas"}</p>
+            <p>{busqueda ? `Sin resultados para "${busqueda}"` : "Sin categorias registradas"}</p>
             {!busqueda && (
               <button className={s.btnNuevoEmpty} onClick={abrirCrear}>
-                <ion-icon name="add-outline" /> Crear primera categoría
+                <ion-icon name="add-outline" /> Crear primera categoria
               </button>
             )}
           </div>
@@ -224,14 +264,14 @@ export default function Categorias() {
             </button>
             <div className={s.modalTitulo}>
               <ion-icon name="pricetag-outline" />
-              {modal === "crear" ? "Nueva categoría" : "Editar categoría"}
+              {modal === "crear" ? "Nueva categoria" : "Editar categoria"}
             </div>
             <div className={s.modalField}>
               <label>Nombre *</label>
               <input
                 autoFocus
                 className={s.modalInput}
-                placeholder="Ej: Electrónica, Ropa, Alimentos..."
+                placeholder="Ej: Electronica, Ropa, Alimentos..."
                 value={nombre}
                 onChange={e => setNombre(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleGuardar()}
@@ -240,7 +280,7 @@ export default function Categorias() {
             <div className={s.modalAcciones}>
               <button className={s.btnCancelar} onClick={() => setModal(null)}>Cancelar</button>
               <button className={s.btnConfirmar} onClick={handleGuardar} disabled={procesando || !nombre.trim()}>
-                {procesando ? <span className={s.spinner} /> : modal === "crear" ? "Crear categoría" : "Guardar cambios"}
+                {procesando ? <span className={s.spinner} /> : modal === "crear" ? "Crear categoria" : "Guardar cambios"}
               </button>
             </div>
           </div>
@@ -251,9 +291,9 @@ export default function Categorias() {
         <div className={s.overlay} onClick={e => e.target === e.currentTarget && setModalElim(null)}>
           <div className={s.modalElim}>
             <div className={s.elimIcono}><ion-icon name="warning-outline" /></div>
-            <div className={s.elimTitulo}>Eliminar categoría</div>
+            <div className={s.elimTitulo}>Eliminar categoria</div>
             <div className={s.elimSub}>
-              ¿Seguro que deseas eliminar <strong>{modalElim.nombre}</strong>? Esta acción no se puede deshacer.
+              Seguro que deseas eliminar <strong>{modalElim.nombre}</strong>? Esta accion no se puede deshacer.
             </div>
             <div className={s.modalAcciones}>
               <button className={s.btnCancelar} onClick={() => setModalElim(null)}>Cancelar</button>

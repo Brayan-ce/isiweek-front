@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getDashboardVendedor } from "../servidor"
+import { getDashboardVendedor } from "../api"
 import s from "../Dashboard.module.css"
 
 const USUARIO_ID = 2
@@ -32,7 +32,11 @@ export default function DashboardVendedor() {
     </div>
   )
 
-  if (!data) return <div className={s.page}><div className={s.empty}><ion-icon name="alert-circle-outline" /><p>Error al cargar datos</p></div></div>
+  if (!data) return (
+    <div className={s.page}>
+      <div className={s.empty}><ion-icon name="alert-circle-outline" /><p>Error al cargar datos</p></div>
+    </div>
+  )
 
   const { ventasHoy, totalHoy, meta, ultimasVentas, cajaActiva } = data
   const progreso = meta > 0 ? Math.min((totalHoy / meta) * 100, 100) : 0
@@ -86,14 +90,14 @@ export default function DashboardVendedor() {
       )}
 
       <div className={s.tableCard}>
-        <div className={s.cardTitle}><ion-icon name="receipt-outline" /> Mis últimas ventas</div>
+        <div className={s.cardTitle}><ion-icon name="receipt-outline" /> Mis ultimas ventas</div>
         {ultimasVentas.length === 0 ? (
           <div className={s.emptyChart}>Sin ventas hoy</div>
         ) : (
           <div className={s.tableWrap}>
             <div className={`${s.tableHeader} ${s.tableHeaderVendedor}`}>
               <span>Cliente</span>
-              <span>Método</span>
+              <span>Metodo</span>
               <span>Total</span>
               <span>Hora</span>
             </div>

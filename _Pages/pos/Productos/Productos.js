@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { getProductos, crearProducto, editarProducto, eliminarProducto, getDatosFormulario, subirImagenProducto, generarBarcode, verificarCodigo, getSiguienteCodigo, getEmpresa } from "./servidor"
 import s from "./Productos.module.css"
 
 const EMPRESA_ID = 1
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getItbisPref() {
   try { return JSON.parse(localStorage.getItem("prod_itbis_pref") ?? "null") } catch { return null }
@@ -15,6 +14,95 @@ function setItbisPref(v) { localStorage.setItem("prod_itbis_pref", JSON.stringif
 const FORM_VACIO = {
   nombre: "", descripcion: "", codigo: "", precio: "", precio_costo: "",
   stock: "", itbis_pct: "18", itbis_habilitado: true, categoria_id: "", marca_id: "", activo: true,
+}
+
+async function getEmpresa(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/empresas/${empresaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function getProductos(empresaId, busqueda = "", pagina = 1, limite = 20) {
+  try {
+    const params = new URLSearchParams({ busqueda, pagina, limite })
+    const res = await fetch(`${API}/api/pos/productos/${empresaId}?${params}`)
+    if (!res.ok) return { productos: [], total: 0, paginas: 1 }
+    return await res.json()
+  } catch { return { productos: [], total: 0, paginas: 1 } }
+}
+
+async function getDatosFormulario(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/productos/formulario/${empresaId}`)
+    if (!res.ok) return { categorias: [], marcas: [] }
+    return await res.json()
+  } catch { return { categorias: [], marcas: [] } }
+}
+
+async function crearProducto(empresaId, data) {
+  try {
+    const res = await fetch(`${API}/api/pos/productos/${empresaId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function editarProducto(id, data) {
+  try {
+    const res = await fetch(`${API}/api/pos/productos/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function generarBarcode(id) {
+  try {
+    const res = await fetch(`${API}/api/pos/productos/${id}/barcode`, { method: "POST" })
+    return await res.json()
+  } catch { return { error: "No se pudo generar el código de barras" } }
+}
+
+async function subirImagenProducto(id, formData) {
+  try {
+    const res = await fetch(`${API}/api/pos/productos/${id}/imagen`, {
+      method: "POST",
+      body: formData,
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo subir la imagen" } }
+}
+
+async function getSiguienteCodigo(empresaId, nombre = "") {
+  try {
+    const params = new URLSearchParams({ nombre })
+    const res = await fetch(`${API}/api/pos/productos/siguiente-codigo/${empresaId}?${params}`)
+    if (!res.ok) return { codigo: null }
+    return await res.json()
+  } catch { return { codigo: null } }
+}
+
+async function verificarCodigo(empresaId, codigo, excluirId = null) {
+  try {
+    const params = new URLSearchParams({ codigo, ...(excluirId ? { excluirId } : {}) })
+    const res = await fetch(`${API}/api/pos/productos/verificar-codigo/${empresaId}?${params}`)
+    if (!res.ok) return { disponible: true }
+    return await res.json()
+  } catch { return { disponible: true } }
+}
+
+async function eliminarProducto(id) {
+  try {
+    const res = await fetch(`${API}/api/pos/productos/${id}`, { method: "DELETE" })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
 }
 
 export default function Productos() {
@@ -111,7 +199,7 @@ export default function Productos() {
     codigoManualRef.current = !!p.codigo
     setCodigoEstado(p.codigo ? "ok" : null)
     modalRef.current = { tipo: "editar", id: p.id }
-    setImgPreview(p.imagen ? `${BACKEND}${p.imagen}` : null)
+    setImgPreview(p.imagen ? `${API}${p.imagen}` : null)
     setImgFile(null)
     setModal({ tipo: "editar", id: p.id })
   }
@@ -260,7 +348,7 @@ export default function Productos() {
               <div className={s.prodCell}>
                 <div className={s.prodImg}>
                   {p.imagen
-                    ? <img src={`${BACKEND}${p.imagen}`} alt={p.nombre} />
+                    ? <img src={`${API}${p.imagen}`} alt={p.nombre} />
                     : <ion-icon name="cube-outline" />
                   }
                 </div>
@@ -470,7 +558,7 @@ export default function Productos() {
             <div className={s.elimIcono}><ion-icon name="warning-outline" /></div>
             <div className={s.elimTitulo}>Eliminar producto</div>
             <div className={s.elimSub}>
-              ¿Seguro que deseas eliminar <strong>{modalElim.nombre}</strong>? Esta acción no se puede deshacer.
+              Seguro que deseas eliminar <strong>{modalElim.nombre}</strong>? Esta accion no se puede deshacer.
             </div>
             <div className={s.modalAcciones}>
               <button className={s.btnSecundario} onClick={() => setModalElim(null)}>Cancelar</button>
@@ -501,7 +589,7 @@ export default function Productos() {
               <>
                 <div className={s.barcodeWrap}>
                   <img
-                    src={`${BACKEND}${modalBarcode.barcode}`}
+                    src={`${API}${modalBarcode.barcode}`}
                     alt={modalBarcode.codigo}
                     className={s.barcodeImg}
                   />
@@ -509,7 +597,7 @@ export default function Productos() {
                 <div className={s.barcodeCodigo}>{modalBarcode.codigo}</div>
                 <a
                   className={s.barcodeDescargar}
-                  href={`${BACKEND}${modalBarcode.barcode}`}
+                  href={`${API}${modalBarcode.barcode}`}
                   download={`barcode_${modalBarcode.codigo}.png`}
                   target="_blank"
                   rel="noreferrer"

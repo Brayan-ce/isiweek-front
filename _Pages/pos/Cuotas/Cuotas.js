@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { getVentasCuotas, getUsuariosEmpresa, pagarCuota, getDatosCuota, editarEstadoCuota } from "./servidor"
 import s from "./Cuotas.module.css"
 
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
 
 function fmt(n, simbolo = "RD$") {
@@ -16,22 +16,70 @@ function fmtFecha(d) {
   return new Date(d).toLocaleDateString("es-DO", { day: "2-digit", month: "short", year: "numeric" })
 }
 
+async function getDatosCuota(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/cuotas/datos/${empresaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function getVentasCuotas(empresaId, filtros = {}) {
+  try {
+    const params = new URLSearchParams()
+    Object.entries(filtros).forEach(([k, v]) => { if (v) params.set(k, v) })
+    const res = await fetch(`${API}/api/pos/cuotas/lista/${empresaId}?${params}`)
+    if (!res.ok) return { ventas: [], total: 0, paginas: 1 }
+    return await res.json()
+  } catch { return { ventas: [], total: 0, paginas: 1 } }
+}
+
+async function getUsuariosEmpresa(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/cuotas/usuarios/${empresaId}`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function editarEstadoCuota(empresaId, cuotaId, estado) {
+  try {
+    const res = await fetch(`${API}/api/pos/cuotas/editar-cuota/${empresaId}/${cuotaId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function pagarCuota(empresaId, cuotaId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/cuotas/pagar/${empresaId}/${cuotaId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
 export default function Cuotas() {
   const router = useRouter()
-  const [ventas, setVentas] = useState([])
-  const [total, setTotal] = useState(0)
-  const [paginas, setPaginas] = useState(1)
-  const [pagina, setPagina] = useState(1)
-  const [usuarios, setUsuarios] = useState([])
-  const [expandidos, setExpandidos] = useState({})
-  const [cargando, setCargando] = useState(true)
-  const [alerta, setAlerta] = useState(null)
-  const [modalEditar, setModalEditar] = useState(null)
-  const [modalPago, setModalPago] = useState(null)
-  const [editando, setEditando] = useState(false)
-  const [cajaSesionId, setCajaSesionId] = useState("")
-  const [pagando, setPagando] = useState(false)
-  const [datos, setDatos] = useState(null)
+  const [ventas, setVentas]                   = useState([])
+  const [total, setTotal]                     = useState(0)
+  const [paginas, setPaginas]                 = useState(1)
+  const [pagina, setPagina]                   = useState(1)
+  const [usuarios, setUsuarios]               = useState([])
+  const [expandidos, setExpandidos]           = useState({})
+  const [cargando, setCargando]               = useState(true)
+  const [alerta, setAlerta]                   = useState(null)
+  const [modalEditar, setModalEditar]         = useState(null)
+  const [modalPago, setModalPago]             = useState(null)
+  const [editando, setEditando]               = useState(false)
+  const [cajaSesionId, setCajaSesionId]       = useState("")
+  const [pagando, setPagando]                 = useState(false)
+  const [datos, setDatos]                     = useState(null)
 
   const [filtros, setFiltros] = useState({
     cliente_id: "",
@@ -119,7 +167,7 @@ export default function Cuotas() {
         </div>
         <button className={s.nuevaBtn} onClick={() => router.push("/pos/cuotas/nueva")}>
           <ion-icon name="add-outline" />
-          Nueva venta a crédito
+          Nueva venta a credito
         </button>
       </div>
 
@@ -167,7 +215,7 @@ export default function Cuotas() {
         ) : ventas.length === 0 ? (
           <div className={s.empty}>
             <ion-icon name="wallet-outline" />
-            <p>No hay ventas a crédito</p>
+            <p>No hay ventas a credito</p>
           </div>
         ) : ventas.map(v => {
           const abierto = !!expandidos[v.id]

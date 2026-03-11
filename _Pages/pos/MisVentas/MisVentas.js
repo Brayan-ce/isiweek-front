@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { obtenerDatosHeader } from "../Header/servidor"
-import { getMisVentas, cancelarVenta } from "./servidor"
 import s from "./MisVentas.module.css"
 
 const EMPRESA_ID = 1
 const USUARIO_ID = 2
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function fmt(n, simbolo = "RD$") {
   return `${simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -16,6 +15,37 @@ function fmt(n, simbolo = "RD$") {
 function fmtFecha(f) {
   if (!f) return ""
   return new Date(f).toLocaleString("es-DO", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+}
+
+async function obtenerDatosHeader(usuarioId) {
+  try {
+    const res = await fetch(`${API}/api/pos/header/${usuarioId}`)
+    if (!res.ok) return null
+    return res.json()
+  } catch { return null }
+}
+
+async function getMisVentas({ empresaId, usuarioId, tipoUsuarioId, fechaDesde, fechaHasta, estado, pagina = 1, limite = 20 }) {
+  try {
+    const params = new URLSearchParams()
+    if (fechaDesde) params.set("fechaDesde", fechaDesde)
+    if (fechaHasta) params.set("fechaHasta", fechaHasta)
+    if (estado)     params.set("estado", estado)
+    params.set("pagina", pagina)
+    params.set("limite", limite)
+    const res = await fetch(`${API}/api/pos/mis-ventas/${empresaId}/${usuarioId}/${tipoUsuarioId}?${params}`)
+    if (!res.ok) return { ventas: [], total: 0, paginas: 1 }
+    return res.json()
+  } catch { return { ventas: [], total: 0, paginas: 1 } }
+}
+
+async function cancelarVenta(ventaId, empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/mis-ventas/cancelar/${ventaId}/${empresaId}`, {
+      method: "PATCH",
+    })
+    return res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
 }
 
 const ESTADOS = [
@@ -92,7 +122,6 @@ export default function MisVentas() {
 
   return (
     <div className={s.page}>
-
       {alerta && (
         <div className={`${s.toast} ${s["toast_" + alerta.tipo]}`}>
           <ion-icon name={alerta.tipo === "error" ? "alert-circle-outline" : "checkmark-circle-outline"} />
@@ -206,7 +235,6 @@ export default function MisVentas() {
           onClose={() => setVentaDetalle(null)}
         />
       )}
-
     </div>
   )
 }
@@ -299,10 +327,9 @@ function ModalDetalle({ venta, simbolo, cancelando, onCancelar, onClose }) {
         </div>
 
         <div className={s.modalAcciones}>
- <button className={s.imprimirBtn} onClick={() => router.push(`/pos/vender/imprimir/${venta.id}`)}>
-    <ion-icon name="print-outline" /> Reimprimir
-  </button>
-
+          <button className={s.imprimirBtn} onClick={() => router.push(`/pos/vender/imprimir/${venta.id}`)}>
+            <ion-icon name="print-outline" /> Reimprimir
+          </button>
           {venta.estado === "completada" && (
             confirmarCancelar ? (
               <div className={s.confirmarWrap}>

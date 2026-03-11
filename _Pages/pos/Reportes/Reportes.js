@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { getReporteVentas, getReporteProductos, getReporteClientes, getReporteGastos } from "./servidor"
 import {
   exportarExcelVentas,
   exportarExcelProductos,
@@ -15,6 +14,7 @@ import {
 } from "recharts"
 import s from "./Reportes.module.css"
 
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
 const COLORES    = ["#1d6fce", "#0ea5e9", "#22c55e", "#f59e0b", "#8b5cf6", "#ef4444"]
 const AÑO_ACTUAL = new Date().getFullYear()
@@ -54,6 +54,46 @@ function usePaginacion(items = [], porPagina = 15) {
   const slice = items.slice((pagina - 1) * porPagina, pagina * porPagina)
   useEffect(() => { setPagina(1) }, [items])
   return { slice, pagina, setPagina, total }
+}
+
+async function getReporteVentas(empresaId, periodo, año, mes) {
+  try {
+    const p = new URLSearchParams({ periodo, año })
+    if (periodo === "mes" && mes !== undefined) p.set("mes", mes)
+    const res = await fetch(`${API}/api/pos/reportes/ventas/${empresaId}?${p}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function getReporteProductos(empresaId, periodo, año, mes) {
+  try {
+    const p = new URLSearchParams({ periodo, año })
+    if (periodo === "mes" && mes !== undefined) p.set("mes", mes)
+    const res = await fetch(`${API}/api/pos/reportes/productos/${empresaId}?${p}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function getReporteClientes(empresaId, periodo, año, mes) {
+  try {
+    const p = new URLSearchParams({ periodo, año })
+    if (periodo === "mes" && mes !== undefined) p.set("mes", mes)
+    const res = await fetch(`${API}/api/pos/reportes/clientes/${empresaId}?${p}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function getReporteGastos(empresaId, periodo, año, mes) {
+  try {
+    const p = new URLSearchParams({ periodo, año })
+    if (periodo === "mes" && mes !== undefined) p.set("mes", mes)
+    const res = await fetch(`${API}/api/pos/reportes/gastos/${empresaId}?${p}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
 }
 
 export default function Reportes() {
@@ -181,19 +221,19 @@ export default function Reportes() {
 }
 
 function TabVentas({ data, fmt, fmtFecha, fmtDateTime }) {
-  const resumen        = data?.resumen        ?? { total: 0, subtotal: 0, itbis: 0, descuento: 0, cantidad: 0 }
-  const ventasPorDia   = data?.ventasPorDia   ?? []
-  const ventasPorMetodo= data?.ventasPorMetodo?? []
-  const detalles       = data?.detalles       ?? []
+  const resumen         = data?.resumen         ?? { total: 0, subtotal: 0, itbis: 0, descuento: 0, cantidad: 0 }
+  const ventasPorDia    = data?.ventasPorDia    ?? []
+  const ventasPorMetodo = data?.ventasPorMetodo ?? []
+  const detalles        = data?.detalles        ?? []
   const pg = usePaginacion(detalles, 15)
 
   return (
     <>
       <div className={s.statsGrid}>
-        <StatCard icon="cash-outline"          label="Total ventas"  valor={`RD$ ${fmt(resumen.total)}`}     sub={`${resumen.cantidad} transacciones`} color="#1d6fce" />
-        <StatCard icon="receipt-outline"       label="Subtotal"      valor={`RD$ ${fmt(resumen.subtotal)}`}  sub="Sin ITBIS ni descuentos"             color="#0ea5e9" />
-        <StatCard icon="pricetag-outline"      label="ITBIS"         valor={`RD$ ${fmt(resumen.itbis)}`}     sub="18% aplicado"                        color="#22c55e" />
-        <StatCard icon="trending-down-outline" label="Descuentos"    valor={`RD$ ${fmt(resumen.descuento)}`} sub="Total descontado"                    color="#f59e0b" />
+        <StatCard icon="cash-outline"          label="Total ventas" valor={`RD$ ${fmt(resumen.total)}`}     sub={`${resumen.cantidad} transacciones`} color="#1d6fce" />
+        <StatCard icon="receipt-outline"       label="Subtotal"     valor={`RD$ ${fmt(resumen.subtotal)}`}  sub="Sin ITBIS ni descuentos"             color="#0ea5e9" />
+        <StatCard icon="pricetag-outline"      label="ITBIS"        valor={`RD$ ${fmt(resumen.itbis)}`}     sub="18% aplicado"                        color="#22c55e" />
+        <StatCard icon="trending-down-outline" label="Descuentos"   valor={`RD$ ${fmt(resumen.descuento)}`} sub="Total descontado"                    color="#f59e0b" />
       </div>
 
       <div className={s.chartsRow}>

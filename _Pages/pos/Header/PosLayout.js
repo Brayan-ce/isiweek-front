@@ -7,7 +7,7 @@ import Topbar from "./Topbar"
 import s from "./PosLayout.module.css"
 
 const USUARIO_ID = 2
-const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 const PRIMER_SLUG_POR_GRUPO = [
   "mis-ventas",
@@ -24,9 +24,9 @@ export default function PosLayout({ children }) {
   const [data, setData] = useState(null)
 
   useEffect(() => {
-    const saved = localStorage.getItem("isiweek_theme")
+    const saved       = localStorage.getItem("isiweek_theme")
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-    const isDark = saved === "dark" || (!saved && prefersDark)
+    const isDark      = saved === "dark" || (!saved && prefersDark)
     setDark(isDark)
     document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light")
 

@@ -2,44 +2,89 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { getDatosCuota, getProductos, getProductoPorCodigo, crearVentaCuotas, crearClienteRapido } from "./servidor"
 import s from "./NuevaCuota.module.css"
 
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
 const USUARIO_ID = 2
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function fmt(n) {
   return Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+async function getDatosCuota(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/cuotas/datos/${empresaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function getProductos(empresaId, busqueda = "", pagina = 1, limite = 20) {
+  try {
+    const params = new URLSearchParams({ busqueda, pagina, limite })
+    const res = await fetch(`${API}/api/pos/vender/productos/${empresaId}?${params}`)
+    if (!res.ok) return { productos: [], total: 0, paginas: 1 }
+    return await res.json()
+  } catch { return { productos: [], total: 0, paginas: 1 } }
+}
+
+async function getProductoPorCodigo(empresaId, codigo) {
+  try {
+    const res = await fetch(`${API}/api/pos/vender/codigo/${empresaId}/${encodeURIComponent(codigo)}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function crearClienteRapido(empresaId, nombre) {
+  try {
+    const res = await fetch(`${API}/api/pos/vender/cliente-rapido/${empresaId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function crearVentaCuotas(empresaId, usuarioId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/cuotas/crear/${empresaId}/${usuarioId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
 export default function NuevaCuota() {
   const router = useRouter()
-  const [datos, setDatos] = useState(null)
-  const [productos, setProductos] = useState([])
-  const [busqueda, setBusqueda] = useState("")
-  const [pagina, setPagina] = useState(1)
-  const [totalPags, setTotalPags] = useState(1)
-  const [loadingProds, setLoadingProds] = useState(false)
-  const [carrito, setCarrito] = useState([])
-  const [clienteId, setClienteId] = useState("")
-  const [clienteNombre, setClienteNombre] = useState("")
-  const [busqCliente, setBusqCliente] = useState("")
-  const [modalCliente, setModalCliente] = useState(false)
-  const [modoCrear, setModoCrear] = useState(false)
-  const [nuevoNombre, setNuevoNombre] = useState("")
+  const [datos, setDatos]                   = useState(null)
+  const [productos, setProductos]           = useState([])
+  const [busqueda, setBusqueda]             = useState("")
+  const [pagina, setPagina]                 = useState(1)
+  const [totalPags, setTotalPags]           = useState(1)
+  const [loadingProds, setLoadingProds]     = useState(false)
+  const [carrito, setCarrito]               = useState([])
+  const [clienteId, setClienteId]           = useState("")
+  const [clienteNombre, setClienteNombre]   = useState("")
+  const [busqCliente, setBusqCliente]       = useState("")
+  const [modalCliente, setModalCliente]     = useState(false)
+  const [modoCrear, setModoCrear]           = useState(false)
+  const [nuevoNombre, setNuevoNombre]       = useState("")
   const [creandoCliente, setCreandoCliente] = useState(false)
-  const [concepto, setConcepto] = useState("")
-  const [cantCuotas, setCantCuotas] = useState(2)
-  const [cuotas, setCuotas] = useState([])
-  const [cargando, setCargando] = useState(false)
-  const [alerta, setAlerta] = useState(null)
+  const [concepto, setConcepto]             = useState("")
+  const [cantCuotas, setCantCuotas]         = useState(2)
+  const [cuotas, setCuotas]                 = useState([])
+  const [cargando, setCargando]             = useState(false)
+  const [alerta, setAlerta]                 = useState(null)
 
   const scanBuffer = useRef("")
-  const scanTimer = useRef(null)
+  const scanTimer  = useRef(null)
 
-  const simbolo = datos?.moneda?.simbolo ?? "RD$"
-
+  const simbolo    = datos?.moneda?.simbolo ?? "RD$"
   const montoTotal = carrito.reduce((a, i) => a + Number(i.precio) * i.cantidad, 0)
 
   useEffect(() => {
@@ -83,7 +128,7 @@ export default function NuevaCuota() {
 
   useEffect(() => {
     if (!montoTotal || !cantCuotas) { setCuotas([]); return }
-    const base = Math.floor((montoTotal / cantCuotas) * 100) / 100
+    const base  = Math.floor((montoTotal / cantCuotas) * 100) / 100
     const resto = Number((montoTotal - base * cantCuotas).toFixed(2))
     setCuotas(Array.from({ length: cantCuotas }, (_, i) => ({
       numero: i + 1,
@@ -104,7 +149,7 @@ export default function NuevaCuota() {
       const idx = prev.findIndex(i => i.id === prod.id)
       if (idx >= 0) {
         const next = [...prev]
-        if (next[idx].cantidad >= prod.stock) { mostrarAlerta("warn", `Stock máximo: ${prod.stock}`); return prev }
+        if (next[idx].cantidad >= prod.stock) { mostrarAlerta("warn", `Stock maximo: ${prod.stock}`); return prev }
         next[idx] = { ...next[idx], cantidad: next[idx].cantidad + 1 }
         return next
       }
@@ -155,18 +200,18 @@ export default function NuevaCuota() {
     if (!concepto.trim()) return mostrarAlerta("error", "Escribe un concepto")
     if (!carrito.length) return mostrarAlerta("error", "Agrega al menos un producto")
     if (!cuotas.length) return mostrarAlerta("error", "Define las cuotas")
-    if (Math.abs(diferencia) > 0.01) return mostrarAlerta("error", `La suma de cuotas no coincide con el total`)
+    if (Math.abs(diferencia) > 0.01) return mostrarAlerta("error", "La suma de cuotas no coincide con el total")
     setCargando(true)
     const res = await crearVentaCuotas(EMPRESA_ID, USUARIO_ID, {
-      cliente_id: Number(clienteId),
-      concepto: concepto.trim(),
-      monto_total: montoTotal,
-      items: carrito.map(i => ({ producto_id: i.id, cantidad: i.cantidad, precio_unitario: Number(i.precio) })),
-      cuotas: cuotas.map(c => ({ monto: Number(c.monto) })),
+      cliente_id:   Number(clienteId),
+      concepto:     concepto.trim(),
+      monto_total:  montoTotal,
+      items:        carrito.map(i => ({ producto_id: i.id, cantidad: i.cantidad, precio_unitario: Number(i.precio) })),
+      cuotas:       cuotas.map(c => ({ monto: Number(c.monto) })),
     })
     setCargando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
-    mostrarAlerta("ok", "Venta a crédito creada")
+    mostrarAlerta("ok", "Venta a credito creada")
     setTimeout(() => router.push("/pos/cuotas"), 1000)
   }
 
@@ -201,7 +246,7 @@ export default function NuevaCuota() {
               <ion-icon name="search-outline" />
               <input
                 className={s.searchInput}
-                placeholder="Buscar por nombre, código..."
+                placeholder="Buscar por nombre, codigo..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
               />
@@ -221,7 +266,7 @@ export default function NuevaCuota() {
                     onClick={() => !sinStock && agregarAlCarrito(p)}
                   >
                     <div className={s.prodThumb}>
-                      {p.imagen ? <img src={`${BACKEND}${p.imagen}`} alt={p.nombre} /> : <ion-icon name="cube-outline" />}
+                      {p.imagen ? <img src={`${API}${p.imagen}`} alt={p.nombre} /> : <ion-icon name="cube-outline" />}
                     </div>
                     <div className={s.prodTexts}>
                       <span className={s.prodNombre}>{p.nombre}</span>
@@ -352,7 +397,7 @@ export default function NuevaCuota() {
           <div className={s.acciones}>
             <button className={s.cancelarBtn} onClick={() => router.push("/pos/cuotas")}>Cancelar</button>
             <button className={s.crearBtn} onClick={handleCrear} disabled={cargando}>
-              {cargando ? <span className={s.spinner} /> : <><ion-icon name="checkmark-circle-outline" />Crear venta a crédito</>}
+              {cargando ? <span className={s.spinner} /> : <><ion-icon name="checkmark-circle-outline" />Crear venta a credito</>}
             </button>
           </div>
         </div>
@@ -378,7 +423,7 @@ export default function NuevaCuota() {
                 <div className={s.clienteSearchRow}>
                   <div className={s.clienteSearch}>
                     <ion-icon name="search-outline" />
-                    <input autoFocus className={s.clienteSearchInput} placeholder="Buscar por nombre o cédula..." value={busqCliente} onChange={e => setBusqCliente(e.target.value)} />
+                    <input autoFocus className={s.clienteSearchInput} placeholder="Buscar por nombre o cedula..." value={busqCliente} onChange={e => setBusqCliente(e.target.value)} />
                   </div>
                   <button className={s.clienteNuevoBtn} onClick={() => setModoCrear(true)}>
                     <ion-icon name="person-add-outline" /><span>Nuevo</span>

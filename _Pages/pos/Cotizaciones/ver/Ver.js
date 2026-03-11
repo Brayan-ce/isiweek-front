@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { getCotizacion } from "./servidor"
 import {
   printerConnect,
   printerPrint,
@@ -12,6 +11,16 @@ import {
   buildRawBTText,
 } from "./extras/printerService"
 import s from "./Ver.module.css"
+
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+async function getCotizacion(id) {
+  try {
+    const res = await fetch(`${API}/api/pos/cotizaciones/ver/${id}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
 
 const OPCIONES_DEFAULT = {
   mostrarDatosEmpresa: true,

@@ -1,10 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getDatosCaja } from "../Cajas/servidor"
-import { getGastos, getTiposGasto, getResumenGastos, crearGasto, editarGasto, eliminarGasto } from "./servidor"
 import s from "./Gastos.module.css"
 
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
 const USUARIO_ID = 2
 const LIMITE     = 20
@@ -23,6 +22,73 @@ function fmtFecha(f) {
 function fmtHora(f) {
   if (!f) return "—"
   return new Date(f).toLocaleTimeString("es-DO", { hour: "2-digit", minute: "2-digit" })
+}
+
+async function getDatosCaja(usuarioId, empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/cajas/datos/${usuarioId}/${empresaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function getGastos(empresaId, filtros = {}) {
+  try {
+    const params = new URLSearchParams()
+    Object.entries(filtros).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") params.set(k, v)
+    })
+    const res = await fetch(`${API}/api/pos/gastos/lista/${empresaId}?${params}`)
+    if (!res.ok) return { gastos: [], total: 0, paginas: 1, pagina: 1 }
+    return await res.json()
+  } catch { return { gastos: [], total: 0, paginas: 1, pagina: 1 } }
+}
+
+async function getTiposGasto(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/gastos/tipos/${empresaId}`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function getResumenGastos(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/gastos/resumen/${empresaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function crearGasto(empresaId, usuarioId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/gastos/crear/${empresaId}/${usuarioId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function editarGasto(empresaId, gastoId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/gastos/editar/${empresaId}/${gastoId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function eliminarGasto(empresaId, gastoId) {
+  try {
+    const res = await fetch(`${API}/api/pos/gastos/eliminar/${empresaId}/${gastoId}`, {
+      method: "DELETE",
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
 }
 
 function ModalGasto({ inicial, onClose, onGuardado, mostrarAlerta, tiposExistentes }) {
@@ -88,7 +154,7 @@ function ModalGasto({ inicial, onClose, onGuardado, mostrarAlerta, tiposExistent
             <label className={s.formLabel}>Tipo (opcional)</label>
             <input
               className={s.formInput}
-              placeholder="Ej: Operativo, Limpieza, Nómina..."
+              placeholder="Ej: Operativo, Limpieza, Nomina..."
               value={form.tipo}
               onChange={e => set("tipo", e.target.value)}
               list="tipos-list"
@@ -381,7 +447,7 @@ export default function Gastos() {
           </button>
           {paginasArr().map((item, i) =>
             item === "..." ? (
-              <span key={`dots-${i}`} className={s.paginaDots}>…</span>
+              <span key={`dots-${i}`} className={s.paginaDots}>...</span>
             ) : (
               <button
                 key={item}
@@ -417,9 +483,9 @@ export default function Gastos() {
         <div className={s.overlay} onClick={e => e.target === e.currentTarget && setConfirmEliminar(null)}>
           <div className={s.modalConfirm}>
             <div className={s.confirmIcon}><ion-icon name="warning-outline" /></div>
-            <div className={s.confirmTitle}>¿Eliminar gasto?</div>
+            <div className={s.confirmTitle}>Eliminar gasto?</div>
             <p className={s.confirmDesc}>
-              Se eliminará el gasto <strong>{confirmEliminar.concepto}</strong> de <strong>{fmt(confirmEliminar.monto)}</strong>. Esta acción no se puede deshacer.
+              Se eliminara el gasto <strong>{confirmEliminar.concepto}</strong> de <strong>{fmt(confirmEliminar.monto)}</strong>. Esta accion no se puede deshacer.
             </p>
             <div className={s.modalAcciones}>
               <button className={s.cancelarBtn} onClick={() => setConfirmEliminar(null)}>Cancelar</button>

@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { obtenerSolicitudes, aprobarSolicitud, rechazarSolicitud, ponerPendiente } from "./servidor"
 import s from "./solicitudes.module.css"
+
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function fmtFecha(f) {
   if (!f) return ""
@@ -11,20 +12,55 @@ function fmtFecha(f) {
 }
 
 const ESTADO_STYLE = {
-  pendiente: { bg: "rgba(245,158,11,0.1)",  color: "#d97706", label: "Pendiente"  },
-  aprobada:  { bg: "rgba(34,197,94,0.1)",   color: "#16a34a", label: "Aprobada"   },
-  rechazada: { bg: "rgba(239,68,68,0.1)",   color: "#dc2626", label: "Rechazada"  },
+  pendiente: { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Pendiente" },
+  aprobada:  { bg: "rgba(34,197,94,0.1)",  color: "#16a34a", label: "Aprobada"  },
+  rechazada: { bg: "rgba(239,68,68,0.1)",  color: "#dc2626", label: "Rechazada" },
+}
+
+async function obtenerSolicitudes({ busqueda = "", estado = "", pagina = 1 } = {}) {
+  try {
+    const p = new URLSearchParams({ busqueda, estado, pagina, limite: 12 })
+    const res = await fetch(`${API}/api/superadmin/solicitudes?${p}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function aprobarSolicitud(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/solicitudes/${id}/aprobar`, { method: "PATCH" })
+    const json = await res.json()
+    if (!res.ok) return { error: json.error ?? "Error al aprobar" }
+    return { ok: true, ...json }
+  } catch { return { error: "Error de conexion" } }
+}
+
+async function rechazarSolicitud(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/solicitudes/${id}/rechazar`, { method: "PATCH" })
+    const json = await res.json()
+    if (!res.ok) return { error: json.error ?? "Error al rechazar" }
+    return { ok: true }
+  } catch { return { error: "Error de conexion" } }
+}
+
+async function ponerPendiente(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/solicitudes/${id}/pendiente`, { method: "PATCH" })
+    const json = await res.json()
+    if (!res.ok) return { error: json.error ?? "Error al actualizar" }
+    return { ok: true }
+  } catch { return { error: "Error de conexion" } }
 }
 
 export default function SolicitudesPage() {
   const router = useRouter()
-  const [data, setData]           = useState(null)
-  const [cargando, setCargando]   = useState(true)
-  const [busqueda, setBusqueda]   = useState("")
-  const [estado, setEstado]       = useState("")
-  const [pagina, setPagina]       = useState(1)
+  const [data, setData]             = useState(null)
+  const [cargando, setCargando]     = useState(true)
+  const [busqueda, setBusqueda]     = useState("")
+  const [estado, setEstado]         = useState("")
+  const [pagina, setPagina]         = useState(1)
   const [accionando, setAccionando] = useState(null)
-  const [detalle, setDetalle]     = useState(null)
 
   const cargar = useCallback(async () => {
     setCargando(true)
@@ -42,7 +78,6 @@ export default function SolicitudesPage() {
     if (accion === "rechazar")  await rechazarSolicitud(id)
     if (accion === "pendiente") await ponerPendiente(id)
     setAccionando(null)
-    if (detalle?.id === id) setDetalle(null)
     cargar()
   }
 
@@ -124,37 +159,23 @@ export default function SolicitudesPage() {
                       </button>
                     </div>
                   )}
-                  {sol.mensaje && (
-                    <div className={s.mensaje}>{sol.mensaje}</div>
-                  )}
+                  {sol.mensaje && <div className={s.mensaje}>{sol.mensaje}</div>}
                   <div className={s.cardFecha}>{fmtFecha(sol.created_at)}</div>
                 </div>
 
                 <div className={s.cardActions}>
                   {sol.estado !== "aprobada" && (
-                    <button
-                      className={s.btnAprobar}
-                      onClick={() => handleAccion(sol.id, "aprobar")}
-                      disabled={cargandoEsta}
-                    >
+                    <button className={s.btnAprobar} onClick={() => handleAccion(sol.id, "aprobar")} disabled={cargandoEsta}>
                       {cargandoEsta ? <span className={s.spinner} /> : <><ion-icon name="checkmark-outline" /> Aprobar</>}
                     </button>
                   )}
                   {sol.estado !== "rechazada" && (
-                    <button
-                      className={s.btnRechazar}
-                      onClick={() => handleAccion(sol.id, "rechazar")}
-                      disabled={cargandoEsta}
-                    >
+                    <button className={s.btnRechazar} onClick={() => handleAccion(sol.id, "rechazar")} disabled={cargandoEsta}>
                       {cargandoEsta ? <span className={s.spinner} /> : <><ion-icon name="close-outline" /> Rechazar</>}
                     </button>
                   )}
                   {sol.estado !== "pendiente" && (
-                    <button
-                      className={s.btnPendiente}
-                      onClick={() => handleAccion(sol.id, "pendiente")}
-                      disabled={cargandoEsta}
-                    >
+                    <button className={s.btnPendiente} onClick={() => handleAccion(sol.id, "pendiente")} disabled={cargandoEsta}>
                       <ion-icon name="time-outline" />
                     </button>
                   )}

@@ -1,10 +1,48 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getMarcas, crearMarca, editarMarca, eliminarMarca } from "./servidor"
 import s from "./Marcas.module.css"
 
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
+
+async function getMarcas(empresaId, busqueda = "", pagina = 1, limite = 20) {
+  try {
+    const params = new URLSearchParams({ busqueda, pagina, limite })
+    const res = await fetch(`${API}/api/pos/marcas/${empresaId}?${params}`)
+    if (!res.ok) return { marcas: [], total: 0, paginas: 1 }
+    return await res.json()
+  } catch { return { marcas: [], total: 0, paginas: 1 } }
+}
+
+async function crearMarca(empresaId, nombre) {
+  try {
+    const res = await fetch(`${API}/api/pos/marcas/${empresaId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function editarMarca(id, nombre) {
+  try {
+    const res = await fetch(`${API}/api/pos/marcas/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function eliminarMarca(id) {
+  try {
+    const res = await fetch(`${API}/api/pos/marcas/${id}`, { method: "DELETE" })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
 
 export default function Marcas() {
   const [marcas, setMarcas]         = useState([])
@@ -248,7 +286,7 @@ export default function Marcas() {
             <div className={s.elimIcono}><ion-icon name="warning-outline" /></div>
             <div className={s.elimTitulo}>Eliminar marca</div>
             <div className={s.elimSub}>
-              ¿Seguro que deseas eliminar <strong>{modalElim.nombre}</strong>? Esta acción no se puede deshacer.
+              ¿Seguro que deseas eliminar <strong>{modalElim.nombre}</strong>? Esta accion no se puede deshacer.
             </div>
             <div className={s.modalAcciones}>
               <button className={s.btnCancelar} onClick={() => setModalElim(null)}>Cancelar</button>

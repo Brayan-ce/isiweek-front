@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getDashboardAdmin } from "../servidor"
+import { getDashboardAdmin } from "../api"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts"
 import s from "../Dashboard.module.css"
 
 const EMPRESA_ID = 1
-
-const COLORES = ["#1d6fce", "#0ea5e9", "#22c55e", "#f59e0b", "#8b5cf6", "#ef4444"]
+const COLORES    = ["#1d6fce", "#0ea5e9", "#22c55e", "#f59e0b", "#8b5cf6", "#ef4444"]
 
 function fmt(n) {
   return Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -39,7 +38,11 @@ export default function DashboardAdmin() {
     </div>
   )
 
-  if (!data) return <div className={s.page}><div className={s.empty}><ion-icon name="alert-circle-outline" /><p>Error al cargar datos</p></div></div>
+  if (!data) return (
+    <div className={s.page}>
+      <div className={s.empty}><ion-icon name="alert-circle-outline" /><p>Error al cargar datos</p></div>
+    </div>
+  )
 
   const { stats, ultimasVentas, cajaActiva, stockBajo, topProductos, ventasPorDia, ventasPorMetodo } = data
 
@@ -47,9 +50,9 @@ export default function DashboardAdmin() {
     <div className={s.page}>
 
       <div className={s.statsGrid}>
-        <StatCard icon="today-outline"      label="Ventas hoy"     valor={`RD$ ${fmt(stats.totalHoy)}`}    sub={`${stats.ventasHoy} transacciones`}    color="#1d6fce" />
-        <StatCard icon="calendar-outline"   label="Esta semana"    valor={`RD$ ${fmt(stats.totalSemana)}`} sub={`${stats.ventasSemana} transacciones`}  color="#0ea5e9" />
-        <StatCard icon="stats-chart-outline" label="Este mes"      valor={`RD$ ${fmt(stats.totalMes)}`}   sub={`${stats.ventasMes} transacciones`}     color="#22c55e" />
+        <StatCard icon="today-outline"       label="Ventas hoy"  valor={`RD$ ${fmt(stats.totalHoy)}`}    sub={`${stats.ventasHoy} transacciones`}   color="#1d6fce" />
+        <StatCard icon="calendar-outline"    label="Esta semana" valor={`RD$ ${fmt(stats.totalSemana)}`} sub={`${stats.ventasSemana} transacciones`} color="#0ea5e9" />
+        <StatCard icon="stats-chart-outline" label="Este mes"    valor={`RD$ ${fmt(stats.totalMes)}`}   sub={`${stats.ventasMes} transacciones`}    color="#22c55e" />
         <StatCard
           icon="wallet-outline"
           label="Caja activa"
@@ -61,25 +64,26 @@ export default function DashboardAdmin() {
 
       <div className={s.chartsRow}>
         <div className={s.chartCard}>
-          <div className={s.cardTitle}><ion-icon name="bar-chart-outline" /> Ventas del mes por día</div>
+          <div className={s.cardTitle}><ion-icon name="bar-chart-outline" /> Ventas del mes por dia</div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={ventasPorDia} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <XAxis dataKey="fecha" tickFormatter={v => fmtFecha(v)} tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v) => [`RD$ ${fmt(v)}`, "Total"]} labelFormatter={fmtFecha} />
-              <Bar dataKey="total" fill="#1d6fce" radius={[4,4,0,0]} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+              <Tooltip formatter={v => [`RD$ ${fmt(v)}`, "Total"]} labelFormatter={fmtFecha} />
+              <Bar dataKey="total" fill="#1d6fce" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         <div className={s.chartCard}>
-          <div className={s.cardTitle}><ion-icon name="pie-chart-outline" /> Ventas por método de pago</div>
+          <div className={s.cardTitle}><ion-icon name="pie-chart-outline" /> Ventas por metodo de pago</div>
           {ventasPorMetodo.length === 0 ? (
             <div className={s.emptyChart}>Sin datos este mes</div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
-                <Pie data={ventasPorMetodo} dataKey="total" nameKey="nombre" cx="50%" cy="50%" outerRadius={80} label={({ nombre, percent }) => `${nombre} ${(percent*100).toFixed(0)}%`} labelLine={false}>
+                <Pie data={ventasPorMetodo} dataKey="total" nameKey="nombre" cx="50%" cy="50%" outerRadius={80}
+                  label={({ nombre, percent }) => `${nombre} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
                   {ventasPorMetodo.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
                 </Pie>
                 <Tooltip formatter={v => `RD$ ${fmt(v)}`} />
@@ -92,7 +96,7 @@ export default function DashboardAdmin() {
 
       <div className={s.bottomRow}>
         <div className={s.tableCard}>
-          <div className={s.cardTitle}><ion-icon name="receipt-outline" /> Últimas ventas</div>
+          <div className={s.cardTitle}><ion-icon name="receipt-outline" /> Ultimas ventas</div>
           {ultimasVentas.length === 0 ? (
             <div className={s.emptyChart}>Sin ventas registradas</div>
           ) : (
@@ -100,7 +104,7 @@ export default function DashboardAdmin() {
               <div className={s.tableHeader}>
                 <span>Cliente</span>
                 <span>Vendedor</span>
-                <span>Método</span>
+                <span>Metodo</span>
                 <span>Total</span>
                 <span>Hora</span>
               </div>
@@ -138,7 +142,7 @@ export default function DashboardAdmin() {
           <div className={s.tableCard}>
             <div className={s.cardTitle}><ion-icon name="warning-outline" /> Stock bajo</div>
             {stockBajo.length === 0 ? (
-              <div className={s.emptyChart}>Todo el stock está bien</div>
+              <div className={s.emptyChart}>Todo el stock esta bien</div>
             ) : (
               <div className={s.topList}>
                 {stockBajo.map(p => (

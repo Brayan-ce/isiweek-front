@@ -2,11 +2,60 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { getCompras, getDatosCompra, crearCompra, editarCompra, eliminarCompra } from "./servidor"
 import s from "./Compras.module.css"
 
 const EMPRESA_ID = 1
 const USUARIO_ID = 2
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+async function getDatosCompra(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/compras/datos/${empresaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function getCompras(empresaId, filtros = {}) {
+  try {
+    const params = new URLSearchParams()
+    Object.entries(filtros).forEach(([k, v]) => { if (v) params.set(k, v) })
+    const res = await fetch(`${API}/api/pos/compras/lista/${empresaId}?${params}`)
+    if (!res.ok) return { compras: [], total: 0, paginas: 1 }
+    return await res.json()
+  } catch { return { compras: [], total: 0, paginas: 1 } }
+}
+
+async function crearCompra(empresaId, usuarioId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/compras/crear/${empresaId}/${usuarioId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function editarCompra(empresaId, compraId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/compras/editar/${empresaId}/${compraId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function eliminarCompra(empresaId, compraId) {
+  try {
+    const res = await fetch(`${API}/api/pos/compras/eliminar/${empresaId}/${compraId}`, {
+      method: "DELETE",
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
 
 function fmt(n) {
   return `RD$ ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -28,12 +77,12 @@ const ITEM_VACIO = { producto_id: "", nombre_producto: "", cantidad: 1, precio_u
 function ModalCompra({ datos, inicial, onClose, onGuardado, mostrarAlerta }) {
   const esEditar = !!inicial
   const [proveedor_id, setProveedorId] = useState(inicial?.proveedor_id ?? "")
-  const [estado, setEstado] = useState(inicial?.estado ?? "completada")
-  const [items, setItems] = useState(
+  const [estado, setEstado]            = useState(inicial?.estado ?? "completada")
+  const [items, setItems]              = useState(
     inicial?.compra_detalles?.map(d => ({
-      producto_id: d.producto_id ?? "",
+      producto_id:     d.producto_id ?? "",
       nombre_producto: d.nombre_producto ?? "",
-      cantidad: d.cantidad,
+      cantidad:        d.cantidad,
       precio_unitario: String(d.precio_unitario),
     })) ?? [{ ...ITEM_VACIO }]
   )
@@ -75,9 +124,9 @@ function ModalCompra({ datos, inicial, onClose, onGuardado, mostrarAlerta }) {
         proveedor_id: proveedor_id || null,
         estado,
         items: items.map(i => ({
-          producto_id: i.producto_id || null,
+          producto_id:     i.producto_id || null,
           nombre_producto: i.nombre_producto.trim(),
-          cantidad: Number(i.cantidad),
+          cantidad:        Number(i.cantidad),
           precio_unitario: Number(i.precio_unitario),
         })),
       })
@@ -193,18 +242,17 @@ function ModalCompra({ datos, inicial, onClose, onGuardado, mostrarAlerta }) {
 
 export default function Compras() {
   const router = useRouter()
-  const [compras, setCompras] = useState([])
-  const [total, setTotal] = useState(0)
-  const [paginas, setPaginas] = useState(1)
-  const [pagina, setPagina] = useState(1)
-  const [cargando, setCargando] = useState(true)
-  const [datos, setDatos] = useState(null)
-  const [alerta, setAlerta] = useState(null)
-  const [modal, setModal] = useState(null)
+  const [compras, setCompras]               = useState([])
+  const [total, setTotal]                   = useState(0)
+  const [paginas, setPaginas]               = useState(1)
+  const [pagina, setPagina]                 = useState(1)
+  const [cargando, setCargando]             = useState(true)
+  const [datos, setDatos]                   = useState(null)
+  const [alerta, setAlerta]                 = useState(null)
+  const [modal, setModal]                   = useState(null)
   const [confirmEliminar, setConfirmEliminar] = useState(null)
-  const [eliminando, setEliminando] = useState(false)
-
-  const [filtros, setFiltros] = useState({ proveedor_id: "", estado: "", fecha_desde: "", fecha_hasta: "" })
+  const [eliminando, setEliminando]         = useState(false)
+  const [filtros, setFiltros]               = useState({ proveedor_id: "", estado: "", fecha_desde: "", fecha_hasta: "" })
 
   const cargar = useCallback(async (f = filtros, p = pagina) => {
     setCargando(true)
@@ -377,9 +425,9 @@ export default function Compras() {
         <div className={s.overlay} onClick={e => e.target === e.currentTarget && setConfirmEliminar(null)}>
           <div className={s.modalConfirm}>
             <div className={s.confirmIcon}><ion-icon name="warning-outline" /></div>
-            <div className={s.confirmTitle}>¿Eliminar compra?</div>
+            <div className={s.confirmTitle}>Eliminar compra?</div>
             <p className={s.confirmDesc}>
-              Esta acción no se puede deshacer. Solo se pueden eliminar compras no completadas.
+              Esta accion no se puede deshacer. Solo se pueden eliminar compras no completadas.
             </p>
             <div className={s.modalAcciones}>
               <button className={s.cancelarBtn} onClick={() => setConfirmEliminar(null)}>Cancelar</button>

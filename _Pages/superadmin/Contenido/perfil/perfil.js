@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { obtenerPerfil, actualizarPerfil, cambiarPassword } from "./servidor"
 import s from "./perfil.module.css"
 
+const API           = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const SUPERADMIN_ID = 1
 
 function fmtFecha(f) {
@@ -11,17 +11,51 @@ function fmtFecha(f) {
   return new Date(f).toLocaleDateString("es-DO", { day: "2-digit", month: "long", year: "numeric" })
 }
 
+async function obtenerPerfil(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/perfil/${id}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function actualizarPerfil(id, data) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/perfil/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (!res.ok) return { error: json.error ?? "Error al actualizar perfil" }
+    return { ok: true, perfil: json }
+  } catch { return { error: "Error de conexion" } }
+}
+
+async function cambiarPassword(id, data) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/perfil/${id}/password`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (!res.ok) return { error: json.error ?? "Error al cambiar contrasena" }
+    return { ok: true }
+  } catch { return { error: "Error de conexion" } }
+}
+
 export default function PerfilPage() {
-  const [perfil, setPerfil]       = useState(null)
-  const [cargando, setCargando]   = useState(true)
-  const [guardando, setGuardando] = useState(false)
-  const [cambiando, setCambiando] = useState(false)
-  const [exitoInfo, setExitoInfo] = useState(false)
-  const [exitoPass, setExitoPass] = useState(false)
-  const [errorInfo, setErrorInfo] = useState("")
-  const [errorPass, setErrorPass] = useState("")
-  const [verActual, setVerActual] = useState(false)
-  const [verNueva, setVerNueva]   = useState(false)
+  const [perfil, setPerfil]         = useState(null)
+  const [cargando, setCargando]     = useState(true)
+  const [guardando, setGuardando]   = useState(false)
+  const [cambiando, setCambiando]   = useState(false)
+  const [exitoInfo, setExitoInfo]   = useState(false)
+  const [exitoPass, setExitoPass]   = useState(false)
+  const [errorInfo, setErrorInfo]   = useState("")
+  const [errorPass, setErrorPass]   = useState("")
+  const [verActual, setVerActual]   = useState(false)
+  const [verNueva, setVerNueva]     = useState(false)
   const [verConfirm, setVerConfirm] = useState(false)
 
   const [form, setForm] = useState({
@@ -62,11 +96,9 @@ export default function PerfilPage() {
     setExitoInfo(false)
     if (!form.nombre_completo.trim()) { setErrorInfo("El nombre es obligatorio"); return }
     if (!form.email.trim())           { setErrorInfo("El email es obligatorio"); return }
-
     setGuardando(true)
     const res = await actualizarPerfil(SUPERADMIN_ID, form)
     setGuardando(false)
-
     if (res.error) { setErrorInfo(res.error); return }
     setPerfil(p => ({ ...p, ...res.perfil }))
     setExitoInfo(true)
@@ -77,18 +109,16 @@ export default function PerfilPage() {
     e.preventDefault()
     setErrorPass("")
     setExitoPass(false)
-    if (!passForm.password_actual.trim()) { setErrorPass("Ingresa tu contraseña actual"); return }
-    if (!passForm.password_nuevo.trim())  { setErrorPass("Ingresa la nueva contraseña"); return }
-    if (passForm.password_nuevo.length < 6) { setErrorPass("La contraseña debe tener al menos 6 caracteres"); return }
-    if (passForm.password_nuevo !== passForm.password_confirm) { setErrorPass("Las contraseñas no coinciden"); return }
-
+    if (!passForm.password_actual.trim()) { setErrorPass("Ingresa tu contrasena actual"); return }
+    if (!passForm.password_nuevo.trim())  { setErrorPass("Ingresa la nueva contrasena"); return }
+    if (passForm.password_nuevo.length < 6) { setErrorPass("La contrasena debe tener al menos 6 caracteres"); return }
+    if (passForm.password_nuevo !== passForm.password_confirm) { setErrorPass("Las contrasenas no coinciden"); return }
     setCambiando(true)
     const res = await cambiarPassword(SUPERADMIN_ID, {
       password_actual: passForm.password_actual,
       password_nuevo:  passForm.password_nuevo,
     })
     setCambiando(false)
-
     if (res.error) { setErrorPass(res.error); return }
     setPassForm({ password_actual: "", password_nuevo: "", password_confirm: "" })
     setExitoPass(true)
@@ -125,7 +155,7 @@ export default function PerfilPage() {
       <div className={s.grid}>
         <form onSubmit={handleGuardar} className={s.section}>
           <div className={s.sectionTitle}>
-            <ion-icon name="person-outline" /> Información personal
+            <ion-icon name="person-outline" /> Informacion personal
           </div>
           <div className={s.fieldCol}>
             <div className={s.field}>
@@ -137,7 +167,7 @@ export default function PerfilPage() {
               <input className={s.input} type="email" name="email" value={form.email} onChange={handleChange} placeholder="correo@dominio.com" />
             </div>
             <div className={s.field}>
-              <label className={s.label}>Cédula</label>
+              <label className={s.label}>Cedula</label>
               <input className={s.input} name="cedula" value={form.cedula} onChange={handleChange} placeholder="000-0000000-0" />
             </div>
           </div>
@@ -152,31 +182,31 @@ export default function PerfilPage() {
 
         <form onSubmit={handlePassword} className={s.section}>
           <div className={s.sectionTitle}>
-            <ion-icon name="lock-closed-outline" /> Cambiar contraseña
+            <ion-icon name="lock-closed-outline" /> Cambiar contrasena
           </div>
           <div className={s.fieldCol}>
             <div className={s.field}>
-              <label className={s.label}>Contraseña actual <span className={s.req}>*</span></label>
+              <label className={s.label}>Contrasena actual <span className={s.req}>*</span></label>
               <div className={s.passWrap}>
-                <input className={s.input} type={verActual ? "text" : "password"} name="password_actual" value={passForm.password_actual} onChange={handlePassChange} placeholder="Contraseña actual" />
+                <input className={s.input} type={verActual ? "text" : "password"} name="password_actual" value={passForm.password_actual} onChange={handlePassChange} placeholder="Contrasena actual" />
                 <button type="button" className={s.passToggle} onClick={() => setVerActual(v => !v)}>
                   <ion-icon name={verActual ? "eye-off-outline" : "eye-outline"} />
                 </button>
               </div>
             </div>
             <div className={s.field}>
-              <label className={s.label}>Nueva contraseña <span className={s.req}>*</span></label>
+              <label className={s.label}>Nueva contrasena <span className={s.req}>*</span></label>
               <div className={s.passWrap}>
-                <input className={s.input} type={verNueva ? "text" : "password"} name="password_nuevo" value={passForm.password_nuevo} onChange={handlePassChange} placeholder="Mínimo 6 caracteres" />
+                <input className={s.input} type={verNueva ? "text" : "password"} name="password_nuevo" value={passForm.password_nuevo} onChange={handlePassChange} placeholder="Minimo 6 caracteres" />
                 <button type="button" className={s.passToggle} onClick={() => setVerNueva(v => !v)}>
                   <ion-icon name={verNueva ? "eye-off-outline" : "eye-outline"} />
                 </button>
               </div>
             </div>
             <div className={s.field}>
-              <label className={s.label}>Confirmar contraseña <span className={s.req}>*</span></label>
+              <label className={s.label}>Confirmar contrasena <span className={s.req}>*</span></label>
               <div className={s.passWrap}>
-                <input className={s.input} type={verConfirm ? "text" : "password"} name="password_confirm" value={passForm.password_confirm} onChange={handlePassChange} placeholder="Repite la nueva contraseña" />
+                <input className={s.input} type={verConfirm ? "text" : "password"} name="password_confirm" value={passForm.password_confirm} onChange={handlePassChange} placeholder="Repite la nueva contrasena" />
                 <button type="button" className={s.passToggle} onClick={() => setVerConfirm(v => !v)}>
                   <ion-icon name={verConfirm ? "eye-off-outline" : "eye-outline"} />
                 </button>
@@ -184,7 +214,7 @@ export default function PerfilPage() {
             </div>
           </div>
           {errorPass && <div className={s.errorMsg}><ion-icon name="alert-circle-outline" /> {errorPass}</div>}
-          {exitoPass && <div className={s.exitoMsg}><ion-icon name="checkmark-circle-outline" /> Contraseña actualizada</div>}
+          {exitoPass && <div className={s.exitoMsg}><ion-icon name="checkmark-circle-outline" /> Contrasena actualizada</div>}
           <div className={s.sectionFooter}>
             <button type="submit" className={s.btnGuardar} disabled={cambiando}>
               {cambiando ? <span className={s.spinner} /> : <><ion-icon name="key-outline" /> Cambiar</>}

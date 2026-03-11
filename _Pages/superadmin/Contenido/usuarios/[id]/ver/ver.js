@@ -2,8 +2,17 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { obtenerUsuario } from "../../servidor"
 import s from "./ver.module.css"
+
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+async function obtenerUsuario(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/usuarios/${id}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
 
 function fmtFecha(f) {
   if (!f) return "—"
@@ -11,8 +20,17 @@ function fmtFecha(f) {
 }
 
 const TIPO_COLOR = {
-  "Administrador": { bg: "rgba(29,111,206,0.1)",  color: "#1d6fce" },
-  "Vendedor":      { bg: "rgba(34,197,94,0.1)",   color: "#16a34a" },
+  "Administrador": { bg: "rgba(29,111,206,0.1)", color: "#1d6fce" },
+  "Vendedor":      { bg: "rgba(34,197,94,0.1)",  color: "#16a34a" },
+}
+
+function InfoRow({ icon, label, value }) {
+  return (
+    <div className={s.infoRow}>
+      <span className={s.infoLabel}><ion-icon name={icon} /> {label}</span>
+      <span className={s.infoValue}>{value || "—"}</span>
+    </div>
+  )
 }
 
 export default function VerUsuarioPage({ id }) {
@@ -75,9 +93,9 @@ export default function VerUsuarioPage({ id }) {
 
       <div className={s.mainGrid}>
         <div className={s.section}>
-          <div className={s.sectionTitle}><ion-icon name="information-circle-outline" /> Información general</div>
+          <div className={s.sectionTitle}><ion-icon name="information-circle-outline" /> Informacion general</div>
           <div className={s.infoGrid}>
-            <InfoRow icon="card-outline"     label="Cédula"      value={usuario.cedula} />
+            <InfoRow icon="card-outline"     label="Cedula"      value={usuario.cedula} />
             <InfoRow icon="business-outline" label="Empresa"     value={usuario.empresa?.nombre} />
             <InfoRow icon="calendar-outline" label="Creado"      value={fmtFecha(usuario.created_at)} />
             <InfoRow icon="time-outline"     label="Actualizado" value={fmtFecha(usuario.updated_at)} />
@@ -103,15 +121,6 @@ export default function VerUsuarioPage({ id }) {
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-function InfoRow({ icon, label, value }) {
-  return (
-    <div className={s.infoRow}>
-      <span className={s.infoLabel}><ion-icon name={icon} /> {label}</span>
-      <span className={s.infoValue}>{value || "—"}</span>
     </div>
   )
 }

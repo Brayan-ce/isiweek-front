@@ -2,18 +2,56 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { obtenerEmpresa, obtenerMonedas, obtenerModulos, actualizarEmpresa } from "../../servidor"
 import LocationSelect from "../../extras/paises/LocationSelect"
 import s from "./editar.module.css"
+
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+async function obtenerEmpresa(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/empresas/${id}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function obtenerMonedas() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/empresas/monedas`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function obtenerModulos() {
+  try {
+    const res = await fetch(`${API}/api/superadmin/empresas/modulos`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function actualizarEmpresa(id, data) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/empresas/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (!res.ok) return { error: json.error ?? "Error al actualizar empresa" }
+    return { ok: true, empresa: json }
+  } catch { return { error: "Error de conexion" } }
+}
 
 const HIJOS_POS = ["CREDITOS", "VENTAS_ONLINE"]
 
 const MODO_META = {
-  General:       { icon: "grid-outline",      color: "#64748b", label: "General",       desc: "Módulos base del sistema" },
-  POS:           { icon: "storefront-outline", color: "#1d6fce", label: "POS",           desc: "Punto de venta y gestión comercial" },
-  CREDITOS:      { icon: "card-outline",       color: "#8b5cf6", label: "Créditos",      desc: "Cartera de créditos y financiamiento" },
+  General:       { icon: "grid-outline",      color: "#64748b", label: "General",       desc: "Modulos base del sistema" },
+  POS:           { icon: "storefront-outline", color: "#1d6fce", label: "POS",           desc: "Punto de venta y gestion comercial" },
+  CREDITOS:      { icon: "card-outline",       color: "#8b5cf6", label: "Creditos",      desc: "Cartera de creditos y financiamiento" },
   VENTAS_ONLINE: { icon: "globe-outline",      color: "#10b981", label: "Ventas Online", desc: "Tienda y ventas por internet" },
-  OBRAS:         { icon: "construct-outline",  color: "#f59e0b", label: "OBRAS",         desc: "Gestión de construcción y obras" },
+  OBRAS:         { icon: "construct-outline",  color: "#f59e0b", label: "OBRAS",         desc: "Gestion de construccion y obras" },
 }
 
 export default function EditarEmpresaPage({ id }) {
@@ -158,7 +196,7 @@ export default function EditarEmpresaPage({ id }) {
             {modo === "OBRAS" && (
               <div className={s.obraNote}>
                 <ion-icon name="warning-outline" />
-                Activar OBRAS desactiva POS y todos sus módulos adicionales
+                Activar OBRAS desactiva POS y todos sus modulos adicionales
               </div>
             )}
             <div className={s.grupoAcciones}>
@@ -211,15 +249,15 @@ export default function EditarEmpresaPage({ id }) {
               <input className={s.input} name="nombre" value={form.nombre} onChange={handleChange} placeholder="Nombre de la empresa" />
             </div>
             <div className={s.field}>
-              <label className={s.label}>Razón social</label>
-              <input className={s.input} name="razon_social" value={form.razon_social} onChange={handleChange} placeholder="Razón social" />
+              <label className={s.label}>Razon social</label>
+              <input className={s.input} name="razon_social" value={form.razon_social} onChange={handleChange} placeholder="Razon social" />
             </div>
             <div className={s.field}>
               <label className={s.label}>RNC</label>
               <input className={s.input} name="rnc" value={form.rnc} onChange={handleChange} placeholder="RNC de la empresa" />
             </div>
             <div className={s.field}>
-              <label className={s.label}>Teléfono</label>
+              <label className={s.label}>Telefono</label>
               <input className={s.input} name="telefono" value={form.telefono} onChange={handleChange} placeholder="(809) 000-0000" />
             </div>
             <div className={s.field}>
@@ -244,15 +282,15 @@ export default function EditarEmpresaPage({ id }) {
               </select>
             </div>
             <div className={`${s.field} ${s.fieldFull}`}>
-              <label className={s.label}>Dirección</label>
-              <textarea className={s.textarea} name="direccion" value={form.direccion} onChange={handleChange} placeholder="Dirección completa" rows={3} />
+              <label className={s.label}>Direccion</label>
+              <textarea className={s.textarea} name="direccion" value={form.direccion} onChange={handleChange} placeholder="Direccion completa" rows={3} />
             </div>
           </div>
         </div>
 
         <div className={s.section}>
           <div className={s.sectionTitle}>
-            <ion-icon name="apps-outline" /> Módulos habilitados
+            <ion-icon name="apps-outline" /> Modulos habilitados
             <span className={s.countBadge}>{modulosSeleccionados.length} seleccionados</span>
           </div>
 

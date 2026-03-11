@@ -1,12 +1,63 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getProveedores, crearProveedor, editarProveedor, eliminarProveedor } from "./servidor"
 import s from "./Proveedores.module.css"
 
 const EMPRESA_ID = 1
-const LIMITE = 15
+const LIMITE     = 15
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const FORM_VACIO = { nombre: "", rnc: "", telefono: "", email: "", direccion: "" }
+
+async function getProveedores(empresaId, filtros = {}) {
+  try {
+    const params = new URLSearchParams()
+    Object.entries(filtros).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") params.set(k, v)
+    })
+    const res = await fetch(`${API}/api/pos/proveedores/lista/${empresaId}?${params}`)
+    if (!res.ok) return { proveedores: [], total: 0, paginas: 1, pagina: 1 }
+    return await res.json()
+  } catch {
+    return { proveedores: [], total: 0, paginas: 1, pagina: 1 }
+  }
+}
+
+async function crearProveedor(empresaId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/proveedores/crear/${empresaId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch {
+    return { error: "No se pudo conectar con el servidor" }
+  }
+}
+
+async function editarProveedor(empresaId, proveedorId, body) {
+  try {
+    const res = await fetch(`${API}/api/pos/proveedores/editar/${empresaId}/${proveedorId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch {
+    return { error: "No se pudo conectar con el servidor" }
+  }
+}
+
+async function eliminarProveedor(empresaId, proveedorId) {
+  try {
+    const res = await fetch(`${API}/api/pos/proveedores/eliminar/${empresaId}/${proveedorId}`, {
+      method: "DELETE",
+    })
+    return await res.json()
+  } catch {
+    return { error: "No se pudo conectar con el servidor" }
+  }
+}
 
 function ModalProveedor({ inicial, onClose, onGuardado, mostrarAlerta }) {
   const esEditar = !!inicial
@@ -117,18 +168,18 @@ function ModalProveedor({ inicial, onClose, onGuardado, mostrarAlerta }) {
 }
 
 export default function Proveedores() {
-  const [proveedores, setProveedores]   = useState([])
-  const [total, setTotal]               = useState(0)
-  const [paginas, setPaginas]           = useState(1)
-  const [pagina, setPagina]             = useState(1)
-  const [busqueda, setBusqueda]         = useState("")
-  const [inputVal, setInputVal]         = useState("")
-  const [cargando, setCargando]         = useState(true)
-  const [alerta, setAlerta]             = useState(null)
-  const [modal, setModal]               = useState(null)
+  const [proveedores, setProveedores]         = useState([])
+  const [total, setTotal]                     = useState(0)
+  const [paginas, setPaginas]                 = useState(1)
+  const [pagina, setPagina]                   = useState(1)
+  const [busqueda, setBusqueda]               = useState("")
+  const [inputVal, setInputVal]               = useState("")
+  const [cargando, setCargando]               = useState(true)
+  const [alerta, setAlerta]                   = useState(null)
+  const [modal, setModal]                     = useState(null)
   const [confirmEliminar, setConfirmEliminar] = useState(null)
-  const [eliminando, setEliminando]     = useState(false)
-  const debounceRef                     = useRef(null)
+  const [eliminando, setEliminando]           = useState(false)
+  const debounceRef                           = useRef(null)
 
   const cargar = useCallback(async (b = busqueda, p = pagina) => {
     setCargando(true)
@@ -298,7 +349,6 @@ export default function Proveedores() {
           <button disabled={pagina === 1} onClick={() => irPagina(pagina - 1)}>
             <ion-icon name="chevron-back-outline" />
           </button>
-
           {paginasArr().map((item, i) =>
             item === "..." ? (
               <span key={`dots-${i}`} className={s.paginaDots}>…</span>
@@ -312,7 +362,6 @@ export default function Proveedores() {
               </button>
             )
           )}
-
           <button disabled={pagina === paginas} onClick={() => irPagina(pagina + 1)}>
             <ion-icon name="chevron-forward-outline" />
           </button>
@@ -332,7 +381,7 @@ export default function Proveedores() {
         <div className={s.overlay} onClick={e => e.target === e.currentTarget && setConfirmEliminar(null)}>
           <div className={s.modalConfirm}>
             <div className={s.confirmIcon}><ion-icon name="warning-outline" /></div>
-            <div className={s.confirmTitle}>¿Eliminar proveedor?</div>
+            <div className={s.confirmTitle}>Eliminar proveedor?</div>
             <p className={s.confirmDesc}>
               Se eliminará <strong>{confirmEliminar.nombre}</strong>. Solo se pueden eliminar proveedores sin compras registradas.
             </p>

@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { getUsuarios, crearUsuario, editarUsuario, toggleUsuario, resetPassword } from "./servidor"
 import s from "./UsuariosEmpresa.module.css"
 
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
 
 const TIPOS = [
@@ -13,7 +13,7 @@ const TIPOS = [
 const MODOS = [
   { id: 1, label: "POS" },
   { id: 2, label: "Obras" },
-  { id: 3, label: "Créditos" },
+  { id: 3, label: "Creditos" },
   { id: 4, label: "Ventas Online" },
 ]
 
@@ -22,8 +22,60 @@ const FORM_VACIO = {
   password: "", tipo_usuario_id: "3", modo_sistema_id: "1",
 }
 
+async function getUsuarios(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/usuarios/${empresaId}`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function crearUsuario(empresaId, data) {
+  try {
+    const res = await fetch(`${API}/api/pos/usuarios/${empresaId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function editarUsuario(id, data) {
+  try {
+    const res = await fetch(`${API}/api/pos/usuarios/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function toggleUsuario(id, estado) {
+  try {
+    const res = await fetch(`${API}/api/pos/usuarios/${id}/toggle`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function resetPassword(id, nuevaPassword) {
+  try {
+    const res = await fetch(`${API}/api/pos/usuarios/${id}/reset-password`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: nuevaPassword }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
 function Avatar({ nombre }) {
-  const letra = nombre?.charAt(0).toUpperCase() ?? "?"
+  const letra  = nombre?.charAt(0).toUpperCase() ?? "?"
   const colores = ["#1d6fce","#10b981","#8b5cf6","#f59e0b","#ef4444","#0ea5e9"]
   const color   = colores[letra.charCodeAt(0) % colores.length]
   return (
@@ -34,15 +86,15 @@ function Avatar({ nombre }) {
 }
 
 export default function UsuariosEmpresa() {
-  const [usuarios, setUsuarios]   = useState([])
-  const [cargando, setCargando]   = useState(true)
-  const [alerta, setAlerta]       = useState(null)
-  const [procesando, setProcesando] = useState(false)
-  const [modal, setModal]         = useState(null)
-  const [form, setForm]           = useState(FORM_VACIO)
-  const [modalReset, setModalReset] = useState(null)
-  const [nuevaPass, setNuevaPass] = useState("")
-  const [verPass, setVerPass]     = useState(false)
+  const [usuarios, setUsuarios]         = useState([])
+  const [cargando, setCargando]         = useState(true)
+  const [alerta, setAlerta]             = useState(null)
+  const [procesando, setProcesando]     = useState(false)
+  const [modal, setModal]               = useState(null)
+  const [form, setForm]                 = useState(FORM_VACIO)
+  const [modalReset, setModalReset]     = useState(null)
+  const [nuevaPass, setNuevaPass]       = useState("")
+  const [verPass, setVerPass]           = useState(false)
   const [verNuevaPass, setVerNuevaPass] = useState(false)
 
   const cargar = useCallback(async () => {
@@ -82,7 +134,7 @@ export default function UsuariosEmpresa() {
   async function handleGuardar() {
     if (!form.nombre_completo.trim()) return mostrarAlerta("error", "El nombre es obligatorio")
     if (!form.email.trim())           return mostrarAlerta("error", "El email es obligatorio")
-    if (modal === "crear" && !form.password.trim()) return mostrarAlerta("error", "La contraseña es obligatoria")
+    if (modal === "crear" && !form.password.trim()) return mostrarAlerta("error", "La contrasena es obligatoria")
     setProcesando(true)
     const res = modal === "crear"
       ? await crearUsuario(EMPRESA_ID, form)
@@ -103,12 +155,12 @@ export default function UsuariosEmpresa() {
 
   async function handleReset() {
     if (!nuevaPass.trim() || nuevaPass.length < 6)
-      return mostrarAlerta("error", "Mínimo 6 caracteres")
+      return mostrarAlerta("error", "Minimo 6 caracteres")
     setProcesando(true)
     const res = await resetPassword(modalReset.id, nuevaPass)
     setProcesando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
-    mostrarAlerta("ok", "Contraseña actualizada")
+    mostrarAlerta("ok", "Contrasena actualizada")
     setModalReset(null)
     setNuevaPass("")
   }
@@ -179,7 +231,7 @@ export default function UsuariosEmpresa() {
                 <button className={s.btnIcono} onClick={() => abrirEditar(u)} title="Editar">
                   <ion-icon name="pencil-outline" />
                 </button>
-                <button className={s.btnIcono} onClick={() => { setModalReset(u); setNuevaPass(""); setVerNuevaPass(false) }} title="Resetear contraseña">
+                <button className={s.btnIcono} onClick={() => { setModalReset(u); setNuevaPass(""); setVerNuevaPass(false) }} title="Resetear contrasena">
                   <ion-icon name="key-outline" />
                 </button>
               </div>
@@ -202,10 +254,10 @@ export default function UsuariosEmpresa() {
             <div className={s.modalGrid}>
               <div className={`${s.field} ${s.spanFull}`}>
                 <label>Nombre completo *</label>
-                <input className={s.input} value={form.nombre_completo} onChange={e => setF("nombre_completo", e.target.value)} placeholder="Juan Pérez" autoFocus />
+                <input className={s.input} value={form.nombre_completo} onChange={e => setF("nombre_completo", e.target.value)} placeholder="Juan Perez" autoFocus />
               </div>
               <div className={s.field}>
-                <label>Cédula</label>
+                <label>Cedula</label>
                 <input className={s.input} value={form.cedula} onChange={e => setF("cedula", e.target.value)} placeholder="001-0000000-0" />
               </div>
               <div className={s.field}>
@@ -226,14 +278,14 @@ export default function UsuariosEmpresa() {
               </div>
               {modal === "crear" && (
                 <div className={`${s.field} ${s.spanFull}`}>
-                  <label>Contraseña *</label>
+                  <label>Contrasena *</label>
                   <div className={s.passWrap}>
                     <input
                       className={s.input}
                       type={verPass ? "text" : "password"}
                       value={form.password}
                       onChange={e => setF("password", e.target.value)}
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder="Minimo 6 caracteres"
                     />
                     <button className={s.verBtn} type="button" onClick={() => setVerPass(v => !v)}>
                       <ion-icon name={verPass ? "eye-off-outline" : "eye-outline"} />
@@ -261,7 +313,7 @@ export default function UsuariosEmpresa() {
             </button>
             <div className={s.modalTitulo}>
               <ion-icon name="key-outline" />
-              Resetear contraseña
+              Resetear contrasena
             </div>
             <p className={s.resetSub}>Usuario: <strong>{modalReset.nombre_completo}</strong></p>
             <div className={s.passWrap}>
@@ -270,7 +322,7 @@ export default function UsuariosEmpresa() {
                 type={verNuevaPass ? "text" : "password"}
                 value={nuevaPass}
                 onChange={e => setNuevaPass(e.target.value)}
-                placeholder="Nueva contraseña (mín. 6 caracteres)"
+                placeholder="Nueva contrasena (min. 6 caracteres)"
                 autoFocus
               />
               <button className={s.verBtn} type="button" onClick={() => setVerNuevaPass(v => !v)}>
@@ -280,7 +332,7 @@ export default function UsuariosEmpresa() {
             <div className={s.modalFooter}>
               <button className={s.btnSecundario} onClick={() => setModalReset(null)}>Cancelar</button>
               <button className={s.btnPrimario} onClick={handleReset} disabled={procesando}>
-                {procesando ? <span className={s.spinner} /> : "Actualizar contraseña"}
+                {procesando ? <span className={s.spinner} /> : "Actualizar contrasena"}
               </button>
             </div>
           </div>

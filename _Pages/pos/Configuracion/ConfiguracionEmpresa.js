@@ -1,27 +1,63 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { getEmpresa, getMonedas, guardarEmpresa, subirLogoEmpresa } from "./servidor"
 import s from "./ConfiguracionEmpresa.module.css"
 
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
-const BACKEND    = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 const FORM_VACIO = {
   nombre: "", rnc: "", razon_social: "", telefono: "", email: "",
   direccion: "", pais: "DO", estado_geo: "", ciudad: "", moneda_id: "",
 }
 
+async function getEmpresa(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/configuracion/${empresaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function getMonedas() {
+  try {
+    const res = await fetch(`${API}/api/pos/configuracion/monedas`)
+    if (!res.ok) return []
+    return await res.json()
+  } catch { return [] }
+}
+
+async function guardarEmpresa(empresaId, data) {
+  try {
+    const res = await fetch(`${API}/api/pos/configuracion/${empresaId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function subirLogoEmpresa(empresaId, formData) {
+  try {
+    const res = await fetch(`${API}/api/pos/configuracion/${empresaId}/logo`, {
+      method: "POST",
+      body: formData,
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo subir el logo" } }
+}
+
 export default function ConfiguracionEmpresa() {
-  const [form, setForm]         = useState(FORM_VACIO)
-  const [monedas, setMonedas]   = useState([])
-  const [cargando, setCargando] = useState(true)
-  const [guardando, setGuardando] = useState(false)
-  const [alerta, setAlerta]     = useState(null)
+  const [form, setForm]               = useState(FORM_VACIO)
+  const [monedas, setMonedas]         = useState([])
+  const [cargando, setCargando]       = useState(true)
+  const [guardando, setGuardando]     = useState(false)
+  const [alerta, setAlerta]           = useState(null)
   const [logoPreview, setLogoPreview] = useState(null)
-  const [logoFile, setLogoFile] = useState(null)
-  const [dragOver, setDragOver] = useState(false)
-  const fileRef                 = useRef(null)
+  const [logoFile, setLogoFile]       = useState(null)
+  const [dragOver, setDragOver]       = useState(false)
+  const fileRef                       = useRef(null)
 
   const cargar = useCallback(async () => {
     setCargando(true)
@@ -40,7 +76,7 @@ export default function ConfiguracionEmpresa() {
         moneda_id:    String(emp.moneda_id ?? ""),
       })
       const logo = emp.configuracion?.find(c => c.clave === "logo")?.valor
-      if (logo) setLogoPreview(`${BACKEND}${logo}`)
+      if (logo) setLogoPreview(`${API}${logo}`)
     }
     setMonedas(mons)
     setCargando(false)
@@ -79,7 +115,7 @@ export default function ConfiguracionEmpresa() {
     const res = await guardarEmpresa(EMPRESA_ID, form)
     setGuardando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
-    mostrarAlerta("ok", "Configuración guardada correctamente")
+    mostrarAlerta("ok", "Configuracion guardada correctamente")
     cargar()
   }
 
@@ -109,22 +145,22 @@ export default function ConfiguracionEmpresa() {
       <div className={s.grid}>
 
         <div className={s.card}>
-          <div className={s.cardTitulo}><ion-icon name="business-outline" />Datos básicos</div>
+          <div className={s.cardTitulo}><ion-icon name="business-outline" />Datos basicos</div>
           <div className={s.formGrid}>
             <div className={`${s.field} ${s.spanFull}`}>
               <label>Nombre de la empresa *</label>
               <input className={s.input} value={form.nombre} onChange={e => setF("nombre", e.target.value)} placeholder="Mi Empresa S.R.L." />
             </div>
             <div className={s.field}>
-              <label>RNC / Cédula</label>
+              <label>RNC / Cedula</label>
               <input className={s.input} value={form.rnc} onChange={e => setF("rnc", e.target.value)} placeholder="101-12345-6" />
             </div>
             <div className={s.field}>
-              <label>Razón social</label>
-              <input className={s.input} value={form.razon_social} onChange={e => setF("razon_social", e.target.value)} placeholder="Razón social opcional" />
+              <label>Razon social</label>
+              <input className={s.input} value={form.razon_social} onChange={e => setF("razon_social", e.target.value)} placeholder="Razon social opcional" />
             </div>
             <div className={s.field}>
-              <label>Teléfono</label>
+              <label>Telefono</label>
               <input className={s.input} value={form.telefono} onChange={e => setF("telefono", e.target.value)} placeholder="809-000-0000" />
             </div>
             <div className={s.field}>
@@ -135,24 +171,24 @@ export default function ConfiguracionEmpresa() {
         </div>
 
         <div className={s.card}>
-          <div className={s.cardTitulo}><ion-icon name="location-outline" />Dirección y ubicación</div>
+          <div className={s.cardTitulo}><ion-icon name="location-outline" />Direccion y ubicacion</div>
           <div className={s.formGrid}>
             <div className={`${s.field} ${s.spanFull}`}>
-              <label>Dirección</label>
+              <label>Direccion</label>
               <input className={s.input} value={form.direccion} onChange={e => setF("direccion", e.target.value)} placeholder="Calle Principal #1" />
             </div>
             <div className={s.field}>
-              <label>País</label>
+              <label>Pais</label>
               <select className={s.input} value={form.pais} onChange={e => setF("pais", e.target.value)}>
-                <option value="DO">República Dominicana</option>
+                <option value="DO">Republica Dominicana</option>
                 <option value="US">Estados Unidos</option>
-                <option value="MX">México</option>
+                <option value="MX">Mexico</option>
                 <option value="CO">Colombia</option>
                 <option value="CL">Chile</option>
-                <option value="ES">España</option>
+                <option value="ES">Espana</option>
                 <option value="GT">Guatemala</option>
                 <option value="HN">Honduras</option>
-                <option value="PA">Panamá</option>
+                <option value="PA">Panama</option>
                 <option value="PR">Puerto Rico</option>
               </select>
             </div>
@@ -198,8 +234,8 @@ export default function ConfiguracionEmpresa() {
             ) : (
               <>
                 <ion-icon name="cloud-upload-outline" />
-                <span>Arrastra el logo aquí o haz clic</span>
-                <span className={s.dropHint}>PNG, JPG, WEBP o SVG — máx 2MB</span>
+                <span>Arrastra el logo aqui o haz clic</span>
+                <span className={s.dropHint}>PNG, JPG, WEBP o SVG - max 2MB</span>
               </>
             )}
             <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => handleLogoChange(e.target.files[0])} />

@@ -1,12 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getPedidos, getPedido, cambiarEstadoPedido, getResumenPedidos } from "./servidor"
 import s from "./PedidosOnline.module.css"
 
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
 const LIMITE     = 20
-const BACKEND    = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 const ESTADOS = ["pendiente", "confirmado", "enviado", "entregado", "cancelado"]
 
@@ -30,6 +29,45 @@ function fmtFecha(f) {
 function fmtHora(f) {
   if (!f) return "—"
   return new Date(f).toLocaleTimeString("es-DO", { hour: "2-digit", minute: "2-digit" })
+}
+
+async function getPedidos(empresaId, filtros = {}) {
+  try {
+    const params = new URLSearchParams()
+    Object.entries(filtros).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") params.set(k, v)
+    })
+    const res = await fetch(`${API}/api/pos/ventas-online/pedidos/lista/${empresaId}?${params}`)
+    if (!res.ok) return { pedidos: [], total: 0, paginas: 1 }
+    return await res.json()
+  } catch { return { pedidos: [], total: 0, paginas: 1 } }
+}
+
+async function getPedido(empresaId, pedidoId) {
+  try {
+    const res = await fetch(`${API}/api/pos/ventas-online/pedidos/${empresaId}/${pedidoId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+async function cambiarEstadoPedido(empresaId, pedidoId, estado) {
+  try {
+    const res = await fetch(`${API}/api/pos/ventas-online/pedidos/${empresaId}/${pedidoId}/estado`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+async function getResumenPedidos(empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/ventas-online/pedidos/resumen/${empresaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
 }
 
 function EstadoBadge({ estado }) {
@@ -88,9 +126,9 @@ function ModalDetalle({ pedidoId, empresaId, onClose, onCambioEstado, mostrarAle
                 <div className={s.seccionTitulo}><ion-icon name="person-outline" />Cliente</div>
                 <div className={s.infoGrid}>
                   <div className={s.infoItem}><span className={s.infoLabel}>Nombre</span><span className={s.infoVal}>{pedido.nombre_cliente}</span></div>
-                  {pedido.telefono  && <div className={s.infoItem}><span className={s.infoLabel}>Teléfono</span><span className={s.infoVal}>{pedido.telefono}</span></div>}
+                  {pedido.telefono  && <div className={s.infoItem}><span className={s.infoLabel}>Telefono</span><span className={s.infoVal}>{pedido.telefono}</span></div>}
                   {pedido.email     && <div className={s.infoItem}><span className={s.infoLabel}>Email</span><span className={s.infoVal}>{pedido.email}</span></div>}
-                  {pedido.direccion && <div className={s.infoItem}><span className={s.infoLabel}>Dirección</span><span className={s.infoVal}>{pedido.direccion}</span></div>}
+                  {pedido.direccion && <div className={s.infoItem}><span className={s.infoLabel}>Direccion</span><span className={s.infoVal}>{pedido.direccion}</span></div>}
                   {pedido.notas     && <div className={s.infoItem}><span className={s.infoLabel}>Notas</span><span className={s.infoVal}>{pedido.notas}</span></div>}
                   <div className={s.infoItem}><span className={s.infoLabel}>Fecha</span><span className={s.infoVal}>{fmtFecha(pedido.created_at)} {fmtHora(pedido.created_at)}</span></div>
                 </div>
@@ -102,7 +140,7 @@ function ModalDetalle({ pedidoId, empresaId, onClose, onCambioEstado, mostrarAle
                   {pedido.items?.map((item, i) => (
                     <div key={i} className={s.itemRow}>
                       {item.imagen
-                        ? <img src={`${BACKEND}${item.imagen}`} alt={item.nombre_producto} className={s.itemImg} />
+                        ? <img src={`${API}${item.imagen}`} alt={item.nombre_producto} className={s.itemImg} />
                         : <div className={s.itemImgVacio}><ion-icon name="cube-outline" /></div>
                       }
                       <span className={s.itemNombre}>{item.nombre_producto}</span>
@@ -251,7 +289,7 @@ export default function PedidosOnline() {
           <ion-icon name="search-outline" />
           <input
             className={s.searchInput}
-            placeholder="Buscar por cliente, email o teléfono..."
+            placeholder="Buscar por cliente, email o telefono..."
             value={inputVal}
             onChange={e => handleBusqueda(e.target.value)}
           />
@@ -341,7 +379,7 @@ export default function PedidosOnline() {
           </button>
           {paginasArr().map((item, i) =>
             item === "..." ? (
-              <span key={`dots-${i}`} className={s.paginaDots}>…</span>
+              <span key={`dots-${i}`} className={s.paginaDots}>...</span>
             ) : (
               <button
                 key={item}

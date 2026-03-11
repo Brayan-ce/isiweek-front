@@ -2,9 +2,29 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { obtenerDatosHeader, cerrarSesion } from "./servidor"
+import { useRouter, usePathname } from "next/navigation"
 import s from "./header.module.css"
+
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const CACHE_KEY = "isiweek_header_datos"
+
+async function obtenerDatosHeader() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    const res = await fetch(`${API}/api/superadmin/header/datos`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    if (data?.config?.sistema_logo) {
+      const logo = data.config.sistema_logo
+      if (!logo.startsWith("http")) {
+        data.config.sistema_logo = `${API}${logo.startsWith("/") ? "" : "/"}${logo}`
+      }
+    }
+    return data
+  } catch { return null }
+}
 
 const NAV = [
   { label: "Dashboard",     href: "/superadmin/dashboard",     icon: "grid-outline" },
@@ -15,10 +35,9 @@ const NAV = [
   { label: "Depuracion",    href: "/superadmin/depuracion",    icon: "bug-outline" },
 ]
 
-const CACHE_KEY = "isiweek_header_datos"
-
 export default function HeaderSuperAdmin({ sesion }) {
   const pathname = usePathname()
+  const router   = useRouter()
   const [dark, setDark]       = useState(false)
   const [open, setOpen]       = useState(false)
   const [sidebar, setSidebar] = useState(false)
@@ -48,7 +67,7 @@ export default function HeaderSuperAdmin({ sesion }) {
   }, [])
 
   useEffect(() => {
-    const handler = (e) => {
+    const handler = e => {
       if (dropRef.current && !dropRef.current.contains(e.target)) setOpen(false)
     }
     document.addEventListener("mousedown", handler)
@@ -65,6 +84,12 @@ export default function HeaderSuperAdmin({ sesion }) {
     setDark(next)
     localStorage.setItem("isiweek_theme", next ? "dark" : "light")
     document.documentElement.setAttribute("data-theme", next ? "dark" : "light")
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("isiweek_token")
+    sessionStorage.removeItem(CACHE_KEY)
+    router.push("/login")
   }
 
   const iniciales  = sesion?.nombre?.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() ?? "SA"
@@ -138,12 +163,10 @@ export default function HeaderSuperAdmin({ sesion }) {
                     </button>
                   </Link>
                   <div className={s.dropDivider} />
-                  <form action={cerrarSesion}>
-                    <button type="submit" className={`${s.dropItem} ${s.dropItemDanger}`}>
-                      <span className={s.dropItemIcon}><ion-icon name="log-out-outline" /></span>
-                      Cerrar sesion
-                    </button>
-                  </form>
+                  <button className={`${s.dropItem} ${s.dropItemDanger}`} onClick={handleLogout}>
+                    <span className={s.dropItemIcon}><ion-icon name="log-out-outline" /></span>
+                    Cerrar sesion
+                  </button>
                 </div>
               </div>
             )}
@@ -194,12 +217,10 @@ export default function HeaderSuperAdmin({ sesion }) {
                 <ion-icon name={dark ? "sunny-outline" : "moon-outline"} />
                 {dark ? "Modo claro" : "Modo oscuro"}
               </button>
-              <form action={cerrarSesion} style={{ width: "100%" }}>
-                <button type="submit" className={s.logoutFull}>
-                  <ion-icon name="log-out-outline" />
-                  Cerrar sesion
-                </button>
-              </form>
+              <button className={s.logoutFull} onClick={handleLogout}>
+                <ion-icon name="log-out-outline" />
+                Cerrar sesion
+              </button>
             </div>
           </aside>
         </div>

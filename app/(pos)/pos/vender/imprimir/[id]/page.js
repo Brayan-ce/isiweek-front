@@ -1,6 +1,6 @@
-import { use } from "react"
 import ImprimirVentaPage from "@/_Pages/pos/Vender/imprimir/imprimir"
-export default function Page({ params }) {
-  const { id } = use(params)
+
+export default async function Page({ params }) {
+  const { id } = await params
   return <ImprimirVentaPage id={id} />
 }

@@ -2,9 +2,18 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { obtenerEmpresa } from "../../servidor"
 import { Country, State } from "country-state-city"
 import s from "./ver.module.css"
+
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+async function obtenerEmpresa(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/empresas/${id}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
 
 function fmtFecha(f) {
   if (!f) return "—"
@@ -12,8 +21,8 @@ function fmtFecha(f) {
 }
 
 function fmtUbicacion(pais, estado_geo, ciudad) {
-  const paisNombre  = pais      ? Country.getCountryByCode(pais)?.name           : null
-  const estadoNombre = (pais && estado_geo) ? State.getStateByCodeAndCountry(estado_geo, pais)?.name : null
+  const paisNombre   = pais                  ? Country.getCountryByCode(pais)?.name                    : null
+  const estadoNombre = (pais && estado_geo)  ? State.getStateByCodeAndCountry(estado_geo, pais)?.name  : null
   const partes = [ciudad, estadoNombre, paisNombre].filter(Boolean)
   return partes.length ? partes.join(", ") : "—"
 }
@@ -24,6 +33,15 @@ const MODO_META = {
   CREDITOS:      { icon: "card-outline",       color: "#8b5cf6" },
   VENTAS_ONLINE: { icon: "globe-outline",      color: "#10b981" },
   OBRAS:         { icon: "construct-outline",  color: "#f59e0b" },
+}
+
+function InfoRow({ icon, label, value, full }) {
+  return (
+    <div className={`${s.infoRow} ${full ? s.infoRowFull : ""}`}>
+      <span className={s.infoLabel}><ion-icon name={icon} /> {label}</span>
+      <span className={s.infoValue}>{value || "—"}</span>
+    </div>
+  )
 }
 
 export default function VerEmpresaPage({ id }) {
@@ -110,23 +128,23 @@ export default function VerEmpresaPage({ id }) {
 
       <div className={s.mainGrid}>
         <div className={s.section}>
-          <div className={s.sectionTitle}><ion-icon name="information-circle-outline" /> Información general</div>
+          <div className={s.sectionTitle}><ion-icon name="information-circle-outline" /> Informacion general</div>
           <div className={s.infoGrid}>
-            <InfoRow icon="card-outline"     label="RNC"        value={empresa.rnc} />
-            <InfoRow icon="cash-outline"     label="Moneda"     value={empresa.moneda ? `${empresa.moneda.nombre} (${empresa.moneda.simbolo} ${empresa.moneda.codigo})` : null} />
-            <InfoRow icon="call-outline"     label="Teléfono"   value={empresa.telefono} />
-            <InfoRow icon="mail-outline"     label="Email"      value={empresa.email} />
-            <InfoRow icon="location-outline" label="Ubicación"  value={fmtUbicacion(empresa.pais, empresa.estado_geo, empresa.ciudad)} full />
-            <InfoRow icon="map-outline"      label="Dirección"  value={empresa.direccion} full />
-            <InfoRow icon="calendar-outline" label="Creada"     value={fmtFecha(empresa.created_at)} />
+            <InfoRow icon="card-outline"     label="RNC"         value={empresa.rnc} />
+            <InfoRow icon="cash-outline"     label="Moneda"      value={empresa.moneda ? `${empresa.moneda.nombre} (${empresa.moneda.simbolo} ${empresa.moneda.codigo})` : null} />
+            <InfoRow icon="call-outline"     label="Telefono"    value={empresa.telefono} />
+            <InfoRow icon="mail-outline"     label="Email"       value={empresa.email} />
+            <InfoRow icon="location-outline" label="Ubicacion"   value={fmtUbicacion(empresa.pais, empresa.estado_geo, empresa.ciudad)} full />
+            <InfoRow icon="map-outline"      label="Direccion"   value={empresa.direccion} full />
+            <InfoRow icon="calendar-outline" label="Creada"      value={fmtFecha(empresa.created_at)} />
             <InfoRow icon="time-outline"     label="Actualizada" value={fmtFecha(empresa.updated_at)} />
           </div>
         </div>
 
         <div className={s.section}>
-          <div className={s.sectionTitle}><ion-icon name="apps-outline" /> Módulos habilitados</div>
+          <div className={s.sectionTitle}><ion-icon name="apps-outline" /> Modulos habilitados</div>
           {Object.keys(modulosPorModo).length === 0 ? (
-            <p className={s.noModulos}>Sin módulos asignados</p>
+            <p className={s.noModulos}>Sin modulos asignados</p>
           ) : (
             Object.entries(modulosPorModo).map(([modo, mods]) => {
               const meta = MODO_META[modo] ?? { icon: "grid-outline", color: "#64748b" }
@@ -148,15 +166,6 @@ export default function VerEmpresaPage({ id }) {
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-function InfoRow({ icon, label, value, full }) {
-  return (
-    <div className={`${s.infoRow} ${full ? s.infoRowFull : ""}`}>
-      <span className={s.infoLabel}><ion-icon name={icon} /> {label}</span>
-      <span className={s.infoValue}>{value || "—"}</span>
     </div>
   )
 }

@@ -1,13 +1,33 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getVentasCuotas, pagarCuota } from "./servidor"
 import s from "./Conduces.module.css"
 
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const EMPRESA_ID = 1
 
 function fmt(n, simbolo = "RD$") {
   return `${simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+async function getVentasCuotas(empresaId, busqueda = "", pagina = 1, limite = 20) {
+  try {
+    const params = new URLSearchParams({ busqueda, pagina, limite })
+    const res = await fetch(`${API}/api/pos/conduces/${empresaId}?${params}`)
+    if (!res.ok) return { ventas: [], total: 0, paginas: 1 }
+    return await res.json()
+  } catch { return { ventas: [], total: 0, paginas: 1 } }
+}
+
+async function pagarCuota(cuotaId, ventaId, empresaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/conduces/pagar-cuota/${cuotaId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ventaId, empresaId }),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
 }
 
 export default function Conduces() {
@@ -48,7 +68,6 @@ export default function Conduces() {
     setProcesando(false)
     if (res.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", `Cuota ${res.numero} pagada`)
-    // Actualizar local
     setVentas(prev => prev.map(v => {
       if (v.id !== ventaId) return v
       const cuotas = v.venta_cuotas.map(c => c.id === cuotaId ? { ...c, estado: "pagada", pagada_at: new Date() } : c)
@@ -87,7 +106,7 @@ export default function Conduces() {
             <input
               ref={searchRef}
               className={s.searchInput}
-              placeholder="Buscar cliente o número..."
+              placeholder="Buscar cliente o numero..."
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />

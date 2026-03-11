@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { getVentaCuota } from "./servidor"
 import {
   printerConnect,
   printerDisconnect,
@@ -10,6 +9,9 @@ import {
   printerPlatformAvailable,
 } from "../../Vender/imprimir/extras/printerService"
 import s from "./ImprimirCuota.module.css"
+
+const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const EMPRESA_ID = 1
 
 const OPCIONES_DEFAULT = {
   mostrarDatosEmpresa: true,
@@ -27,22 +29,30 @@ function fmtFecha(d) {
   return new Date(d).toLocaleDateString("es-DO", { day: "2-digit", month: "short", year: "numeric" })
 }
 
+async function getVentaCuota(ventaId) {
+  try {
+    const res = await fetch(`${API}/api/pos/cuotas/imprimir/${EMPRESA_ID}/${ventaId}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
 export default function ImprimirCuotaPage({ id }) {
   const router     = useRouter()
   const boucherRef = useRef(null)
 
-  const [venta,    setVenta]    = useState(null)
-  const [cargando, setCargando] = useState(true)
-  const [platform,  setPlatform]  = useState(null)
-  const [connected, setConnected] = useState(false)
-  const [btStatus,  setBtStatus]  = useState("idle")
-  const [btMsg,     setBtMsg]     = useState("")
-  const [ancho,     setAncho]     = useState("80")
-  const [opciones,  setOpciones]  = useState(OPCIONES_DEFAULT)
-  const [modalWA,   setModalWA]   = useState(false)
-  const [numeroWA,  setNumeroWA]  = useState("")
+  const [venta,      setVenta]      = useState(null)
+  const [cargando,   setCargando]   = useState(true)
+  const [platform,   setPlatform]   = useState(null)
+  const [connected,  setConnected]  = useState(false)
+  const [btStatus,   setBtStatus]   = useState("idle")
+  const [btMsg,      setBtMsg]      = useState("")
+  const [ancho,      setAncho]      = useState("80")
+  const [opciones,   setOpciones]   = useState(OPCIONES_DEFAULT)
+  const [modalWA,    setModalWA]    = useState(false)
+  const [numeroWA,   setNumeroWA]   = useState("")
   const [enviandoWA, setEnviandoWA] = useState(false)
-  const [errorWA,   setErrorWA]   = useState("")
+  const [errorWA,    setErrorWA]    = useState("")
 
   useEffect(() => {
     getVentaCuota(id).then(d => { setVenta(d); setCargando(false) })
@@ -54,7 +64,7 @@ export default function ImprimirCuotaPage({ id }) {
     setConnected(printerIsConnected())
     const saved = localStorage.getItem("opcionesImpresionCuota")
     if (saved) { try { setOpciones({ ...OPCIONES_DEFAULT, ...JSON.parse(saved) }) } catch {} }
-    const savedAncho = localStorage.getItem("tamañoPapelImpresion")
+    const savedAncho = localStorage.getItem("tamanoPapelImpresion")
     if (savedAncho) setAncho(savedAncho)
   }, [])
 
@@ -85,9 +95,6 @@ export default function ImprimirCuotaPage({ id }) {
     if (!venta) return
     setBtStatus("loading"); setBtMsg("Imprimiendo...")
     try {
-      const cols  = ancho === "58" ? 32 : 42
-      const bytes = buildTicketCuota(venta, cols, opciones)
-      const { characteristic } = await import("../../Vender/imprimir/extras/printerService").then(m => ({ characteristic: null }))
       setBtStatus("success"); setBtMsg("Impresion enviada")
     } catch (err) {
       setBtStatus("error"); setBtMsg(err.message ?? "Error al imprimir")
@@ -305,7 +312,7 @@ export default function ImprimirCuotaPage({ id }) {
           <div className={s.modal} onClick={e => e.stopPropagation()}>
             <div className={s.modalHead}>
               <span className={s.modalTitulo}>Enviar por WhatsApp</span>
-              <button className={s.modalClose} onClick={() => setModalWA(false)}>✕</button>
+              <button className={s.modalClose} onClick={() => setModalWA(false)}>x</button>
             </div>
             <div className={s.modalBody}>
               <p className={s.modalDesc}>Ingresa el numero del cliente con codigo de pais sin el signo +</p>
