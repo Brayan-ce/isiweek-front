@@ -1,14 +1,22 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 import s from "./Gastos.module.css"
 
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
-const USUARIO_ID = 2
-const LIMITE     = 20
+const API    = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const LIMITE = 20
 
 const FORM_VACIO = { concepto: "", monto: "", tipo: "" }
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function fmt(n) {
   return `RD$ ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -91,9 +99,9 @@ async function eliminarGasto(empresaId, gastoId) {
   } catch { return { error: "No se pudo conectar con el servidor" } }
 }
 
-function ModalGasto({ inicial, onClose, onGuardado, mostrarAlerta, tiposExistentes }) {
+function ModalGasto({ inicial, onClose, onGuardado, mostrarAlerta, tiposExistentes, empresaId, usuarioId }) {
   const esEditar = !!inicial
-  const [form, setForm]     = useState(
+  const [form, setForm] = useState(
     inicial
       ? { concepto: inicial.concepto ?? "", monto: String(inicial.monto ?? ""), tipo: inicial.tipo ?? "" }
       : { ...FORM_VACIO }
@@ -107,8 +115,8 @@ function ModalGasto({ inicial, onClose, onGuardado, mostrarAlerta, tiposExistent
     if (!form.monto || Number(form.monto) <= 0) return mostrarAlerta("error", "El monto debe ser mayor a 0")
     setCargando(true)
     const res = esEditar
-      ? await editarGasto(EMPRESA_ID, inicial.id, form)
-      : await crearGasto(EMPRESA_ID, USUARIO_ID, form)
+      ? await editarGasto(empresaId, inicial.id, form)
+      : await crearGasto(empresaId, usuarioId, form)
     setCargando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", esEditar ? "Gasto actualizado" : "Gasto registrado")
@@ -182,29 +190,40 @@ function ModalGasto({ inicial, onClose, onGuardado, mostrarAlerta, tiposExistent
 }
 
 export default function Gastos() {
-  const [caja, setCaja]                       = useState(null)
-  const [cargandoCaja, setCargandoCaja]       = useState(true)
-  const [gastos, setGastos]                   = useState([])
-  const [total, setTotal]                     = useState(0)
-  const [paginas, setPaginas]                 = useState(1)
-  const [pagina, setPagina]                   = useState(1)
-  const [resumen, setResumen]                 = useState(null)
-  const [tiposExistentes, setTiposExistentes] = useState([])
-  const [busqueda, setBusqueda]               = useState("")
-  const [inputVal, setInputVal]               = useState("")
-  const [tipoFiltro, setTipoFiltro]           = useState("")
-  const [cargando, setCargando]               = useState(true)
-  const [alerta, setAlerta]                   = useState(null)
-  const [modal, setModal]                     = useState(null)
-  const [confirmEliminar, setConfirmEliminar] = useState(null)
-  const [eliminando, setEliminando]           = useState(false)
-  const debounceRef                           = useRef(null)
+  const router = useRouter()
+  const [empresaId, setEmpresaId]               = useState(null)
+  const [usuarioId, setUsuarioId]               = useState(null)
+  const [caja, setCaja]                         = useState(null)
+  const [cargandoCaja, setCargandoCaja]         = useState(true)
+  const [gastos, setGastos]                     = useState([])
+  const [total, setTotal]                       = useState(0)
+  const [paginas, setPaginas]                   = useState(1)
+  const [pagina, setPagina]                     = useState(1)
+  const [resumen, setResumen]                   = useState(null)
+  const [tiposExistentes, setTiposExistentes]   = useState([])
+  const [busqueda, setBusqueda]                 = useState("")
+  const [inputVal, setInputVal]                 = useState("")
+  const [tipoFiltro, setTipoFiltro]             = useState("")
+  const [cargando, setCargando]                 = useState(true)
+  const [alerta, setAlerta]                     = useState(null)
+  const [modal, setModal]                       = useState(null)
+  const [confirmEliminar, setConfirmEliminar]   = useState(null)
+  const [eliminando, setEliminando]             = useState(false)
+  const debounceRef                             = useRef(null)
 
   const cajaAbierta = caja?.sesion?.estado === "abierta"
 
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
+  }, [])
+
   const cargar = useCallback(async (opts = {}) => {
+    if (!empresaId) return
     setCargando(true)
-    const res = await getGastos(EMPRESA_ID, {
+    const res = await getGastos(empresaId, {
       busqueda: opts.busqueda ?? busqueda,
       tipo:     opts.tipo     ?? tipoFiltro,
       pagina:   opts.pagina   ?? pagina,
@@ -214,18 +233,19 @@ export default function Gastos() {
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [busqueda, tipoFiltro, pagina])
+  }, [empresaId, busqueda, tipoFiltro, pagina])
 
   useEffect(() => {
+    if (!empresaId || !usuarioId) return
     setCargandoCaja(true)
-    getDatosCaja(USUARIO_ID, EMPRESA_ID).then(d => {
+    getDatosCaja(usuarioId, empresaId).then(d => {
       setCaja(d)
       setCargandoCaja(false)
     })
     cargar()
-    getResumenGastos(EMPRESA_ID).then(r => setResumen(r))
-    getTiposGasto(EMPRESA_ID).then(t => setTiposExistentes(t))
-  }, [])
+    getResumenGastos(empresaId).then(r => setResumen(r))
+    getTiposGasto(empresaId).then(t => setTiposExistentes(t))
+  }, [empresaId, usuarioId])
 
   function handleBusqueda(val) {
     setInputVal(val)
@@ -258,7 +278,7 @@ export default function Gastos() {
   async function handleEliminar() {
     if (!confirmEliminar) return
     setEliminando(true)
-    const res = await eliminarGasto(EMPRESA_ID, confirmEliminar.id)
+    const res = await eliminarGasto(empresaId, confirmEliminar.id)
     setEliminando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Gasto eliminado")
@@ -266,7 +286,7 @@ export default function Gastos() {
     const nuevaPagina = gastos.length === 1 && pagina > 1 ? pagina - 1 : pagina
     setPagina(nuevaPagina)
     cargar({ pagina: nuevaPagina })
-    getResumenGastos(EMPRESA_ID).then(r => setResumen(r))
+    getResumenGastos(empresaId).then(r => setResumen(r))
   }
 
   const hayFiltros = inputVal || tipoFiltro
@@ -279,6 +299,8 @@ export default function Gastos() {
     else arr.push(1, "...", pagina - 1, pagina, pagina + 1, "...", paginas)
     return arr
   }
+
+  if (!empresaId || cargando) return <div className={s.page} />
 
   return (
     <div className={s.page}>
@@ -382,18 +404,7 @@ export default function Gastos() {
         </div>
 
         <div className={s.tablaBody}>
-          {cargando ? (
-            [...Array(8)].map((_, i) => (
-              <div key={i} className={s.skeletonRow}>
-                <div className={s.skeletonCell} style={{ width: "28%" }} />
-                <div className={s.skeletonCell} style={{ width: "12%" }} />
-                <div className={s.skeletonCell} style={{ width: "16%" }} />
-                <div className={s.skeletonCell} style={{ width: "12%" }} />
-                <div className={s.skeletonCell} style={{ width: "8%" }} />
-                <div className={s.skeletonCell} style={{ width: "12%" }} />
-              </div>
-            ))
-          ) : gastos.length === 0 ? (
+          {gastos.length === 0 ? (
             <div className={s.empty}>
               <ion-icon name="trending-down-outline" />
               <p>{hayFiltros ? "Sin resultados con los filtros aplicados" : "No hay gastos registrados"}</p>
@@ -471,11 +482,13 @@ export default function Gastos() {
           onGuardado={() => {
             setModal(null)
             cargar()
-            getResumenGastos(EMPRESA_ID).then(r => setResumen(r))
-            getTiposGasto(EMPRESA_ID).then(t => setTiposExistentes(t))
+            getResumenGastos(empresaId).then(r => setResumen(r))
+            getTiposGasto(empresaId).then(t => setTiposExistentes(t))
           }}
           mostrarAlerta={mostrarAlerta}
           tiposExistentes={tiposExistentes}
+          empresaId={empresaId}
+          usuarioId={usuarioId}
         />
       )}
 

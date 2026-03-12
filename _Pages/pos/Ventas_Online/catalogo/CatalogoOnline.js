@@ -1,16 +1,25 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import s from "./CatalogoOnline.module.css"
 
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
+const API          = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const BASE_URL_CAT = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/catalogo/`
 
 const CONFIG_VACIA = {
   nombre: "", descripcion: "", url_slug: "", whatsapp: "",
   horario: "", direccion: "", color_primario: "#1d6fce",
   color_secundario: "#0ea5e9", activo: true, logo: null,
+}
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
 }
 
 function fmt(n) {
@@ -87,6 +96,8 @@ function generarSlug(nombre) {
 }
 
 export default function CatalogoOnline() {
+  const router                        = useRouter()
+  const [empresaId, setEmpresaId]     = useState(null)
   const [tab, setTab]                 = useState("config")
   const [config, setConfig]           = useState(CONFIG_VACIA)
   const [productos, setProductos]     = useState([])
@@ -102,11 +113,18 @@ export default function CatalogoOnline() {
 
   const urlCompleta = `${BASE_URL_CAT}${config.url_slug}`
 
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
+
   const cargar = useCallback(async () => {
+    if (!empresaId) return
     setCargando(true)
     const [cfg, prods] = await Promise.all([
-      getConfigCatalogo(EMPRESA_ID),
-      getProductosCatalogo(EMPRESA_ID),
+      getConfigCatalogo(empresaId),
+      getProductosCatalogo(empresaId),
     ])
     if (cfg) {
       setConfig(cfg)
@@ -114,7 +132,7 @@ export default function CatalogoOnline() {
     }
     setProductos(prods)
     setCargando(false)
-  }, [])
+  }, [empresaId])
 
   useEffect(() => { cargar() }, [cargar])
 
@@ -131,19 +149,19 @@ export default function CatalogoOnline() {
   }
 
   async function handleGuardar() {
-    if (!config.nombre.trim())    return mostrarAlerta("error", "El nombre es obligatorio")
-    if (!config.url_slug.trim())  return mostrarAlerta("error", "La URL del catalogo es obligatoria")
+    if (!config.nombre.trim())   return mostrarAlerta("error", "El nombre es obligatorio")
+    if (!config.url_slug.trim()) return mostrarAlerta("error", "La URL del catalogo es obligatoria")
     setGuardando(true)
 
     let logoUrl = config.logo
     if (logoFile) {
       const fd = new FormData()
       fd.append("logo", logoFile)
-      const r = await subirLogoCatalogo(EMPRESA_ID, fd)
+      const r = await subirLogoCatalogo(empresaId, fd)
       if (r?.url) logoUrl = r.url
     }
 
-    const res = await guardarConfigCatalogo(EMPRESA_ID, { ...config, logo: logoUrl })
+    const res = await guardarConfigCatalogo(empresaId, { ...config, logo: logoUrl })
     setGuardando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Cambios guardados correctamente")
@@ -153,7 +171,7 @@ export default function CatalogoOnline() {
   async function handleToggleProducto(productoId, campo, valorActual) {
     const nuevoValor = !valorActual
     setProductos(p => p.map(pr => pr.id === productoId ? { ...pr, [campo]: nuevoValor } : pr))
-    const res = await toggleProductoCatalogo(EMPRESA_ID, productoId, campo, nuevoValor)
+    const res = await toggleProductoCatalogo(empresaId, productoId, campo, nuevoValor)
     if (res?.error) {
       mostrarAlerta("error", res.error)
       setProductos(p => p.map(pr => pr.id === productoId ? { ...pr, [campo]: valorActual } : pr))
@@ -180,7 +198,7 @@ export default function CatalogoOnline() {
   const visibles   = productos.filter(p => p.visible).length
   const destacados = productos.filter(p => p.destacado).length
 
-  if (cargando) return (
+  if (!empresaId || cargando) return (
     <div className={s.page}>
       <div className={s.skeletonHeader} />
       <div className={s.skeletonBody} />

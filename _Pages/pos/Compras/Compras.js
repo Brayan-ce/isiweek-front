@@ -4,9 +4,16 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import s from "./Compras.module.css"
 
-const EMPRESA_ID = 1
-const USUARIO_ID = 2
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 async function getDatosCompra(empresaId) {
   try {
@@ -74,7 +81,7 @@ const ESTADO_META = {
 
 const ITEM_VACIO = { producto_id: "", nombre_producto: "", cantidad: 1, precio_unitario: "" }
 
-function ModalCompra({ datos, inicial, onClose, onGuardado, mostrarAlerta }) {
+function ModalCompra({ datos, inicial, onClose, onGuardado, mostrarAlerta, empresaId, usuarioId }) {
   const esEditar = !!inicial
   const [proveedor_id, setProveedorId] = useState(inicial?.proveedor_id ?? "")
   const [estado, setEstado]            = useState(inicial?.estado ?? "completada")
@@ -118,9 +125,9 @@ function ModalCompra({ datos, inicial, onClose, onGuardado, mostrarAlerta }) {
     setCargando(true)
     let res
     if (esEditar) {
-      res = await editarCompra(EMPRESA_ID, inicial.id, { estado })
+      res = await editarCompra(empresaId, inicial.id, { estado })
     } else {
-      res = await crearCompra(EMPRESA_ID, USUARIO_ID, {
+      res = await crearCompra(empresaId, usuarioId, {
         proveedor_id: proveedor_id || null,
         estado,
         items: items.map(i => ({
@@ -242,31 +249,42 @@ function ModalCompra({ datos, inicial, onClose, onGuardado, mostrarAlerta }) {
 
 export default function Compras() {
   const router = useRouter()
-  const [compras, setCompras]               = useState([])
-  const [total, setTotal]                   = useState(0)
-  const [paginas, setPaginas]               = useState(1)
-  const [pagina, setPagina]                 = useState(1)
-  const [cargando, setCargando]             = useState(true)
-  const [datos, setDatos]                   = useState(null)
-  const [alerta, setAlerta]                 = useState(null)
-  const [modal, setModal]                   = useState(null)
-  const [confirmEliminar, setConfirmEliminar] = useState(null)
-  const [eliminando, setEliminando]         = useState(false)
-  const [filtros, setFiltros]               = useState({ proveedor_id: "", estado: "", fecha_desde: "", fecha_hasta: "" })
+  const [empresaId, setEmpresaId]               = useState(null)
+  const [usuarioId, setUsuarioId]               = useState(null)
+  const [compras, setCompras]                   = useState([])
+  const [total, setTotal]                       = useState(0)
+  const [paginas, setPaginas]                   = useState(1)
+  const [pagina, setPagina]                     = useState(1)
+  const [cargando, setCargando]                 = useState(true)
+  const [datos, setDatos]                       = useState(null)
+  const [alerta, setAlerta]                     = useState(null)
+  const [modal, setModal]                       = useState(null)
+  const [confirmEliminar, setConfirmEliminar]   = useState(null)
+  const [eliminando, setEliminando]             = useState(false)
+  const [filtros, setFiltros]                   = useState({ proveedor_id: "", estado: "", fecha_desde: "", fecha_hasta: "" })
+
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
+  }, [])
 
   const cargar = useCallback(async (f = filtros, p = pagina) => {
+    if (!empresaId) return
     setCargando(true)
-    const res = await getCompras(EMPRESA_ID, { ...f, pagina: p, limite: 15 })
+    const res = await getCompras(empresaId, { ...f, pagina: p, limite: 15 })
     setCompras(res.compras ?? [])
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [filtros, pagina])
+  }, [empresaId, filtros, pagina])
 
   useEffect(() => {
+    if (!empresaId) return
     cargar()
-    getDatosCompra(EMPRESA_ID).then(d => { if (d) setDatos(d) })
-  }, [])
+    getDatosCompra(empresaId).then(d => { if (d) setDatos(d) })
+  }, [empresaId])
 
   function mostrarAlerta(tipo, msg) {
     setAlerta({ tipo, msg })
@@ -282,7 +300,7 @@ export default function Compras() {
   async function handleEliminar() {
     if (!confirmEliminar) return
     setEliminando(true)
-    const res = await eliminarCompra(EMPRESA_ID, confirmEliminar.id)
+    const res = await eliminarCompra(empresaId, confirmEliminar.id)
     setEliminando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Compra eliminada")
@@ -291,6 +309,8 @@ export default function Compras() {
   }
 
   const hayFiltros = Object.values(filtros).some(v => v)
+
+  if (!empresaId || cargando) return <div className={s.page} />
 
   return (
     <div className={s.page}>
@@ -361,9 +381,7 @@ export default function Compras() {
           <span></span>
         </div>
 
-        {cargando ? (
-          [...Array(6)].map((_, i) => <div key={i} className={s.skeletonRow} />)
-        ) : compras.length === 0 ? (
+        {compras.length === 0 ? (
           <div className={s.empty}>
             <ion-icon name="bag-handle-outline" />
             <p>No hay compras registradas</p>
@@ -418,6 +436,8 @@ export default function Compras() {
           onClose={() => setModal(null)}
           onGuardado={() => { setModal(null); cargar() }}
           mostrarAlerta={mostrarAlerta}
+          empresaId={empresaId}
+          usuarioId={usuarioId}
         />
       )}
 

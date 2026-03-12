@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import {
   exportarExcelVentas,
   exportarExcelProductos,
@@ -15,7 +16,6 @@ import {
 import s from "./Reportes.module.css"
 
 const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
 const COLORES    = ["#1d6fce", "#0ea5e9", "#22c55e", "#f59e0b", "#8b5cf6", "#ef4444"]
 const AÑO_ACTUAL = new Date().getFullYear()
 const MES_ACTUAL = new Date().getMonth() + 1
@@ -33,6 +33,15 @@ const MESES = [
 ]
 
 const AÑOS = [AÑO_ACTUAL, AÑO_ACTUAL - 1, AÑO_ACTUAL - 2]
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function fmt(n) {
   return Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -97,25 +106,34 @@ async function getReporteGastos(empresaId, periodo, año, mes) {
 }
 
 export default function Reportes() {
-  const [tab,        setTab]        = useState("ventas")
-  const [periodo,    setPeriodo]    = useState("mes")
-  const [año,        setAño]        = useState(AÑO_ACTUAL)
-  const [mes,        setMes]        = useState(MES_ACTUAL)
-  const [data,       setData]       = useState(null)
-  const [cargando,   setCargando]   = useState(true)
-  const [error,      setError]      = useState(false)
-  const [exportando, setExportando] = useState(false)
+  const router                        = useRouter()
+  const [empresaId, setEmpresaId]     = useState(null)
+  const [tab,        setTab]          = useState("ventas")
+  const [periodo,    setPeriodo]      = useState("mes")
+  const [año,        setAño]          = useState(AÑO_ACTUAL)
+  const [mes,        setMes]          = useState(MES_ACTUAL)
+  const [data,       setData]         = useState(null)
+  const [cargando,   setCargando]     = useState(true)
+  const [error,      setError]        = useState(false)
+  const [exportando, setExportando]   = useState(false)
+
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
 
   const cargar = useCallback(async () => {
+    if (!empresaId) return
     setCargando(true)
     setError(false)
     setData(null)
     try {
       let res = null
-      if (tab === "ventas")    res = await getReporteVentas(EMPRESA_ID, periodo, año, mes)
-      if (tab === "productos") res = await getReporteProductos(EMPRESA_ID, periodo, año, mes)
-      if (tab === "clientes")  res = await getReporteClientes(EMPRESA_ID, periodo, año, mes)
-      if (tab === "gastos")    res = await getReporteGastos(EMPRESA_ID, periodo, año, mes)
+      if (tab === "ventas")    res = await getReporteVentas(empresaId, periodo, año, mes)
+      if (tab === "productos") res = await getReporteProductos(empresaId, periodo, año, mes)
+      if (tab === "clientes")  res = await getReporteClientes(empresaId, periodo, año, mes)
+      if (tab === "gastos")    res = await getReporteGastos(empresaId, periodo, año, mes)
       if (!res) { setError(true); return }
       setData(res)
     } catch {
@@ -123,7 +141,7 @@ export default function Reportes() {
     } finally {
       setCargando(false)
     }
-  }, [tab, periodo, año, mes])
+  }, [empresaId, tab, periodo, año, mes])
 
   useEffect(() => { cargar() }, [cargar])
 
@@ -139,6 +157,18 @@ export default function Reportes() {
       setTimeout(() => setExportando(false), 800)
     }
   }
+
+  if (!empresaId) return (
+    <div className={s.page}>
+      <div className={s.skeletonWrap}>
+        <div className={s.skeletonGrid}>
+          {[...Array(4)].map((_, i) => <div key={i} className={s.skeleton} />)}
+        </div>
+        <div className={s.skeletonChart} />
+        <div className={s.skeletonTable} />
+      </div>
+    </div>
+  )
 
   return (
     <div className={s.page}>
@@ -239,9 +269,7 @@ function TabVentas({ data, fmt, fmtFecha, fmtDateTime }) {
       <div className={s.chartsRow}>
         <div className={s.chartCard}>
           <div className={s.cardTitle}><ion-icon name="bar-chart-outline" /> Evolucion de ventas</div>
-          {ventasPorDia.length === 0 ? (
-            <EmptyChart />
-          ) : (
+          {ventasPorDia.length === 0 ? <EmptyChart /> : (
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={ventasPorDia} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                 <XAxis dataKey="fecha" tickFormatter={fmtFecha} tick={{ fontSize: 11 }} />
@@ -255,9 +283,7 @@ function TabVentas({ data, fmt, fmtFecha, fmtDateTime }) {
 
         <div className={s.chartCard}>
           <div className={s.cardTitle}><ion-icon name="pie-chart-outline" /> Por metodo de pago</div>
-          {ventasPorMetodo.length === 0 ? (
-            <EmptyChart />
-          ) : (
+          {ventasPorMetodo.length === 0 ? <EmptyChart /> : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie data={ventasPorMetodo} dataKey="total" nameKey="nombre" cx="50%" cy="50%" outerRadius={75}
@@ -274,23 +300,14 @@ function TabVentas({ data, fmt, fmtFecha, fmtDateTime }) {
 
       <div className={s.tableCard}>
         <div className={s.cardTitle}><ion-icon name="list-outline" /> Detalle de ventas</div>
-        {detalles.length === 0 ? (
-          <EmptyChart texto="Sin ventas en este periodo" />
-        ) : (
+        {detalles.length === 0 ? <EmptyChart texto="Sin ventas en este periodo" /> : (
           <>
             <div className={s.tableWrap}>
               <table className={s.table}>
                 <thead>
                   <tr>
-                    <th>Fecha</th>
-                    <th>Cliente</th>
-                    <th>Vendedor</th>
-                    <th>Metodo</th>
-                    <th>Comprobante</th>
-                    <th>ITBIS</th>
-                    <th>Descuento</th>
-                    <th>Total</th>
-                    <th>Estado</th>
+                    <th>Fecha</th><th>Cliente</th><th>Vendedor</th><th>Metodo</th>
+                    <th>Comprobante</th><th>ITBIS</th><th>Descuento</th><th>Total</th><th>Estado</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -371,14 +388,7 @@ function TabProductos({ data, fmt }) {
             <div className={s.tableWrap}>
               <table className={s.table}>
                 <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Producto</th>
-                    <th>Categoria</th>
-                    <th>Precio Unit.</th>
-                    <th>Uds Vendidas</th>
-                    <th>Total</th>
-                  </tr>
+                  <tr><th>#</th><th>Producto</th><th>Categoria</th><th>Precio Unit.</th><th>Uds Vendidas</th><th>Total</th></tr>
                 </thead>
                 <tbody>
                   {pg.slice.map((p, i) => (
@@ -429,13 +439,7 @@ function TabClientes({ data, fmt }) {
             <div className={s.tableWrap}>
               <table className={s.table}>
                 <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Cliente</th>
-                    <th>Telefono</th>
-                    <th>Compras</th>
-                    <th>Total</th>
-                  </tr>
+                  <tr><th>#</th><th>Cliente</th><th>Telefono</th><th>Compras</th><th>Total</th></tr>
                 </thead>
                 <tbody>
                   {pg.slice.map((c, i) => (
@@ -509,13 +513,7 @@ function TabGastos({ data, fmt, fmtDateTime }) {
             <div className={s.tableWrap}>
               <table className={s.table}>
                 <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Concepto</th>
-                    <th>Tipo</th>
-                    <th>Registrado por</th>
-                    <th>Monto</th>
-                  </tr>
+                  <tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Registrado por</th><th>Monto</th></tr>
                 </thead>
                 <tbody>
                   {pg.slice.map(g => (

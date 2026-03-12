@@ -1,10 +1,19 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import s from "./Productos.module.css"
 
-const EMPRESA_ID = 1
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function getItbisPref() {
   try { return JSON.parse(localStorage.getItem("prod_itbis_pref") ?? "null") } catch { return null }
@@ -89,15 +98,6 @@ async function getSiguienteCodigo(empresaId, nombre = "") {
   } catch { return { codigo: null } }
 }
 
-async function verificarCodigo(empresaId, codigo, excluirId = null) {
-  try {
-    const params = new URLSearchParams({ codigo, ...(excluirId ? { excluirId } : {}) })
-    const res = await fetch(`${API}/api/pos/productos/verificar-codigo/${empresaId}?${params}`)
-    if (!res.ok) return { disponible: true }
-    return await res.json()
-  } catch { return { disponible: true } }
-}
-
 async function eliminarProducto(id) {
   try {
     const res = await fetch(`${API}/api/pos/productos/${id}`, { method: "DELETE" })
@@ -106,6 +106,8 @@ async function eliminarProducto(id) {
 }
 
 export default function Productos() {
+  const router = useRouter()
+  const [empresaId, setEmpresaId]       = useState(null)
   const [productos, setProductos]       = useState([])
   const [total, setTotal]               = useState(0)
   const [pagina, setPagina]             = useState(1)
@@ -134,37 +136,50 @@ export default function Productos() {
     return `${moneda.simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
+
   const cargar = useCallback(async (q, p) => {
+    if (!empresaId) return
     const query   = q !== undefined ? q : ""
     const paginaN = p !== undefined ? p : 1
     setCargando(true)
-    const res = await getProductos(EMPRESA_ID, query, paginaN, 20)
+    const res = await getProductos(empresaId, query, paginaN, 20)
     setProductos(res.productos ?? [])
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [])
+  }, [empresaId])
 
-  useEffect(() => { cargar("", 1) }, [cargar])
-  useEffect(() => { getDatosFormulario(EMPRESA_ID).then(setDatosForm) }, [])
-  useEffect(() => { getEmpresa(EMPRESA_ID).then(e => { if (e?.moneda) setMoneda(e.moneda) }) }, [])
   useEffect(() => {
+    if (!empresaId) return
+    cargar("", 1)
+    getDatosFormulario(empresaId).then(setDatosForm)
+    getEmpresa(empresaId).then(e => { if (e?.moneda) setMoneda(e.moneda) })
+  }, [empresaId])
+
+  useEffect(() => {
+    if (!empresaId) return
     const t = setTimeout(() => { setPagina(1); cargar(busqueda, 1) }, 350)
     return () => clearTimeout(t)
-  }, [busqueda, cargar])
+  }, [busqueda, cargar, empresaId])
 
   useEffect(() => {
+    if (!empresaId) return
     if (codigoManualRef.current || !form.nombre.trim()) return
     clearTimeout(codigoTimeoutRef.current)
     setCodigoEstado("verificando")
     codigoTimeoutRef.current = setTimeout(async () => {
-      const res = await getSiguienteCodigo(EMPRESA_ID, form.nombre)
+      const res = await getSiguienteCodigo(empresaId, form.nombre)
       if (!res.codigo) { setCodigoEstado(null); return }
       setF("codigo", res.codigo)
       setCodigoEstado("ok")
     }, 600)
     return () => clearTimeout(codigoTimeoutRef.current)
-  }, [form.nombre])
+  }, [form.nombre, empresaId])
 
   function mostrarAlerta(tipo, msg) {
     setAlerta({ tipo, msg })
@@ -251,7 +266,7 @@ export default function Productos() {
     }
 
     const res = modal === "crear"
-      ? await crearProducto(EMPRESA_ID, payload)
+      ? await crearProducto(empresaId, payload)
       : await editarProducto(modal.id, payload)
 
     if (res.error) { setProcesando(false); return mostrarAlerta("error", res.error) }
@@ -282,6 +297,8 @@ export default function Productos() {
   }
 
   function irPagina(p) { setPagina(p); cargar(busqueda, p) }
+
+  if (!empresaId || cargando) return <div className={s.page}><div className={s.skeletonRow} /></div>
 
   return (
     <div className={s.page}>
@@ -335,9 +352,7 @@ export default function Productos() {
           <span></span>
         </div>
 
-        {cargando ? (
-          [...Array(8)].map((_, i) => <div key={i} className={s.skeletonRow} />)
-        ) : productos.length === 0 ? (
+        {productos.length === 0 ? (
           <div className={s.empty}>
             <ion-icon name="cube-outline" />
             <p>Sin productos registrados</p>

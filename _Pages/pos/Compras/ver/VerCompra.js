@@ -4,8 +4,16 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import s from "./VerCompra.module.css"
 
-const EMPRESA_ID = 1
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 async function getCompra(empresaId, compraId) {
   try {
@@ -32,14 +40,22 @@ const ESTADO_META = {
 
 export default function VerCompra({ id }) {
   const router = useRouter()
-  const [compra, setCompra]   = useState(null)
-  const [cargando, setCargando] = useState(true)
+  const [empresaId, setEmpresaId]   = useState(null)
+  const [compra,    setCompra]      = useState(null)
+  const [cargando,  setCargando]    = useState(true)
 
   useEffect(() => {
-    getCompra(EMPRESA_ID, id).then(d => { setCompra(d); setCargando(false) })
-  }, [id])
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
 
-  if (cargando) return (
+  useEffect(() => {
+    if (!empresaId) return
+    getCompra(empresaId, id).then(d => { setCompra(d); setCargando(false) })
+  }, [empresaId, id])
+
+  if (!empresaId || cargando) return (
     <div className={s.loading}>
       <span className={s.spinner} />
       <p>Cargando compra...</p>

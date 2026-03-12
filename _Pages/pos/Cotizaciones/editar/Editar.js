@@ -4,9 +4,16 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import s from "./Editar.module.css"
 
-const EMPRESA_ID = 1
-const USUARIO_ID = 2
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 async function getDatos(empresaId, usuarioId) {
   try {
@@ -42,6 +49,8 @@ function fmt(n, simbolo = "RD$") {
 export default function Editar({ id }) {
   const router = useRouter()
 
+  const [empresaId,     setEmpresaId]     = useState(null)
+  const [usuarioId,     setUsuarioId]     = useState(null)
   const [datos,         setDatos]         = useState(null)
   const [cargando,      setCargando]      = useState(true)
   const [guardando,     setGuardando]     = useState(false)
@@ -57,9 +66,17 @@ export default function Editar({ id }) {
   const [busqProd,      setBusqProd]      = useState("")
 
   useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
+  }, [])
+
+  useEffect(() => {
+    if (!empresaId || !usuarioId) return
     async function init() {
       const [d, cot] = await Promise.all([
-        getDatos(EMPRESA_ID, USUARIO_ID),
+        getDatos(empresaId, usuarioId),
         getCotizacion(id),
       ])
       setDatos(d)
@@ -79,7 +96,7 @@ export default function Editar({ id }) {
       setCargando(false)
     }
     init()
-  }, [id])
+  }, [empresaId, usuarioId, id])
 
   function mostrarAlerta(tipo, msg) {
     setAlerta({ tipo, msg })
@@ -133,7 +150,7 @@ export default function Editar({ id }) {
   async function handleGuardar() {
     if (!items.length) return mostrarAlerta("error", "Agrega al menos un producto")
     setGuardando(true)
-    const res = await actualizarCotizacion(id, EMPRESA_ID, {
+    const res = await actualizarCotizacion(id, empresaId, {
       cliente_id:       clienteId ? Number(clienteId) : null,
       notas,
       descuento_global: desc,
@@ -150,7 +167,7 @@ export default function Editar({ id }) {
     router.push("/pos/cotizaciones")
   }
 
-  if (cargando) return <div className={s.loading}><span className={s.spinner} /></div>
+  if (!empresaId || cargando) return <div className={s.loading}><span className={s.spinner} /></div>
 
   const clientesFiltrados = (datos?.clientes ?? []).filter(c =>
     !busqCliente ||

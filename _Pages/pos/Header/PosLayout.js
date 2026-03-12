@@ -6,8 +6,7 @@ import Sidebar from "./Sidebar"
 import Topbar from "./Topbar"
 import s from "./PosLayout.module.css"
 
-const USUARIO_ID = 2
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 const PRIMER_SLUG_POR_GRUPO = [
   "mis-ventas",
@@ -15,6 +14,15 @@ const PRIMER_SLUG_POR_GRUPO = [
   "ventas-online/pedidos",
   "dashboard",
 ]
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 export default function PosLayout({ children }) {
   const pathname = usePathname()
@@ -30,7 +38,10 @@ export default function PosLayout({ children }) {
     setDark(isDark)
     document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light")
 
-    fetch(`${API}/api/pos/header/${USUARIO_ID}`)
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+
+    fetch(`${API}/api/pos/header/${payload.id}`)
       .then(r => r.json())
       .then(d => setData(d))
       .catch(() => {})

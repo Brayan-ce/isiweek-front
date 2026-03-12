@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 import s from "./PedidosOnline.module.css"
 
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
-const LIMITE     = 20
+const API    = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const LIMITE = 20
 
 const ESTADOS = ["pendiente", "confirmado", "enviado", "entregado", "cancelado"]
 
@@ -15,6 +15,15 @@ const ESTADO_META = {
   enviado:    { color: s.estadoEnviado,    icon: "car-outline",              label: "Enviado"    },
   entregado:  { color: s.estadoEntregado,  icon: "bag-check-outline",        label: "Entregado"  },
   cancelado:  { color: s.estadoCancelado,  icon: "close-circle-outline",     label: "Cancelado"  },
+}
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
 }
 
 function fmt(n) {
@@ -106,11 +115,8 @@ function ModalDetalle({ pedidoId, empresaId, onClose, onCambioEstado, mostrarAle
         <button className={s.modalClose} onClick={onClose}>
           <ion-icon name="close-outline" />
         </button>
-
         {cargando ? (
-          <div className={s.modalLoading}>
-            <span className={s.spinnerDark} />
-          </div>
+          <div className={s.modalLoading}><span className={s.spinnerDark} /></div>
         ) : !pedido ? (
           <div className={s.modalLoading}>No se pudo cargar el pedido</div>
         ) : (
@@ -120,7 +126,6 @@ function ModalDetalle({ pedidoId, empresaId, onClose, onCambioEstado, mostrarAle
               Pedido #{pedido.id}
               <EstadoBadge estado={pedido.estado} />
             </div>
-
             <div className={s.modalBody}>
               <div className={s.seccion}>
                 <div className={s.seccionTitulo}><ion-icon name="person-outline" />Cliente</div>
@@ -133,7 +138,6 @@ function ModalDetalle({ pedidoId, empresaId, onClose, onCambioEstado, mostrarAle
                   <div className={s.infoItem}><span className={s.infoLabel}>Fecha</span><span className={s.infoVal}>{fmtFecha(pedido.created_at)} {fmtHora(pedido.created_at)}</span></div>
                 </div>
               </div>
-
               <div className={s.seccion}>
                 <div className={s.seccionTitulo}><ion-icon name="list-outline" />Productos</div>
                 <div className={s.itemsList}>
@@ -154,7 +158,6 @@ function ModalDetalle({ pedidoId, empresaId, onClose, onCambioEstado, mostrarAle
                   <span className={s.totalVal}>{fmt(pedido.total)}</span>
                 </div>
               </div>
-
               <div className={s.seccion}>
                 <div className={s.seccionTitulo}><ion-icon name="swap-horizontal-outline" />Cambiar Estado</div>
                 <div className={s.estadosBtns}>
@@ -180,6 +183,8 @@ function ModalDetalle({ pedidoId, empresaId, onClose, onCambioEstado, mostrarAle
 }
 
 export default function PedidosOnline() {
+  const router                    = useRouter()
+  const [empresaId, setEmpresaId] = useState(null)
   const [pedidos, setPedidos]     = useState([])
   const [total, setTotal]         = useState(0)
   const [paginas, setPaginas]     = useState(1)
@@ -193,9 +198,16 @@ export default function PedidosOnline() {
   const [modalId, setModalId]     = useState(null)
   const debounceRef               = useRef(null)
 
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
+
   const cargar = useCallback(async (opts = {}) => {
+    if (!empresaId) return
     setCargando(true)
-    const res = await getPedidos(EMPRESA_ID, {
+    const res = await getPedidos(empresaId, {
       busqueda: opts.busqueda ?? busqueda,
       estado:   opts.estado   ?? estadoFiltro,
       pagina:   opts.pagina   ?? pagina,
@@ -205,12 +217,13 @@ export default function PedidosOnline() {
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [busqueda, estadoFiltro, pagina])
+  }, [empresaId, busqueda, estadoFiltro, pagina])
 
   useEffect(() => {
+    if (!empresaId) return
     cargar()
-    getResumenPedidos(EMPRESA_ID).then(r => setResumen(r))
-  }, [])
+    getResumenPedidos(empresaId).then(r => setResumen(r))
+  }, [empresaId])
 
   function mostrarAlerta(tipo, msg) {
     setAlerta({ tipo, msg })
@@ -240,7 +253,7 @@ export default function PedidosOnline() {
 
   function handleCambioEstado(pedidoId, nuevoEstado) {
     setPedidos(p => p.map(x => x.id === pedidoId ? { ...x, estado: nuevoEstado } : x))
-    getResumenPedidos(EMPRESA_ID).then(r => setResumen(r))
+    getResumenPedidos(empresaId).then(r => setResumen(r))
   }
 
   const hayFiltros = inputVal || estadoFiltro
@@ -253,6 +266,12 @@ export default function PedidosOnline() {
     else arr.push(1, "...", pagina - 1, pagina, pagina + 1, "...", paginas)
     return arr
   }
+
+  if (!empresaId || cargando) return (
+    <div className={s.page}>
+      {[...Array(8)].map((_, i) => <div key={i} className={s.skeletonRow} />)}
+    </div>
+  )
 
   return (
     <div className={s.page}>
@@ -325,18 +344,7 @@ export default function PedidosOnline() {
           <div className={s.colAcciones}></div>
         </div>
         <div className={s.tablaBody}>
-          {cargando ? (
-            [...Array(8)].map((_, i) => (
-              <div key={i} className={s.skeletonRow}>
-                <div className={s.skeletonCell} style={{ width: "6%" }} />
-                <div className={s.skeletonCell} style={{ width: "22%" }} />
-                <div className={s.skeletonCell} style={{ width: "18%" }} />
-                <div className={s.skeletonCell} style={{ width: "12%" }} />
-                <div className={s.skeletonCell} style={{ width: "12%" }} />
-                <div className={s.skeletonCell} style={{ width: "14%" }} />
-              </div>
-            ))
-          ) : pedidos.length === 0 ? (
+          {pedidos.length === 0 ? (
             <div className={s.empty}>
               <ion-icon name="bag-outline" />
               <p>{hayFiltros ? "Sin resultados con los filtros aplicados" : "No hay pedidos registrados"}</p>
@@ -399,7 +407,7 @@ export default function PedidosOnline() {
       {modalId && (
         <ModalDetalle
           pedidoId={modalId}
-          empresaId={EMPRESA_ID}
+          empresaId={empresaId}
           onClose={() => setModalId(null)}
           onCambioEstado={handleCambioEstado}
           mostrarAlerta={mostrarAlerta}

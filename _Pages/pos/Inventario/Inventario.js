@@ -1,11 +1,20 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 import s from "./Inventario.module.css"
 
-const EMPRESA_ID = 1
-const LIMITE     = 20
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const LIMITE = 20
+const API    = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function imgSrc(imagen) {
   if (!imagen) return null
@@ -50,7 +59,7 @@ async function ajustarStock(empresaId, productoId, body) {
   }
 }
 
-function ModalAjuste({ producto, onClose, onGuardado, mostrarAlerta }) {
+function ModalAjuste({ producto, onClose, onGuardado, mostrarAlerta, empresaId }) {
   const [nuevoStock, setNuevoStock] = useState(String(producto.stock))
   const [cargando, setCargando]     = useState(false)
 
@@ -59,7 +68,7 @@ function ModalAjuste({ producto, onClose, onGuardado, mostrarAlerta }) {
     if (nuevoStock === "" || isNaN(val) || val < 0)
       return mostrarAlerta("error", "Ingresa un número válido mayor o igual a 0")
     setCargando(true)
-    const res = await ajustarStock(EMPRESA_ID, producto.id, { tipo: "ajuste", cantidad: val })
+    const res = await ajustarStock(empresaId, producto.id, { tipo: "ajuste", cantidad: val })
     setCargando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Stock actualizado correctamente")
@@ -112,6 +121,8 @@ function ModalAjuste({ producto, onClose, onGuardado, mostrarAlerta }) {
 }
 
 export default function Inventario() {
+  const router = useRouter()
+  const [empresaId, setEmpresaId]     = useState(null)
   const [productos, setProductos]     = useState([])
   const [total, setTotal]             = useState(0)
   const [paginas, setPaginas]         = useState(1)
@@ -128,9 +139,16 @@ export default function Inventario() {
   const [modalAjuste, setModalAjuste] = useState(null)
   const debounceRef                   = useRef(null)
 
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
+
   const cargar = useCallback(async (opts = {}) => {
+    if (!empresaId) return
     setCargando(true)
-    const res = await getInventario(EMPRESA_ID, {
+    const res = await getInventario(empresaId, {
       busqueda:     opts.busqueda     ?? busqueda,
       categoria_id: opts.categoria_id ?? categoriaId,
       marca_id:     opts.marca_id     ?? marcaId,
@@ -142,15 +160,16 @@ export default function Inventario() {
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [busqueda, categoriaId, marcaId, stockFiltro, pagina])
+  }, [empresaId, busqueda, categoriaId, marcaId, stockFiltro, pagina])
 
   useEffect(() => {
+    if (!empresaId) return
     cargar()
-    getCategoriasMarcas(EMPRESA_ID).then(r => {
+    getCategoriasMarcas(empresaId).then(r => {
       setCategorias(r.categorias ?? [])
       setMarcas(r.marcas ?? [])
     })
-  }, [])
+  }, [empresaId])
 
   function handleBusqueda(val) {
     setInputVal(val)
@@ -197,6 +216,8 @@ export default function Inventario() {
     if (stock <= 5) return <span className={`${s.stockTag} ${s.stockTagBajo}`}>Bajo</span>
     return <span className={`${s.stockTag} ${s.stockTagOk}`}>OK</span>
   }
+
+  if (!empresaId || cargando) return <div className={s.page}><div className={s.skeletonRow} /></div>
 
   return (
     <div className={s.page}>
@@ -263,19 +284,7 @@ export default function Inventario() {
         </div>
 
         <div className={s.tablaBody}>
-          {cargando ? (
-            [...Array(8)].map((_, i) => (
-              <div key={i} className={s.skeletonRow}>
-                <div className={s.skeletonCell} style={{ width: "28%" }} />
-                <div className={s.skeletonCell} style={{ width: "12%" }} />
-                <div className={s.skeletonCell} style={{ width: "10%" }} />
-                <div className={s.skeletonCell} style={{ width: "10%" }} />
-                <div className={s.skeletonCell} style={{ width: "9%"  }} />
-                <div className={s.skeletonCell} style={{ width: "9%"  }} />
-                <div className={s.skeletonCell} style={{ width: "7%"  }} />
-              </div>
-            ))
-          ) : productos.length === 0 ? (
+          {productos.length === 0 ? (
             <div className={s.empty}>
               <ion-icon name="cube-outline" />
               <p>{hayFiltros ? "Sin resultados con los filtros aplicados" : "No hay productos en inventario"}</p>
@@ -348,6 +357,7 @@ export default function Inventario() {
       {modalAjuste && (
         <ModalAjuste
           producto={modalAjuste}
+          empresaId={empresaId}
           onClose={() => setModalAjuste(null)}
           onGuardado={() => { setModalAjuste(null); cargar() }}
           mostrarAlerta={mostrarAlerta}

@@ -1,12 +1,21 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 import s from "./Proveedores.module.css"
 
-const EMPRESA_ID = 1
-const LIMITE     = 15
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const LIMITE = 15
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const FORM_VACIO = { nombre: "", rnc: "", telefono: "", email: "", direccion: "" }
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 async function getProveedores(empresaId, filtros = {}) {
   try {
@@ -59,7 +68,7 @@ async function eliminarProveedor(empresaId, proveedorId) {
   }
 }
 
-function ModalProveedor({ inicial, onClose, onGuardado, mostrarAlerta }) {
+function ModalProveedor({ inicial, onClose, onGuardado, mostrarAlerta, empresaId }) {
   const esEditar = !!inicial
   const [form, setForm] = useState(
     inicial
@@ -80,8 +89,8 @@ function ModalProveedor({ inicial, onClose, onGuardado, mostrarAlerta }) {
     if (!form.nombre.trim()) return mostrarAlerta("error", "El nombre es obligatorio")
     setCargando(true)
     const res = esEditar
-      ? await editarProveedor(EMPRESA_ID, inicial.id, form)
-      : await crearProveedor(EMPRESA_ID, form)
+      ? await editarProveedor(empresaId, inicial.id, form)
+      : await crearProveedor(empresaId, form)
     setCargando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", esEditar ? "Proveedor actualizado" : "Proveedor creado")
@@ -168,6 +177,8 @@ function ModalProveedor({ inicial, onClose, onGuardado, mostrarAlerta }) {
 }
 
 export default function Proveedores() {
+  const router = useRouter()
+  const [empresaId, setEmpresaId]             = useState(null)
   const [proveedores, setProveedores]         = useState([])
   const [total, setTotal]                     = useState(0)
   const [paginas, setPaginas]                 = useState(1)
@@ -181,16 +192,26 @@ export default function Proveedores() {
   const [eliminando, setEliminando]           = useState(false)
   const debounceRef                           = useRef(null)
 
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
+
   const cargar = useCallback(async (b = busqueda, p = pagina) => {
+    if (!empresaId) return
     setCargando(true)
-    const res = await getProveedores(EMPRESA_ID, { busqueda: b, pagina: p, limite: LIMITE })
+    const res = await getProveedores(empresaId, { busqueda: b, pagina: p, limite: LIMITE })
     setProveedores(res.proveedores ?? [])
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [busqueda, pagina])
+  }, [empresaId, busqueda, pagina])
 
-  useEffect(() => { cargar() }, [])
+  useEffect(() => {
+    if (!empresaId) return
+    cargar()
+  }, [empresaId])
 
   function handleBusqueda(val) {
     setInputVal(val)
@@ -222,7 +243,7 @@ export default function Proveedores() {
   async function handleEliminar() {
     if (!confirmEliminar) return
     setEliminando(true)
-    const res = await eliminarProveedor(EMPRESA_ID, confirmEliminar.id)
+    const res = await eliminarProveedor(empresaId, confirmEliminar.id)
     setEliminando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Proveedor eliminado")
@@ -244,6 +265,8 @@ export default function Proveedores() {
     }
     return arr
   }
+
+  if (!empresaId || cargando) return <div className={s.page}><div className={s.skeletonCard} /></div>
 
   return (
     <div className={s.page}>
@@ -279,9 +302,7 @@ export default function Proveedores() {
       </div>
 
       <div className={s.grid}>
-        {cargando ? (
-          [...Array(6)].map((_, i) => <div key={i} className={s.skeletonCard} />)
-        ) : proveedores.length === 0 ? (
+        {proveedores.length === 0 ? (
           <div className={s.empty}>
             <ion-icon name="business-outline" />
             <p>{busqueda ? `Sin resultados para "${busqueda}"` : "No hay proveedores registrados"}</p>
@@ -374,6 +395,7 @@ export default function Proveedores() {
           onClose={() => setModal(null)}
           onGuardado={() => { setModal(null); cargar() }}
           mostrarAlerta={mostrarAlerta}
+          empresaId={empresaId}
         />
       )}
 

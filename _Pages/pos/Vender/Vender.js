@@ -4,9 +4,16 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import s from "./Vender.module.css"
 
-const EMPRESA_ID = 1
-const USUARIO_ID = 2
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function fmt(n, simbolo = "RD$") {
   return `${simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -71,6 +78,8 @@ async function crearVenta(empresaId, usuarioId, body) {
 }
 
 export default function Vender() {
+  const [empresaId, setEmpresaId]           = useState(null)
+  const [usuarioId, setUsuarioId]           = useState(null)
   const [datos, setDatos]                   = useState(null)
   const [productos, setProductos]           = useState([])
   const [busqueda, setBusqueda]             = useState("")
@@ -103,7 +112,15 @@ export default function Vender() {
   const scanTimer  = useRef(null)
 
   useEffect(() => {
-    getDatosVender(EMPRESA_ID, USUARIO_ID).then(d => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
+  }, [])
+
+  useEffect(() => {
+    if (!empresaId || !usuarioId) return
+    getDatosVender(empresaId, usuarioId).then(d => {
       if (!d) return
       setDatos(d)
       const sm = localStorage.getItem("vender_metodo_pago")
@@ -112,15 +129,16 @@ export default function Vender() {
       else if (d.metodosPago?.[0]) setMetodoPagoId(String(d.metodosPago[0].id))
       if (sc) setComprobanteId(sc)
     })
-  }, [])
+  }, [empresaId, usuarioId])
 
   const cargarProductos = useCallback(async (q = "", p = 1) => {
+    if (!empresaId) return
     setLoadingProds(true)
-    const data = await fetchProductos(EMPRESA_ID, q, p, 20)
+    const data = await fetchProductos(empresaId, q, p, 20)
     setProductos(data.productos ?? [])
     setTotalPags(data.paginas ?? 1)
     setLoadingProds(false)
-  }, [])
+  }, [empresaId])
 
   useEffect(() => { cargarProductos() }, [cargarProductos])
 
@@ -150,7 +168,7 @@ export default function Vender() {
   }, [modalCobrar, modalRecibo, modalCliente, editandoStock])
 
   async function agregarPorCodigo(codigo) {
-    const prod = await getProductoPorCodigo(EMPRESA_ID, codigo)
+    const prod = await getProductoPorCodigo(empresaId, codigo)
     if (!prod || prod.error) return mostrarAlerta("error", prod?.error ?? "Producto no encontrado")
     if (prod.stock === 0) return mostrarAlerta("warn", `"${prod.nombre}" no tiene stock`)
     agregarAlCarrito(prod)
@@ -211,7 +229,7 @@ export default function Vender() {
   async function handleCrearCliente() {
     if (!nuevoNombre.trim()) return
     setCreandoCliente(true)
-    const res = await crearClienteRapido(EMPRESA_ID, nuevoNombre.trim())
+    const res = await crearClienteRapido(empresaId, nuevoNombre.trim())
     setCreandoCliente(false)
     if (res.error) return mostrarAlerta("error", res.error)
     datos.clientes.unshift(res)
@@ -229,7 +247,7 @@ export default function Vender() {
     const val = Number(nuevoStock)
     if (isNaN(val) || val < 0) return mostrarAlerta("error", "Stock inválido")
     setGuardandoStock(true)
-    const res = await actualizarStock(EMPRESA_ID, prodId, val)
+    const res = await actualizarStock(empresaId, prodId, val)
     setGuardandoStock(false)
     if (res.error) return mostrarAlerta("error", res.error)
     setProductos(prev => prev.map(p => p.id === prodId ? { ...p, stock: val } : p))
@@ -284,7 +302,7 @@ export default function Vender() {
         descuento_global:  desc,
         items: carrito.map(i => ({ producto_id: i.id, cantidad: i.cantidad })),
       }
-      const venta = await crearVenta(EMPRESA_ID, USUARIO_ID, body)
+      const venta = await crearVenta(empresaId, usuarioId, body)
       if (venta.error) return mostrarAlerta("error", venta.error)
       setModalCobrar(false)
       limpiarVenta()
@@ -296,7 +314,7 @@ export default function Vender() {
     }
   }
 
-  if (!datos) return <div className={s.loading}><span className={s.spinner} /></div>
+  if (!empresaId || !datos) return <div className={s.loading}><span className={s.spinner} /></div>
 
   const clientesFiltrados = datos.clientes.filter(c =>
     !busqCliente ||

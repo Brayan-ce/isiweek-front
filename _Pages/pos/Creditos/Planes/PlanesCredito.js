@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import s from "./PlanesCredito.module.css"
 
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 const FORM_VACIO = {
   nombre: "", codigo: "", descripcion: "",
@@ -16,6 +16,15 @@ const FORM_VACIO = {
 }
 
 const OPCION_VACIA = { meses: "", tasa_anual_pct: "0", inicial_pct: "0", tipo: "credito" }
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function fmt(n) {
   return `RD$ ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -70,20 +79,29 @@ async function toggleActivoPlan(id, activo) {
 }
 
 export default function PlanesCredito() {
-  const [planes, setPlanes]         = useState([])
-  const [cargando, setCargando]     = useState(true)
-  const [alerta, setAlerta]         = useState(null)
-  const [procesando, setProcesando] = useState(false)
-  const [modal, setModal]           = useState(null)
-  const [form, setForm]             = useState(FORM_VACIO)
-  const [modalElim, setModalElim]   = useState(null)
-  const [expandido, setExpandido]   = useState(null)
+  const router = useRouter()
+  const [empresaId,   setEmpresaId]   = useState(null)
+  const [planes,      setPlanes]      = useState([])
+  const [cargando,    setCargando]    = useState(true)
+  const [alerta,      setAlerta]      = useState(null)
+  const [procesando,  setProcesando]  = useState(false)
+  const [modal,       setModal]       = useState(null)
+  const [form,        setForm]        = useState(FORM_VACIO)
+  const [modalElim,   setModalElim]   = useState(null)
+  const [expandido,   setExpandido]   = useState(null)
+
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
 
   const cargar = useCallback(async () => {
+    if (!empresaId) return
     setCargando(true)
-    setPlanes(await getPlanes(EMPRESA_ID))
+    setPlanes(await getPlanes(empresaId))
     setCargando(false)
-  }, [])
+  }, [empresaId])
 
   useEffect(() => { cargar() }, [cargar])
 
@@ -136,6 +154,7 @@ export default function PlanesCredito() {
   }
 
   async function handleGuardar() {
+    if (!empresaId) return
     if (!form.nombre.trim()) return mostrarAlerta("error", "El nombre es obligatorio")
     if (form.opciones.length === 0) return mostrarAlerta("error", "Agrega al menos una opcion de plazo")
     for (const o of form.opciones) {
@@ -158,7 +177,7 @@ export default function PlanesCredito() {
       })),
     }
     const res = modal === "crear"
-      ? await crearPlan(EMPRESA_ID, payload)
+      ? await crearPlan(empresaId, payload)
       : await editarPlan(modal.id, payload)
     setProcesando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
@@ -187,6 +206,14 @@ export default function PlanesCredito() {
   const activos   = planes.filter(p => p.activo).length
   const inactivos = planes.filter(p => !p.activo).length
 
+  if (!empresaId || cargando) return (
+    <div className={s.page}>
+      <div className={s.planesGrid}>
+        {[...Array(3)].map((_, i) => <div key={i} className={s.skeletonCard} />)}
+      </div>
+    </div>
+  )
+
   return (
     <div className={s.page}>
       {alerta && (
@@ -211,11 +238,7 @@ export default function PlanesCredito() {
         </button>
       </div>
 
-      {cargando ? (
-        <div className={s.planesGrid}>
-          {[...Array(3)].map((_, i) => <div key={i} className={s.skeletonCard} />)}
-        </div>
-      ) : planes.length === 0 ? (
+      {planes.length === 0 ? (
         <div className={s.empty}>
           <ion-icon name="document-text-outline" />
           <p>No hay planes de credito creados</p>

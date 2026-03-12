@@ -10,14 +10,22 @@ import {
 } from "../../Vender/imprimir/extras/printerService"
 import s from "./ImprimirCuota.module.css"
 
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 const OPCIONES_DEFAULT = {
   mostrarDatosEmpresa: true,
   mostrarDatosCliente: true,
   mostrarVendedor:     true,
   mostrarMensajeFinal: true,
+}
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
 }
 
 function fmt(n, simbolo = "RD$") {
@@ -29,9 +37,9 @@ function fmtFecha(d) {
   return new Date(d).toLocaleDateString("es-DO", { day: "2-digit", month: "short", year: "numeric" })
 }
 
-async function getVentaCuota(ventaId) {
+async function getVentaCuota(ventaId, empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/cuotas/imprimir/${EMPRESA_ID}/${ventaId}`)
+    const res = await fetch(`${API}/api/pos/cuotas/imprimir/${empresaId}/${ventaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -41,22 +49,30 @@ export default function ImprimirCuotaPage({ id }) {
   const router     = useRouter()
   const boucherRef = useRef(null)
 
-  const [venta,      setVenta]      = useState(null)
-  const [cargando,   setCargando]   = useState(true)
-  const [platform,   setPlatform]   = useState(null)
-  const [connected,  setConnected]  = useState(false)
-  const [btStatus,   setBtStatus]   = useState("idle")
-  const [btMsg,      setBtMsg]      = useState("")
-  const [ancho,      setAncho]      = useState("80")
-  const [opciones,   setOpciones]   = useState(OPCIONES_DEFAULT)
-  const [modalWA,    setModalWA]    = useState(false)
-  const [numeroWA,   setNumeroWA]   = useState("")
-  const [enviandoWA, setEnviandoWA] = useState(false)
-  const [errorWA,    setErrorWA]    = useState("")
+  const [empresaId,   setEmpresaId]   = useState(null)
+  const [venta,       setVenta]       = useState(null)
+  const [cargando,    setCargando]    = useState(true)
+  const [platform,    setPlatform]    = useState(null)
+  const [connected,   setConnected]   = useState(false)
+  const [btStatus,    setBtStatus]    = useState("idle")
+  const [btMsg,       setBtMsg]       = useState("")
+  const [ancho,       setAncho]       = useState("80")
+  const [opciones,    setOpciones]    = useState(OPCIONES_DEFAULT)
+  const [modalWA,     setModalWA]     = useState(false)
+  const [numeroWA,    setNumeroWA]    = useState("")
+  const [enviandoWA,  setEnviandoWA]  = useState(false)
+  const [errorWA,     setErrorWA]     = useState("")
 
   useEffect(() => {
-    getVentaCuota(id).then(d => { setVenta(d); setCargando(false) })
-  }, [id])
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
+
+  useEffect(() => {
+    if (!empresaId) return
+    getVentaCuota(id, empresaId).then(d => { setVenta(d); setCargando(false) })
+  }, [id, empresaId])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -143,7 +159,7 @@ export default function ImprimirCuotaPage({ id }) {
     }
   }
 
-  if (cargando) return (
+  if (!empresaId || cargando) return (
     <div className={s.loading}><span className={s.spinner} /><p>Cargando boucher...</p></div>
   )
   if (!venta) return (

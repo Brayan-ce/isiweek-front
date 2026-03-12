@@ -4,9 +4,16 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import s from "./NuevaCuota.module.css"
 
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
-const USUARIO_ID = 2
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function fmt(n) {
   return Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -61,6 +68,8 @@ async function crearVentaCuotas(empresaId, usuarioId, body) {
 
 export default function NuevaCuota() {
   const router = useRouter()
+  const [empresaId, setEmpresaId]           = useState(null)
+  const [usuarioId, setUsuarioId]           = useState(null)
   const [datos, setDatos]                   = useState(null)
   const [productos, setProductos]           = useState([])
   const [busqueda, setBusqueda]             = useState("")
@@ -88,18 +97,30 @@ export default function NuevaCuota() {
   const montoTotal = carrito.reduce((a, i) => a + Number(i.precio) * i.cantidad, 0)
 
   useEffect(() => {
-    getDatosCuota(EMPRESA_ID).then(d => { if (d) setDatos(d) })
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
   }, [])
 
+  useEffect(() => {
+    if (!empresaId) return
+    getDatosCuota(empresaId).then(d => { if (d) setDatos(d) })
+  }, [empresaId])
+
   const cargarProductos = useCallback(async (q = "", p = 1) => {
+    if (!empresaId) return
     setLoadingProds(true)
-    const data = await getProductos(EMPRESA_ID, q, p, 20)
+    const data = await getProductos(empresaId, q, p, 20)
     setProductos(data.productos ?? [])
     setTotalPags(data.paginas ?? 1)
     setLoadingProds(false)
-  }, [])
+  }, [empresaId])
 
-  useEffect(() => { cargarProductos() }, [cargarProductos])
+  useEffect(() => {
+    if (!empresaId) return
+    cargarProductos()
+  }, [cargarProductos, empresaId])
 
   useEffect(() => {
     const t = setTimeout(() => { cargarProductos(busqueda, 1); setPagina(1) }, 350)
@@ -137,7 +158,7 @@ export default function NuevaCuota() {
   }, [montoTotal, cantCuotas])
 
   async function agregarPorCodigo(codigo) {
-    const prod = await getProductoPorCodigo(EMPRESA_ID, codigo)
+    const prod = await getProductoPorCodigo(empresaId, codigo)
     if (!prod || prod.error) return mostrarAlerta("error", prod?.error ?? "Producto no encontrado")
     if (prod.stock === 0) return mostrarAlerta("warn", `"${prod.nombre}" sin stock`)
     agregarAlCarrito(prod)
@@ -184,7 +205,7 @@ export default function NuevaCuota() {
   async function handleCrearCliente() {
     if (!nuevoNombre.trim()) return
     setCreandoCliente(true)
-    const res = await crearClienteRapido(EMPRESA_ID, nuevoNombre.trim())
+    const res = await crearClienteRapido(empresaId, nuevoNombre.trim())
     setCreandoCliente(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     datos.clientes.unshift(res)
@@ -202,7 +223,7 @@ export default function NuevaCuota() {
     if (!cuotas.length) return mostrarAlerta("error", "Define las cuotas")
     if (Math.abs(diferencia) > 0.01) return mostrarAlerta("error", "La suma de cuotas no coincide con el total")
     setCargando(true)
-    const res = await crearVentaCuotas(EMPRESA_ID, USUARIO_ID, {
+    const res = await crearVentaCuotas(empresaId, usuarioId, {
       cliente_id:   Number(clienteId),
       concepto:     concepto.trim(),
       monto_total:  montoTotal,
@@ -215,7 +236,7 @@ export default function NuevaCuota() {
     setTimeout(() => router.push("/pos/cuotas"), 1000)
   }
 
-  if (!datos) return <div className={s.loading}><span className={s.spinnerDark} /></div>
+  if (!empresaId || !datos) return <div className={s.loading}><span className={s.spinnerDark} /></div>
 
   const clientesFiltrados = datos.clientes.filter(c =>
     !busqCliente ||
@@ -268,7 +289,7 @@ export default function NuevaCuota() {
                     <div className={s.prodThumb}>
                       {p.imagen ? <img src={`${API}${p.imagen}`} alt={p.nombre} /> : <ion-icon name="cube-outline" />}
                     </div>
-                    <div className={s.prodTexts}>
+                    <div className={s.prodTextos}>
                       <span className={s.prodNombre}>{p.nombre}</span>
                       {p.codigo && <span className={s.prodCodigo}>{p.codigo}</span>}
                     </div>

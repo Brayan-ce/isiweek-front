@@ -1,10 +1,19 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 import s from "./Categorias.module.css"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 async function getCategorias(empresaId, busqueda = "", pagina = 1, limite = 20) {
   try {
@@ -47,36 +56,46 @@ async function eliminarCategoria(id) {
 }
 
 export default function Categorias() {
-  const [categorias, setCategorias] = useState([])
-  const [total, setTotal]           = useState(0)
-  const [pagina, setPagina]         = useState(1)
-  const [paginas, setPaginas]       = useState(1)
-  const [busqueda, setBusqueda]     = useState("")
-  const [cargando, setCargando]     = useState(true)
-  const [alerta, setAlerta]         = useState(null)
-  const [procesando, setProcesando] = useState(false)
-  const [modal, setModal]           = useState(null)
-  const [nombre, setNombre]         = useState("")
-  const [modalElim, setModalElim]   = useState(null)
-  const [editInline, setEditInline] = useState(null)
-  const [editNombre, setEditNombre] = useState("")
-  const searchRef                   = useRef()
+  const router = useRouter()
+  const [empresaId,   setEmpresaId]   = useState(null)
+  const [categorias,  setCategorias]  = useState([])
+  const [total,       setTotal]       = useState(0)
+  const [pagina,      setPagina]      = useState(1)
+  const [paginas,     setPaginas]     = useState(1)
+  const [busqueda,    setBusqueda]    = useState("")
+  const [cargando,    setCargando]    = useState(true)
+  const [alerta,      setAlerta]      = useState(null)
+  const [procesando,  setProcesando]  = useState(false)
+  const [modal,       setModal]       = useState(null)
+  const [nombre,      setNombre]      = useState("")
+  const [modalElim,   setModalElim]   = useState(null)
+  const [editInline,  setEditInline]  = useState(null)
+  const [editNombre,  setEditNombre]  = useState("")
+  const searchRef                     = useRef()
+
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
 
   const cargar = useCallback(async (q = "", p = 1) => {
+    if (!empresaId) return
     setCargando(true)
-    const res = await getCategorias(EMPRESA_ID, q, p, 20)
+    const res = await getCategorias(empresaId, q, p, 20)
     setCategorias(res.categorias ?? [])
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [])
+  }, [empresaId])
 
   useEffect(() => { cargar("", 1) }, [cargar])
 
   useEffect(() => {
+    if (!empresaId) return
     const t = setTimeout(() => { setPagina(1); cargar(busqueda, 1) }, 350)
     return () => clearTimeout(t)
-  }, [busqueda, cargar])
+  }, [busqueda, cargar, empresaId])
 
   function mostrarAlerta(tipo, msg) {
     setAlerta({ tipo, msg })
@@ -94,10 +113,11 @@ export default function Categorias() {
   }
 
   async function handleGuardar() {
+    if (!empresaId) return
     if (!nombre.trim()) return mostrarAlerta("error", "El nombre es obligatorio")
     setProcesando(true)
     const res = modal === "crear"
-      ? await crearCategoria(EMPRESA_ID, nombre)
+      ? await crearCategoria(empresaId, nombre)
       : await editarCategoria(modal.id, nombre)
     setProcesando(false)
     if (res.error) return mostrarAlerta("error", res.error)
@@ -130,6 +150,12 @@ export default function Categorias() {
   }
 
   function irPagina(p) { setPagina(p); cargar(busqueda, p) }
+
+  if (!empresaId || cargando) return (
+    <div className={s.page}>
+      {[...Array(6)].map((_, i) => <div key={i} className={s.skeletonRow} />)}
+    </div>
+  )
 
   return (
     <div className={s.page}>
@@ -175,9 +201,7 @@ export default function Categorias() {
           <span></span>
         </div>
 
-        {cargando ? (
-          [...Array(6)].map((_, i) => <div key={i} className={s.skeletonRow} />)
-        ) : categorias.length === 0 ? (
+        {categorias.length === 0 ? (
           <div className={s.empty}>
             <ion-icon name="pricetags-outline" />
             <p>{busqueda ? `Sin resultados para "${busqueda}"` : "Sin categorias registradas"}</p>

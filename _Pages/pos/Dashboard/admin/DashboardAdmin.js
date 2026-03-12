@@ -1,12 +1,21 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { getDashboardAdmin } from "../api"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts"
 import s from "../Dashboard.module.css"
 
-const EMPRESA_ID = 1
-const COLORES    = ["#1d6fce", "#0ea5e9", "#22c55e", "#f59e0b", "#8b5cf6", "#ef4444"]
+const COLORES = ["#1d6fce", "#0ea5e9", "#22c55e", "#f59e0b", "#8b5cf6", "#ef4444"]
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function fmt(n) {
   return Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -23,14 +32,23 @@ function fmtHora(f) {
 }
 
 export default function DashboardAdmin() {
-  const [data, setData]         = useState(null)
-  const [cargando, setCargando] = useState(true)
+  const router = useRouter()
+  const [empresaId, setEmpresaId] = useState(null)
+  const [data, setData]           = useState(null)
+  const [cargando, setCargando]   = useState(true)
 
   useEffect(() => {
-    getDashboardAdmin(EMPRESA_ID).then(d => { setData(d); setCargando(false) })
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
   }, [])
 
-  if (cargando) return (
+  useEffect(() => {
+    if (!empresaId) return
+    getDashboardAdmin(empresaId).then(d => { setData(d); setCargando(false) })
+  }, [empresaId])
+
+  if (!empresaId || cargando) return (
     <div className={s.page}>
       <div className={s.skeletonGrid}>
         {[...Array(6)].map((_, i) => <div key={i} className={s.skeleton} />)}

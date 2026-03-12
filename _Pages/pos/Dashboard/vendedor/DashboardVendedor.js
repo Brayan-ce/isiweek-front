@@ -1,11 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { getDashboardVendedor } from "../api"
 import s from "../Dashboard.module.css"
 
-const USUARIO_ID = 2
-const EMPRESA_ID = 1
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function fmt(n) {
   return Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -17,14 +24,25 @@ function fmtHora(f) {
 }
 
 export default function DashboardVendedor() {
-  const [data, setData]         = useState(null)
+  const router = useRouter()
+  const [empresaId, setEmpresaId] = useState(null)
+  const [usuarioId, setUsuarioId] = useState(null)
+  const [data, setData] = useState(null)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    getDashboardVendedor(USUARIO_ID, EMPRESA_ID).then(d => { setData(d); setCargando(false) })
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
   }, [])
 
-  if (cargando) return (
+  useEffect(() => {
+    if (!empresaId || !usuarioId) return
+    getDashboardVendedor(usuarioId, empresaId).then(d => { setData(d); setCargando(false) })
+  }, [empresaId, usuarioId])
+
+  if (!empresaId || cargando) return (
     <div className={s.page}>
       <div className={s.skeletonGrid}>
         {[...Array(4)].map((_, i) => <div key={i} className={s.skeleton} />)}

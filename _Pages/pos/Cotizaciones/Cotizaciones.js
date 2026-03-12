@@ -4,8 +4,16 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import s from "./Cotizaciones.module.css"
 
-const EMPRESA_ID = 1
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 async function getCotizaciones(empresaId, params = {}) {
   try {
@@ -57,6 +65,7 @@ function fmt(n, simbolo = "RD$") {
 export default function Cotizaciones() {
   const router = useRouter()
 
+  const [empresaId, setEmpresaId] = useState(null)
   const [data,     setData]     = useState({ cotizaciones: [], total: 0, paginas: 1 })
   const [loading,  setLoading]  = useState(true)
   const [busqueda, setBusqueda] = useState("")
@@ -65,14 +74,24 @@ export default function Cotizaciones() {
   const [alerta,   setAlerta]   = useState(null)
   const [confirm,  setConfirm]  = useState(null)
 
-  const cargar = useCallback(async (q = "", est = "", pag = 1) => {
-    setLoading(true)
-    const res = await getCotizaciones(EMPRESA_ID, { busqueda: q, estado: est, pagina: pag, limite: 20 })
-    setData(res)
-    setLoading(false)
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  const cargar = useCallback(async (q = "", est = "", pag = 1) => {
+    if (!empresaId) return
+    setLoading(true)
+    const res = await getCotizaciones(empresaId, { busqueda: q, estado: est, pagina: pag, limite: 20 })
+    setData(res)
+    setLoading(false)
+  }, [empresaId])
+
+  useEffect(() => {
+    if (!empresaId) return
+    cargar()
+  }, [cargar, empresaId])
 
   useEffect(() => {
     const t = setTimeout(() => { cargar(busqueda, estado, 1); setPagina(1) }, 350)
@@ -85,14 +104,14 @@ export default function Cotizaciones() {
   }
 
   async function handleCambiarEstado(id, nuevoEstado) {
-    const res = await cambiarEstado(id, EMPRESA_ID, nuevoEstado)
+    const res = await cambiarEstado(id, empresaId, nuevoEstado)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Estado actualizado")
     cargar(busqueda, estado, pagina)
   }
 
   async function handleEliminar(id) {
-    const res = await eliminarCotizacion(id, EMPRESA_ID)
+    const res = await eliminarCotizacion(id, empresaId)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Cotizacion eliminada")
     setConfirm(null)
@@ -100,6 +119,8 @@ export default function Cotizaciones() {
   }
 
   const { cotizaciones, paginas } = data
+
+  if (!empresaId) return <div className={s.loading}><span className={s.spinner} /></div>
 
   return (
     <div className={s.page}>

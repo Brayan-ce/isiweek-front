@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import s from "./UsuariosEmpresa.module.css"
 
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 const TIPOS = [
   { id: 2, label: "Administrador" },
@@ -20,6 +20,15 @@ const MODOS = [
 const FORM_VACIO = {
   nombre_completo: "", cedula: "", email: "",
   password: "", tipo_usuario_id: "3", modo_sistema_id: "1",
+}
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
 }
 
 async function getUsuarios(empresaId) {
@@ -75,17 +84,15 @@ async function resetPassword(id, nuevaPassword) {
 }
 
 function Avatar({ nombre }) {
-  const letra  = nombre?.charAt(0).toUpperCase() ?? "?"
+  const letra   = nombre?.charAt(0).toUpperCase() ?? "?"
   const colores = ["#1d6fce","#10b981","#8b5cf6","#f59e0b","#ef4444","#0ea5e9"]
   const color   = colores[letra.charCodeAt(0) % colores.length]
-  return (
-    <div className={s.avatar} style={{ background: color }}>
-      {letra}
-    </div>
-  )
+  return <div className={s.avatar} style={{ background: color }}>{letra}</div>
 }
 
 export default function UsuariosEmpresa() {
+  const router                          = useRouter()
+  const [empresaId, setEmpresaId]       = useState(null)
   const [usuarios, setUsuarios]         = useState([])
   const [cargando, setCargando]         = useState(true)
   const [alerta, setAlerta]             = useState(null)
@@ -97,11 +104,18 @@ export default function UsuariosEmpresa() {
   const [verPass, setVerPass]           = useState(false)
   const [verNuevaPass, setVerNuevaPass] = useState(false)
 
-  const cargar = useCallback(async () => {
-    setCargando(true)
-    setUsuarios(await getUsuarios(EMPRESA_ID))
-    setCargando(false)
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
   }, [])
+
+  const cargar = useCallback(async () => {
+    if (!empresaId) return
+    setCargando(true)
+    setUsuarios(await getUsuarios(empresaId))
+    setCargando(false)
+  }, [empresaId])
 
   useEffect(() => { cargar() }, [cargar])
 
@@ -137,7 +151,7 @@ export default function UsuariosEmpresa() {
     if (modal === "crear" && !form.password.trim()) return mostrarAlerta("error", "La contrasena es obligatoria")
     setProcesando(true)
     const res = modal === "crear"
-      ? await crearUsuario(EMPRESA_ID, form)
+      ? await crearUsuario(empresaId, form)
       : await editarUsuario(modal.id, form)
     setProcesando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
@@ -167,6 +181,12 @@ export default function UsuariosEmpresa() {
 
   const activos   = usuarios.filter(u => u.estado === "activo").length
   const inactivos = usuarios.filter(u => u.estado === "inactivo").length
+
+  if (!empresaId || cargando) return (
+    <div className={s.page}>
+      {[...Array(5)].map((_, i) => <div key={i} className={s.skeletonRow} />)}
+    </div>
+  )
 
   return (
     <div className={s.page}>
@@ -199,9 +219,7 @@ export default function UsuariosEmpresa() {
           <span />
         </div>
         <div className={s.tablaBody}>
-          {cargando ? (
-            [...Array(5)].map((_, i) => <div key={i} className={s.skeletonRow} />)
-          ) : usuarios.length === 0 ? (
+          {usuarios.length === 0 ? (
             <div className={s.empty}>
               <ion-icon name="people-outline" />
               <p>No hay usuarios registrados</p>
@@ -250,7 +268,6 @@ export default function UsuariosEmpresa() {
               <ion-icon name="person-outline" />
               {modal === "crear" ? "Nuevo usuario" : "Editar usuario"}
             </div>
-
             <div className={s.modalGrid}>
               <div className={`${s.field} ${s.spanFull}`}>
                 <label>Nombre completo *</label>
@@ -294,7 +311,6 @@ export default function UsuariosEmpresa() {
                 </div>
               )}
             </div>
-
             <div className={s.modalFooter}>
               <button className={s.btnSecundario} onClick={() => setModal(null)}>Cancelar</button>
               <button className={s.btnPrimario} onClick={handleGuardar} disabled={procesando}>

@@ -4,8 +4,16 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import s from "./Cuotas.module.css"
 
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function fmt(n, simbolo = "RD$") {
   return `${simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -66,6 +74,7 @@ async function pagarCuota(empresaId, cuotaId, body) {
 
 export default function Cuotas() {
   const router = useRouter()
+  const [empresaId, setEmpresaId]             = useState(null)
   const [ventas, setVentas]                   = useState([])
   const [total, setTotal]                     = useState(0)
   const [paginas, setPaginas]                 = useState(1)
@@ -89,20 +98,28 @@ export default function Cuotas() {
     usuario_id: "",
   })
 
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
+
   const cargar = useCallback(async (f = filtros, p = pagina) => {
+    if (!empresaId) return
     setCargando(true)
-    const res = await getVentasCuotas(EMPRESA_ID, { ...f, pagina: p, limite: 15 })
+    const res = await getVentasCuotas(empresaId, { ...f, pagina: p, limite: 15 })
     setVentas(res.ventas ?? [])
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [filtros, pagina])
+  }, [empresaId, filtros, pagina])
 
   useEffect(() => {
+    if (!empresaId) return
     cargar()
-    getUsuariosEmpresa(EMPRESA_ID).then(u => setUsuarios(u ?? []))
-    getDatosCuota(EMPRESA_ID).then(d => { if (d) setDatos(d) })
-  }, [])
+    getUsuariosEmpresa(empresaId).then(u => setUsuarios(u ?? []))
+    getDatosCuota(empresaId).then(d => { if (d) setDatos(d) })
+  }, [empresaId])
 
   function toggleExpandir(id) {
     setExpandidos(prev => ({ ...prev, [id]: !prev[id] }))
@@ -128,7 +145,7 @@ export default function Cuotas() {
   async function handleEditarCuota(estado) {
     if (!modalEditar) return
     setEditando(true)
-    const res = await editarEstadoCuota(EMPRESA_ID, modalEditar.cuota.id, estado)
+    const res = await editarEstadoCuota(empresaId, modalEditar.cuota.id, estado)
     setEditando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Estado actualizado")
@@ -139,7 +156,7 @@ export default function Cuotas() {
   async function handlePagarCuota() {
     if (!modalPago) return
     setPagando(true)
-    const res = await pagarCuota(EMPRESA_ID, modalPago.cuota.id, {
+    const res = await pagarCuota(empresaId, modalPago.cuota.id, {
       caja_sesion_id: cajaSesionId ? Number(cajaSesionId) : null,
     })
     setPagando(false)
@@ -151,6 +168,8 @@ export default function Cuotas() {
   }
 
   const hayFiltros = Object.values(filtros).some(v => v)
+
+  if (!empresaId || cargando) return <div className={s.page} />
 
   return (
     <div className={s.page}>
@@ -210,9 +229,7 @@ export default function Cuotas() {
       </div>
 
       <div className={s.listaWrap}>
-        {cargando ? (
-          [...Array(5)].map((_, i) => <div key={i} className={s.skeletonRow} />)
-        ) : ventas.length === 0 ? (
+        {ventas.length === 0 ? (
           <div className={s.empty}>
             <ion-icon name="wallet-outline" />
             <p>No hay ventas a credito</p>

@@ -1,12 +1,21 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 import s from "./Clientes.module.css"
 
-const EMPRESA_ID = 1
 const LIMITE = 20
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const FORM_VACIO = { nombre: "", cedula_rnc: "", telefono: "", email: "", direccion: "" }
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 async function getClientes(empresaId, filtros = {}) {
   try {
@@ -59,7 +68,7 @@ async function eliminarCliente(empresaId, clienteId) {
   }
 }
 
-function ModalCliente({ inicial, onClose, onGuardado, mostrarAlerta }) {
+function ModalCliente({ inicial, empresaId, onClose, onGuardado, mostrarAlerta }) {
   const esEditar = !!inicial
   const [form, setForm] = useState(
     inicial
@@ -80,8 +89,8 @@ function ModalCliente({ inicial, onClose, onGuardado, mostrarAlerta }) {
     if (!form.nombre.trim()) return mostrarAlerta("error", "El nombre es obligatorio")
     setCargando(true)
     const res = esEditar
-      ? await editarCliente(EMPRESA_ID, inicial.id, form)
-      : await crearCliente(EMPRESA_ID, form)
+      ? await editarCliente(empresaId, inicial.id, form)
+      : await crearCliente(empresaId, form)
     setCargando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", esEditar ? "Cliente actualizado" : "Cliente creado")
@@ -168,6 +177,9 @@ function ModalCliente({ inicial, onClose, onGuardado, mostrarAlerta }) {
 }
 
 export default function Clientes() {
+  const router = useRouter()
+
+  const [empresaId, setEmpresaId]             = useState(null)
   const [clientes, setClientes]               = useState([])
   const [total, setTotal]                     = useState(0)
   const [paginas, setPaginas]                 = useState(1)
@@ -181,16 +193,26 @@ export default function Clientes() {
   const [eliminando, setEliminando]           = useState(false)
   const debounceRef                           = useRef(null)
 
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
+
   const cargar = useCallback(async (b = busqueda, p = pagina) => {
+    if (!empresaId) return
     setCargando(true)
-    const res = await getClientes(EMPRESA_ID, { busqueda: b, pagina: p, limite: LIMITE })
+    const res = await getClientes(empresaId, { busqueda: b, pagina: p, limite: LIMITE })
     setClientes(res.clientes ?? [])
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [busqueda, pagina])
+  }, [empresaId, busqueda, pagina])
 
-  useEffect(() => { cargar() }, [])
+  useEffect(() => {
+    if (!empresaId) return
+    cargar()
+  }, [cargar, empresaId])
 
   function handleBusqueda(val) {
     setInputVal(val)
@@ -222,7 +244,7 @@ export default function Clientes() {
   async function handleEliminar() {
     if (!confirmEliminar) return
     setEliminando(true)
-    const res = await eliminarCliente(EMPRESA_ID, confirmEliminar.id)
+    const res = await eliminarCliente(empresaId, confirmEliminar.id)
     setEliminando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Cliente eliminado")
@@ -244,6 +266,8 @@ export default function Clientes() {
     }
     return arr
   }
+
+  if (!empresaId) return <div className={s.loading}><span className={s.spinner} /></div>
 
   return (
     <div className={s.page}>
@@ -381,6 +405,7 @@ export default function Clientes() {
       {modal && (
         <ModalCliente
           inicial={modal.tipo === "editar" ? modal.cliente : null}
+          empresaId={empresaId}
           onClose={() => setModal(null)}
           onGuardado={() => { setModal(null); cargar() }}
           mostrarAlerta={mostrarAlerta}

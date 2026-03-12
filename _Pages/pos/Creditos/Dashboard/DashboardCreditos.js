@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import s from "./DashboardCreditos.module.css"
 
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 const ESTADO_META = {
   activo:         { color: s.badgeActivo,        label: "Activo"         },
@@ -15,6 +15,15 @@ const ESTADO_META = {
   vencida:        { color: s.badgeVencida,        label: "Vencida"        },
   pendiente:      { color: s.badgePendiente,      label: "Pendiente"      },
   parcial:        { color: s.badgeParcial,        label: "Parcial"        },
+}
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
 }
 
 async function getDashboardCreditos(empresaId) {
@@ -65,19 +74,28 @@ function MiniBar({ data }) {
 }
 
 export default function DashboardCreditos() {
-  const [data, setData]      = useState(null)
-  const [cargando, setCarga] = useState(true)
+  const router = useRouter()
+  const [empresaId, setEmpresaId] = useState(null)
+  const [data, setData]           = useState(null)
+  const [cargando, setCarga]      = useState(true)
+
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
 
   const cargar = useCallback(async () => {
+    if (!empresaId) return
     setCarga(true)
-    const res = await getDashboardCreditos(EMPRESA_ID)
+    const res = await getDashboardCreditos(empresaId)
     setData(res)
     setCarga(false)
-  }, [])
+  }, [empresaId])
 
   useEffect(() => { cargar() }, [cargar])
 
-  if (cargando) return (
+  if (!empresaId || cargando) return (
     <div className={s.page}>
       <div className={s.skeletonGrid}>
         {[...Array(4)].map((_, i) => <div key={i} className={s.skeletonCard} />)}

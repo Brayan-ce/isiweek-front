@@ -4,9 +4,16 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import s from "./MisVentas.module.css"
 
-const EMPRESA_ID = 1
-const USUARIO_ID = 2
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function fmt(n, simbolo = "RD$") {
   return `${simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -62,7 +69,9 @@ const ESTADO_STYLE = {
 }
 
 export default function MisVentas() {
-  const router = useRouter()
+  const router                          = useRouter()
+  const [empresaId, setEmpresaId]       = useState(null)
+  const [usuarioId, setUsuarioId]       = useState(null)
   const [tipoUsuario, setTipoUsuario]   = useState(null)
   const [ventas, setVentas]             = useState([])
   const [total, setTotal]               = useState(0)
@@ -77,17 +86,25 @@ export default function MisVentas() {
   const [alerta, setAlerta]             = useState(null)
 
   useEffect(() => {
-    obtenerDatosHeader(USUARIO_ID).then(d => {
-      setTipoUsuario(d?.usuario?.tipo_usuario_id ?? 3)
-    })
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
   }, [])
 
+  useEffect(() => {
+    if (!usuarioId) return
+    obtenerDatosHeader(usuarioId).then(d => {
+      setTipoUsuario(d?.usuario?.tipo_usuario_id ?? 3)
+    })
+  }, [usuarioId])
+
   const cargar = useCallback(async (p = 1) => {
-    if (!tipoUsuario) return
+    if (!tipoUsuario || !empresaId || !usuarioId) return
     setCargando(true)
     const data = await getMisVentas({
-      empresaId:     EMPRESA_ID,
-      usuarioId:     USUARIO_ID,
+      empresaId,
+      usuarioId,
       tipoUsuarioId: tipoUsuario,
       fechaDesde,
       fechaHasta,
@@ -99,7 +116,7 @@ export default function MisVentas() {
     setTotal(data.total)
     setPaginas(data.paginas)
     setCargando(false)
-  }, [tipoUsuario, fechaDesde, fechaHasta, estado])
+  }, [tipoUsuario, empresaId, usuarioId, fechaDesde, fechaHasta, estado])
 
   useEffect(() => { cargar(1); setPagina(1) }, [cargar])
 
@@ -110,7 +127,7 @@ export default function MisVentas() {
 
   async function handleCancelar(venta) {
     setCancelando(venta.id)
-    const res = await cancelarVenta(venta.id, EMPRESA_ID)
+    const res = await cancelarVenta(venta.id, empresaId)
     setCancelando(null)
     if (res.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", `Venta #${String(venta.id).padStart(6, "0")} cancelada`)
@@ -119,6 +136,12 @@ export default function MisVentas() {
   }
 
   const simbolo = "RD$"
+
+  if (!empresaId || !usuarioId || cargando) return (
+    <div className={s.page}>
+      {[...Array(8)].map((_, i) => <div key={i} className={s.skeletonRow} />)}
+    </div>
+  )
 
   return (
     <div className={s.page}>
@@ -179,9 +202,7 @@ export default function MisVentas() {
           <span></span>
         </div>
 
-        {cargando ? (
-          [...Array(8)].map((_, i) => <div key={i} className={s.skeletonRow} />)
-        ) : ventas.length === 0 ? (
+        {ventas.length === 0 ? (
           <div className={s.empty}>
             <ion-icon name="receipt-outline" />
             <p>Sin ventas con los filtros aplicados</p>
@@ -257,40 +278,13 @@ function ModalDetalle({ venta, simbolo, cancelando, onCancelar, onClose }) {
 
         <div className={s.reciboWrap} id="recibo-print">
           <div className={s.reciboMeta}>
-            <div className={s.reciboMetaItem}>
-              <ion-icon name="calendar-outline" />
-              <span>{new Date(venta.created_at).toLocaleString("es-DO")}</span>
-            </div>
-            <div className={s.reciboMetaItem}>
-              <ion-icon name="person-outline" />
-              <span>{venta.cliente?.nombre ?? "Consumidor final"}</span>
-            </div>
-            {venta.cliente?.cedula_rnc && (
-              <div className={s.reciboMetaItem}>
-                <ion-icon name="card-outline" />
-                <span>{venta.cliente.cedula_rnc}</span>
-              </div>
-            )}
-            <div className={s.reciboMetaItem}>
-              <ion-icon name="person-circle-outline" />
-              <span>{venta.usuario?.nombre_completo ?? "—"}</span>
-            </div>
-            <div className={s.reciboMetaItem}>
-              <ion-icon name="cash-outline" />
-              <span>{venta.metodo_pago?.nombre ?? "—"}</span>
-            </div>
-            {venta.caja_sesion?.caja && (
-              <div className={s.reciboMetaItem}>
-                <ion-icon name="wallet-outline" />
-                <span>{venta.caja_sesion.caja.nombre}</span>
-              </div>
-            )}
-            {venta.comprobante && (
-              <div className={s.reciboMetaItem}>
-                <ion-icon name="document-text-outline" />
-                <span>{venta.comprobante.codigo} — {venta.comprobante.descripcion}</span>
-              </div>
-            )}
+            <div className={s.reciboMetaItem}><ion-icon name="calendar-outline" /><span>{new Date(venta.created_at).toLocaleString("es-DO")}</span></div>
+            <div className={s.reciboMetaItem}><ion-icon name="person-outline" /><span>{venta.cliente?.nombre ?? "Consumidor final"}</span></div>
+            {venta.cliente?.cedula_rnc && <div className={s.reciboMetaItem}><ion-icon name="card-outline" /><span>{venta.cliente.cedula_rnc}</span></div>}
+            <div className={s.reciboMetaItem}><ion-icon name="person-circle-outline" /><span>{venta.usuario?.nombre_completo ?? "—"}</span></div>
+            <div className={s.reciboMetaItem}><ion-icon name="cash-outline" /><span>{venta.metodo_pago?.nombre ?? "—"}</span></div>
+            {venta.caja_sesion?.caja && <div className={s.reciboMetaItem}><ion-icon name="wallet-outline" /><span>{venta.caja_sesion.caja.nombre}</span></div>}
+            {venta.comprobante && <div className={s.reciboMetaItem}><ion-icon name="document-text-outline" /><span>{venta.comprobante.codigo} — {venta.comprobante.descripcion}</span></div>}
           </div>
 
           <div className={s.detalleHeader}>
@@ -308,20 +302,11 @@ function ModalDetalle({ venta, simbolo, cancelando, onCancelar, onClose }) {
           <div className={s.detalleTotales}>
             <div className={s.detalleTotalRow}><span>Subtotal</span><span>{fmt(venta.subtotal, simbolo)}</span></div>
             <div className={s.detalleTotalRow}><span>ITBIS</span><span>{fmt(venta.itbis, simbolo)}</span></div>
-            {Number(venta.descuento) > 0 && (
-              <div className={s.detalleTotalRow}><span>Descuento</span><span>-{fmt(venta.descuento, simbolo)}</span></div>
-            )}
-            <div className={`${s.detalleTotalRow} ${s.detalleTotalFinal}`}>
-              <span>Total</span><span>{fmt(venta.total, simbolo)}</span>
-            </div>
-            {Number(venta.efectivo_recibido) > 0 && (
-              <div className={s.detalleTotalRow}><span>Efectivo</span><span>{fmt(venta.efectivo_recibido, simbolo)}</span></div>
-            )}
+            {Number(venta.descuento) > 0 && <div className={s.detalleTotalRow}><span>Descuento</span><span>-{fmt(venta.descuento, simbolo)}</span></div>}
+            <div className={`${s.detalleTotalRow} ${s.detalleTotalFinal}`}><span>Total</span><span>{fmt(venta.total, simbolo)}</span></div>
+            {Number(venta.efectivo_recibido) > 0 && <div className={s.detalleTotalRow}><span>Efectivo</span><span>{fmt(venta.efectivo_recibido, simbolo)}</span></div>}
             {Number(venta.efectivo_recibido) > Number(venta.total) && (
-              <div className={s.detalleTotalRow}>
-                <span>Cambio</span>
-                <span>{fmt(Number(venta.efectivo_recibido) - Number(venta.total), simbolo)}</span>
-              </div>
+              <div className={s.detalleTotalRow}><span>Cambio</span><span>{fmt(Number(venta.efectivo_recibido) - Number(venta.total), simbolo)}</span></div>
             )}
           </div>
         </div>

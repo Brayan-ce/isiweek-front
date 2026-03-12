@@ -5,8 +5,15 @@ import { useRouter } from "next/navigation"
 import s from "./Cajas.module.css"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
-const USUARIO_ID = 2
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function fmt(n, simbolo = "RD$") {
   return `${simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -75,38 +82,49 @@ async function getHistorialCajas(usuarioId, empresaId, pagina = 1, limite = 10) 
 export default function Cajas() {
   const router = useRouter()
 
-  const [datos, setDatos]                         = useState(null)
-  const [cargando, setCargando]                   = useState(true)
-  const [tab, setTab]                             = useState("caja")
-  const [alerta, setAlerta]                       = useState(null)
-  const [procesando, setProcesando]               = useState(false)
-  const [modalAbrir, setModalAbrir]               = useState(false)
-  const [modalCerrar, setModalCerrar]             = useState(false)
-  const [modalGasto, setModalGasto]               = useState(false)
-  const [montoInicial, setMontoInicial]           = useState("")
-  const [gastoConcepto, setGastoConcepto]         = useState("")
-  const [gastoMonto, setGastoMonto]               = useState("")
-  const [gastoTipo, setGastoTipo]                 = useState("")
-  const [historial, setHistorial]                 = useState([])
-  const [histPagina, setHistPagina]               = useState(1)
-  const [histPaginas, setHistPaginas]             = useState(1)
-  const [cargandoHist, setCargandoHist]           = useState(false)
-  const [montoManual, setMontoManual]             = useState(false)
+  const [empresaId, setEmpresaId]               = useState(null)
+  const [usuarioId, setUsuarioId]               = useState(null)
+  const [datos, setDatos]                       = useState(null)
+  const [cargando, setCargando]                 = useState(true)
+  const [tab, setTab]                           = useState("caja")
+  const [alerta, setAlerta]                     = useState(null)
+  const [procesando, setProcesando]             = useState(false)
+  const [modalAbrir, setModalAbrir]             = useState(false)
+  const [modalCerrar, setModalCerrar]           = useState(false)
+  const [modalGasto, setModalGasto]             = useState(false)
+  const [montoInicial, setMontoInicial]         = useState("")
+  const [gastoConcepto, setGastoConcepto]       = useState("")
+  const [gastoMonto, setGastoMonto]             = useState("")
+  const [gastoTipo, setGastoTipo]               = useState("")
+  const [historial, setHistorial]               = useState([])
+  const [histPagina, setHistPagina]             = useState(1)
+  const [histPaginas, setHistPaginas]           = useState(1)
+  const [cargandoHist, setCargandoHist]         = useState(false)
+  const [montoManual, setMontoManual]           = useState(false)
   const [montoCierreManual, setMontoCierreManual] = useState("")
-  const [notasCierre, setNotasCierre]             = useState("")
+  const [notasCierre, setNotasCierre]           = useState("")
+
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
+  }, [])
 
   const cargar = useCallback(async () => {
+    if (!usuarioId || !empresaId) return
     setCargando(true)
-    const d = await getDatosCaja(USUARIO_ID, EMPRESA_ID)
+    const d = await getDatosCaja(usuarioId, empresaId)
     setDatos(d)
     setCargando(false)
-  }, [])
+  }, [usuarioId, empresaId])
 
   useEffect(() => { cargar() }, [cargar])
 
   async function cargarHistorial(p = 1) {
+    if (!usuarioId || !empresaId) return
     setCargandoHist(true)
-    const res = await getHistorialCajas(USUARIO_ID, EMPRESA_ID, p, 10)
+    const res = await getHistorialCajas(usuarioId, empresaId, p, 10)
     setHistorial(res.sesiones)
     setHistPaginas(res.paginas)
     setHistPagina(p)
@@ -115,7 +133,7 @@ export default function Cajas() {
 
   useEffect(() => {
     if (tab === "historial") cargarHistorial(1)
-  }, [tab])
+  }, [tab, usuarioId, empresaId])
 
   function mostrarAlerta(tipo, msg) {
     setAlerta({ tipo, msg })
@@ -131,7 +149,7 @@ export default function Cajas() {
 
   async function handleAbrir() {
     setProcesando(true)
-    const res = await abrirCaja(USUARIO_ID, EMPRESA_ID, Number(montoInicial) || 0)
+    const res = await abrirCaja(usuarioId, empresaId, Number(montoInicial) || 0)
     setProcesando(false)
     if (res.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Caja abierta correctamente")
@@ -144,7 +162,7 @@ export default function Cajas() {
     if (!datos?.sesion) return
     const montoFinal = montoManual ? Number(montoCierreManual) : null
     setProcesando(true)
-    const res = await cerrarCaja(datos.sesion.id, USUARIO_ID, montoFinal, notasCierre)
+    const res = await cerrarCaja(datos.sesion.id, usuarioId, montoFinal, notasCierre)
     setProcesando(false)
     if (res.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", `Caja cerrada. Saldo final: ${fmt(res.saldo_cierre)}`)
@@ -155,7 +173,7 @@ export default function Cajas() {
   async function handleGasto() {
     if (!gastoConcepto.trim() || !gastoMonto) return
     setProcesando(true)
-    const res = await registrarGasto(USUARIO_ID, EMPRESA_ID, gastoConcepto, gastoMonto, gastoTipo)
+    const res = await registrarGasto(usuarioId, empresaId, gastoConcepto, gastoMonto, gastoTipo)
     setProcesando(false)
     if (res.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", `Gasto "${res.concepto}" registrado`)
@@ -171,7 +189,7 @@ export default function Cajas() {
   const cajaAbierta = sesion?.estado === "abierta"
   const montoCalculado = resumen?.totalEnCaja ?? 0
 
-  if (cargando) return (
+  if (!empresaId || cargando) return (
     <div className={s.page}>
       <div className={s.skeletonWrap}>
         <div className={s.skeleton} style={{ height: 180 }} />

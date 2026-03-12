@@ -1,14 +1,23 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import s from "./ConfiguracionEmpresa.module.css"
 
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 const FORM_VACIO = {
   nombre: "", rnc: "", razon_social: "", telefono: "", email: "",
   direccion: "", pais: "DO", estado_geo: "", ciudad: "", moneda_id: "",
+}
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
 }
 
 async function getEmpresa(empresaId) {
@@ -49,19 +58,28 @@ async function subirLogoEmpresa(empresaId, formData) {
 }
 
 export default function ConfiguracionEmpresa() {
-  const [form, setForm]               = useState(FORM_VACIO)
-  const [monedas, setMonedas]         = useState([])
-  const [cargando, setCargando]       = useState(true)
-  const [guardando, setGuardando]     = useState(false)
-  const [alerta, setAlerta]           = useState(null)
+  const router                        = useRouter()
+  const [empresaId,   setEmpresaId]   = useState(null)
+  const [form,        setForm]        = useState(FORM_VACIO)
+  const [monedas,     setMonedas]     = useState([])
+  const [cargando,    setCargando]    = useState(true)
+  const [guardando,   setGuardando]   = useState(false)
+  const [alerta,      setAlerta]      = useState(null)
   const [logoPreview, setLogoPreview] = useState(null)
-  const [logoFile, setLogoFile]       = useState(null)
-  const [dragOver, setDragOver]       = useState(false)
+  const [logoFile,    setLogoFile]    = useState(null)
+  const [dragOver,    setDragOver]    = useState(false)
   const fileRef                       = useRef(null)
 
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
+
   const cargar = useCallback(async () => {
+    if (!empresaId) return
     setCargando(true)
-    const [emp, mons] = await Promise.all([getEmpresa(EMPRESA_ID), getMonedas()])
+    const [emp, mons] = await Promise.all([getEmpresa(empresaId), getMonedas()])
     if (emp) {
       setForm({
         nombre:       emp.nombre       ?? "",
@@ -80,7 +98,7 @@ export default function ConfiguracionEmpresa() {
     }
     setMonedas(mons)
     setCargando(false)
-  }, [])
+  }, [empresaId])
 
   useEffect(() => { cargar() }, [cargar])
 
@@ -101,6 +119,7 @@ export default function ConfiguracionEmpresa() {
   }
 
   async function handleGuardar() {
+    if (!empresaId) return
     if (!form.nombre.trim()) return mostrarAlerta("error", "El nombre es obligatorio")
     if (!form.moneda_id)     return mostrarAlerta("error", "Selecciona una moneda")
     setGuardando(true)
@@ -108,18 +127,18 @@ export default function ConfiguracionEmpresa() {
     if (logoFile) {
       const fd = new FormData()
       fd.append("file", logoFile)
-      const r = await subirLogoEmpresa(EMPRESA_ID, fd)
+      const r = await subirLogoEmpresa(empresaId, fd)
       if (r?.error) { setGuardando(false); return mostrarAlerta("error", r.error) }
     }
 
-    const res = await guardarEmpresa(EMPRESA_ID, form)
+    const res = await guardarEmpresa(empresaId, form)
     setGuardando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Configuracion guardada correctamente")
     cargar()
   }
 
-  if (cargando) return (
+  if (!empresaId || cargando) return (
     <div className={s.page}>
       <div className={s.skeletonGrid}>
         {[...Array(4)].map((_, i) => <div key={i} className={s.skeletonCard} />)}

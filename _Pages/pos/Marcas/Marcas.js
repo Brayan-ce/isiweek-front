@@ -1,10 +1,19 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 import s from "./Marcas.module.css"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 async function getMarcas(empresaId, busqueda = "", pagina = 1, limite = 20) {
   try {
@@ -45,29 +54,38 @@ async function eliminarMarca(id) {
 }
 
 export default function Marcas() {
-  const [marcas, setMarcas]         = useState([])
-  const [total, setTotal]           = useState(0)
-  const [pagina, setPagina]         = useState(1)
-  const [paginas, setPaginas]       = useState(1)
-  const [busqueda, setBusqueda]     = useState("")
-  const [cargando, setCargando]     = useState(true)
-  const [alerta, setAlerta]         = useState(null)
-  const [procesando, setProcesando] = useState(false)
-  const [modal, setModal]           = useState(null)
-  const [nombre, setNombre]         = useState("")
-  const [modalElim, setModalElim]   = useState(null)
-  const [editInline, setEditInline] = useState(null)
-  const [editNombre, setEditNombre] = useState("")
-  const searchRef                   = useRef()
+  const router                          = useRouter()
+  const [empresaId, setEmpresaId]       = useState(null)
+  const [marcas, setMarcas]             = useState([])
+  const [total, setTotal]               = useState(0)
+  const [pagina, setPagina]             = useState(1)
+  const [paginas, setPaginas]           = useState(1)
+  const [busqueda, setBusqueda]         = useState("")
+  const [cargando, setCargando]         = useState(true)
+  const [alerta, setAlerta]             = useState(null)
+  const [procesando, setProcesando]     = useState(false)
+  const [modal, setModal]               = useState(null)
+  const [nombre, setNombre]             = useState("")
+  const [modalElim, setModalElim]       = useState(null)
+  const [editInline, setEditInline]     = useState(null)
+  const [editNombre, setEditNombre]     = useState("")
+  const searchRef                       = useRef()
+
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
 
   const cargar = useCallback(async (q = "", p = 1) => {
+    if (!empresaId) return
     setCargando(true)
-    const res = await getMarcas(EMPRESA_ID, q, p, 20)
+    const res = await getMarcas(empresaId, q, p, 20)
     setMarcas(res.marcas ?? [])
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [])
+  }, [empresaId])
 
   useEffect(() => { cargar("", 1) }, [cargar])
 
@@ -90,7 +108,7 @@ export default function Marcas() {
     if (!nombre.trim()) return mostrarAlerta("error", "El nombre es obligatorio")
     setProcesando(true)
     const res = modal === "crear"
-      ? await crearMarca(EMPRESA_ID, nombre)
+      ? await crearMarca(empresaId, nombre)
       : await editarMarca(modal.id, nombre)
     setProcesando(false)
     if (res.error) return mostrarAlerta("error", res.error)
@@ -124,9 +142,14 @@ export default function Marcas() {
 
   function irPagina(p) { setPagina(p); cargar(busqueda, p) }
 
+  if (!empresaId || cargando) return (
+    <div className={s.page}>
+      {[...Array(6)].map((_, i) => <div key={i} className={s.skeletonRow} />)}
+    </div>
+  )
+
   return (
     <div className={s.page}>
-
       {alerta && (
         <div className={`${s.toast} ${s["toast_" + alerta.tipo]}`}>
           <ion-icon name={alerta.tipo === "error" ? "alert-circle-outline" : "checkmark-circle-outline"} />
@@ -168,9 +191,7 @@ export default function Marcas() {
           <span></span>
         </div>
 
-        {cargando ? (
-          [...Array(6)].map((_, i) => <div key={i} className={s.skeletonRow} />)
-        ) : marcas.length === 0 ? (
+        {marcas.length === 0 ? (
           <div className={s.empty}>
             <ion-icon name="ribbon-outline" />
             <p>{busqueda ? `Sin resultados para "${busqueda}"` : "Sin marcas registradas"}</p>
@@ -207,28 +228,17 @@ export default function Marcas() {
                   <span className={s.marcaNombre}>{marca.nombre}</span>
                 )}
               </div>
-
               <div className={`${s.countCell} ${s.colProductos}`}>
                 <span className={`${s.countBadge} ${marca._count.productos === 0 ? s.countCero : ""}`}>
                   <ion-icon name="cube-outline" />
                   <span>{marca._count.productos}</span>
                 </span>
               </div>
-
               <div className={s.acciones}>
-                <button
-                  className={s.btnEdit}
-                  onClick={() => { setEditInline(marca.id); setEditNombre(marca.nombre) }}
-                  title="Editar"
-                >
+                <button className={s.btnEdit} onClick={() => { setEditInline(marca.id); setEditNombre(marca.nombre) }} title="Editar">
                   <ion-icon name="pencil-outline" />
                 </button>
-                <button
-                  className={s.btnDel}
-                  onClick={() => setModalElim(marca)}
-                  title={marca._count.productos > 0 ? "Tiene productos asignados" : "Eliminar"}
-                  disabled={marca._count.productos > 0}
-                >
+                <button className={s.btnDel} onClick={() => setModalElim(marca)} title={marca._count.productos > 0 ? "Tiene productos asignados" : "Eliminar"} disabled={marca._count.productos > 0}>
                   <ion-icon name="trash-outline" />
                 </button>
               </div>
@@ -297,7 +307,6 @@ export default function Marcas() {
           </div>
         </div>
       )}
-
     </div>
   )
 }

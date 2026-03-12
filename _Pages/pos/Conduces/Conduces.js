@@ -1,10 +1,19 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 import s from "./Conduces.module.css"
 
-const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const EMPRESA_ID = 1
+const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 function fmt(n, simbolo = "RD$") {
   return `${simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -31,6 +40,9 @@ async function pagarCuota(cuotaId, ventaId, empresaId) {
 }
 
 export default function Conduces() {
+  const router = useRouter()
+
+  const [empresaId, setEmpresaId]   = useState(null)
   const [ventas, setVentas]         = useState([])
   const [total, setTotal]           = useState(0)
   const [pagina, setPagina]         = useState(1)
@@ -42,16 +54,27 @@ export default function Conduces() {
   const [modalVer, setModalVer]     = useState(null)
   const searchRef = useRef()
 
+  useEffect(() => {
+    const payload = getTokenPayload()
+    if (!payload) { router.push("/login"); return }
+    setEmpresaId(payload.empresa_id)
+  }, [])
+
   const cargar = useCallback(async (q = "", p = 1) => {
+    if (!empresaId) return
     setCargando(true)
-    const res = await getVentasCuotas(EMPRESA_ID, q, p, 20)
+    const res = await getVentasCuotas(empresaId, q, p, 20)
     setVentas(res.ventas ?? [])
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [])
+  }, [empresaId])
 
-  useEffect(() => { cargar("", 1) }, [cargar])
+  useEffect(() => {
+    if (!empresaId) return
+    cargar("", 1)
+  }, [cargar, empresaId])
+
   useEffect(() => {
     const t = setTimeout(() => { setPagina(1); cargar(busqueda, 1) }, 350)
     return () => clearTimeout(t)
@@ -64,7 +87,7 @@ export default function Conduces() {
 
   async function handlePagarCuota(cuotaId, ventaId) {
     setProcesando(true)
-    const res = await pagarCuota(cuotaId, ventaId, EMPRESA_ID)
+    const res = await pagarCuota(cuotaId, ventaId, empresaId)
     setProcesando(false)
     if (res.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", `Cuota ${res.numero} pagada`)
@@ -87,6 +110,8 @@ export default function Conduces() {
   function cuotasPendientes(v) { return v.venta_cuotas.filter(c => c.estado === "pendiente") }
   function proximaCuota(v)     { return cuotasPendientes(v)[0] ?? null }
   function montoPagado(v)      { return v.venta_cuotas.filter(c => c.estado === "pagada").reduce((a, c) => a + Number(c.monto), 0) }
+
+  if (!empresaId) return <div className={s.loading}><span className={s.spinner} /></div>
 
   return (
     <div className={s.page}>
