@@ -12,14 +12,13 @@ const TIPOS = [
 ]
 const MODOS = [
   { id: 1, label: "POS" },
-  { id: 2, label: "Obras" },
   { id: 3, label: "Creditos" },
   { id: 4, label: "Ventas Online" },
 ]
 
 const FORM_VACIO = {
   nombre_completo: "", cedula: "", email: "",
-  password: "", tipo_usuario_id: "3", modo_sistema_id: "1",
+  password: "", tipo_usuario_id: "3", modos_ids: [],
 }
 
 function getTokenPayload() {
@@ -126,6 +125,15 @@ export default function UsuariosEmpresa() {
 
   function setF(k, v) { setForm(f => ({ ...f, [k]: v })) }
 
+  function toggleModo(id) {
+    setForm(f => ({
+      ...f,
+      modos_ids: f.modos_ids.includes(id)
+        ? f.modos_ids.filter(x => x !== id)
+        : [...f.modos_ids, id],
+    }))
+  }
+
   function abrirCrear() {
     setForm(FORM_VACIO)
     setVerPass(false)
@@ -139,7 +147,7 @@ export default function UsuariosEmpresa() {
       email:           u.email           ?? "",
       password:        "",
       tipo_usuario_id: String(u.tipo_usuario?.id ?? 3),
-      modo_sistema_id: String(u.modo_sistema?.id ?? 1),
+      modos_ids:       u.usuario_modos?.map(um => um.modo_sistema.id) ?? [],
     })
     setVerPass(false)
     setModal({ tipo: "editar", id: u.id })
@@ -214,7 +222,7 @@ export default function UsuariosEmpresa() {
           <span>Usuario</span>
           <span>Email</span>
           <span>Rol</span>
-          <span>Modo</span>
+          <span>Modos</span>
           <span>Estado</span>
           <span />
         </div>
@@ -237,7 +245,16 @@ export default function UsuariosEmpresa() {
               <span className={`${s.rolBadge} ${u.tipo_usuario?.id === 2 ? s.rolAdmin : s.rolVendedor}`}>
                 {u.tipo_usuario?.nombre ?? "—"}
               </span>
-              <span className={s.cellGris}>{u.modo_sistema?.nombre ?? "—"}</span>
+              <div className={s.modosCell}>
+                {u.usuario_modos?.length > 0
+                  ? u.usuario_modos.map(um => (
+                      <span key={um.modo_sistema.id} className={s.modoBadge}>
+                        {um.modo_sistema.nombre}
+                      </span>
+                    ))
+                  : <span className={s.cellGris}>—</span>
+                }
+              </div>
               <button
                 className={`${s.toggleBtn} ${u.estado === "activo" ? s.toggleOn : ""}`}
                 onClick={() => handleToggle(u)}
@@ -287,11 +304,22 @@ export default function UsuariosEmpresa() {
                   {TIPOS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
                 </select>
               </div>
-              <div className={s.field}>
-                <label>Modo del sistema</label>
-                <select className={s.input} value={form.modo_sistema_id} onChange={e => setF("modo_sistema_id", e.target.value)}>
-                  {MODOS.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
-                </select>
+              <div className={`${s.field} ${s.spanFull}`}>
+                <label>Modos del sistema</label>
+                <div className={s.modosGrid}>
+                  {MODOS.map(m => {
+                    const on = form.modos_ids.includes(m.id)
+                    return (
+                      <button key={m.id} type="button"
+                        className={`${s.modoBtn} ${on ? s.modoBtnOn : ""}`}
+                        onClick={() => toggleModo(m.id)}
+                      >
+                        <ion-icon name={on ? "checkmark-circle" : "ellipse-outline"} />
+                        {m.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
               {modal === "crear" && (
                 <div className={`${s.field} ${s.spanFull}`}>

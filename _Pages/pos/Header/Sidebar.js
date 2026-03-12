@@ -105,6 +105,8 @@ export default function Sidebar({ data, open, onClose, onToggleDark, darkMode })
   const router   = useRouter()
 
   const slugsDisponibles = new Set((data?.modulos ?? []).map(m => m.slug))
+  
+  const esVendedor = data?.usuario?.tipo_usuario_id === 3
 
   const grupoActivoId = GRUPOS.find(g =>
     g.slugs.some(sl => pathname === `/pos/${sl}` || pathname.startsWith(`/pos/${sl}/`))
@@ -132,8 +134,17 @@ export default function Sidebar({ data, open, onClose, onToggleDark, darkMode })
   const empresa         = data?.empresa ?? { nombre: "" }
   const usuario         = data?.usuario ?? { nombre_completo: "" }
   const tieneVender     = slugsDisponibles.has("vender")
+  const SLUGS_SOLO_ADMIN = ["solicitudes", "empresas", "usuarios", "depuracion", "configuracion"]
+
   const gruposFiltrados = GRUPOS
-    .map(g => ({ ...g, hijos: g.slugs.filter(sl => slugsDisponibles.has(sl)) }))
+    .map(g => ({
+      ...g,
+      hijos: g.slugs.filter(sl => {
+        if (!slugsDisponibles.has(sl)) return false
+        if (esVendedor && SLUGS_SOLO_ADMIN.includes(sl)) return false
+        return true
+      }),
+    }))
     .filter(g => g.hijos.length > 0)
 
   return (

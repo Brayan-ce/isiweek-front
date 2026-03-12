@@ -32,7 +32,7 @@
 
 .tablaHead {
   display: grid;
-  grid-template-columns: 1fr 1fr 120px 100px 60px 80px;
+  grid-template-columns: 1fr 1fr 120px 1fr 60px 80px;
   padding: 10px 16px; background: #f1f5f9;
   font-size: 10px; font-weight: 700; color: #94a3b8;
   text-transform: uppercase; letter-spacing: 0.5px; gap: 10px; align-items: center;
@@ -43,7 +43,7 @@
 
 .fila {
   display: grid;
-  grid-template-columns: 1fr 1fr 120px 100px 60px 80px;
+  grid-template-columns: 1fr 1fr 120px 1fr 60px 80px;
   padding: 11px 16px; gap: 10px; align-items: center;
   border-bottom: 1px solid #f1f5f9; transition: background 0.12s;
 }
@@ -72,8 +72,36 @@
   display: inline-flex; padding: 3px 10px; border-radius: 20px;
   font-size: 11px; font-weight: 700; width: fit-content;
 }
-.rolAdmin   { background: rgba(139,92,246,0.1); color: #8b5cf6; }
+.rolAdmin    { background: rgba(139,92,246,0.1); color: #8b5cf6; }
 .rolVendedor { background: rgba(29,111,206,0.1); color: #1d6fce; }
+
+.modosCell {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+}
+.modoBadge {
+  font-size: 11px; padding: 2px 8px; border-radius: 20px;
+  background: #e0edff; color: #1d6fce; font-weight: 600;
+  white-space: nowrap;
+}
+:global([data-theme="dark"]) .modoBadge { background: rgba(29,111,206,0.2); color: #60a5fa; }
+
+.modosGrid {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;
+}
+.modoBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 9px;
+  border: 1.5px solid #e2e8f0; background: #f8fafc;
+  color: #64748b; font-size: 13px; font-weight: 500;
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.modoBtn:hover { border-color: #1d6fce; color: #1d6fce; }
+.modoBtnOn {
+  border-color: #1d6fce; background: #e0edff;
+  color: #1d6fce; font-weight: 700;
+}
+:global([data-theme="dark"]) .modoBtn { background: #0a1628; border-color: rgba(255,255,255,0.07); color: #94a3b8; }
+:global([data-theme="dark"]) .modoBtnOn { background: rgba(29,111,206,0.2); border-color: #1d6fce; color: #60a5fa; }
 
 .toggleBtn {
   width: 40px; height: 22px; border-radius: 11px; border: none;
@@ -226,12 +254,13 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 900px) {
-  .tablaHead, .fila { grid-template-columns: 1fr 120px 60px 80px; }
-  .tablaHead span:nth-child(2), .fila > .cellGris:first-of-type,
-  .tablaHead span:nth-child(4), .fila > .cellGris:last-of-type { display: none; }
+  .tablaHead, .fila { grid-template-columns: 1fr 120px 1fr 60px 80px; }
+  .tablaHead span:nth-child(2), .fila > .cellGris:first-of-type { display: none; }
 }
 @media (max-width: 600px) {
   .page { padding: 12px; }
+  .tablaHead, .fila { grid-template-columns: 1fr 120px 60px 44px; }
+  .tablaHead span:nth-child(4), .fila > .modosCell { display: none; }
   .modalGrid { grid-template-columns: 1fr; }
   .spanFull { grid-column: 1; }
 }

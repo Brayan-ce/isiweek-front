@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import LocationSelect from "./extras/paises/LocationSelect"
 import s from "./ConfiguracionEmpresa.module.css"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
@@ -107,7 +108,10 @@ export default function ConfiguracionEmpresa() {
     setTimeout(() => setAlerta(null), 3500)
   }
 
-  function setF(k, v) { setForm(f => ({ ...f, [k]: v })) }
+  function handleChange(e) {
+    const { name, value } = e.target
+    setForm(f => ({ ...f, [name]: value }))
+  }
 
   function handleLogoChange(file) {
     if (!file) return
@@ -168,23 +172,23 @@ export default function ConfiguracionEmpresa() {
           <div className={s.formGrid}>
             <div className={`${s.field} ${s.spanFull}`}>
               <label>Nombre de la empresa *</label>
-              <input className={s.input} value={form.nombre} onChange={e => setF("nombre", e.target.value)} placeholder="Mi Empresa S.R.L." />
+              <input className={s.input} name="nombre" value={form.nombre} onChange={handleChange} placeholder="Mi Empresa S.R.L." />
             </div>
             <div className={s.field}>
               <label>RNC / Cedula</label>
-              <input className={s.input} value={form.rnc} onChange={e => setF("rnc", e.target.value)} placeholder="101-12345-6" />
+              <input className={s.input} name="rnc" value={form.rnc} onChange={handleChange} placeholder="101-12345-6" />
             </div>
             <div className={s.field}>
               <label>Razon social</label>
-              <input className={s.input} value={form.razon_social} onChange={e => setF("razon_social", e.target.value)} placeholder="Razon social opcional" />
+              <input className={s.input} name="razon_social" value={form.razon_social} onChange={handleChange} placeholder="Razon social opcional" />
             </div>
             <div className={s.field}>
               <label>Telefono</label>
-              <input className={s.input} value={form.telefono} onChange={e => setF("telefono", e.target.value)} placeholder="809-000-0000" />
+              <input className={s.input} name="telefono" value={form.telefono} onChange={handleChange} placeholder="809-000-0000" />
             </div>
             <div className={s.field}>
               <label>Email</label>
-              <input className={s.input} type="email" value={form.email} onChange={e => setF("email", e.target.value)} placeholder="empresa@correo.com" />
+              <input className={s.input} type="email" name="email" value={form.email} onChange={handleChange} placeholder="empresa@correo.com" />
             </div>
           </div>
         </div>
@@ -194,31 +198,9 @@ export default function ConfiguracionEmpresa() {
           <div className={s.formGrid}>
             <div className={`${s.field} ${s.spanFull}`}>
               <label>Direccion</label>
-              <input className={s.input} value={form.direccion} onChange={e => setF("direccion", e.target.value)} placeholder="Calle Principal #1" />
+              <input className={s.input} name="direccion" value={form.direccion} onChange={handleChange} placeholder="Calle Principal #1" />
             </div>
-            <div className={s.field}>
-              <label>Pais</label>
-              <select className={s.input} value={form.pais} onChange={e => setF("pais", e.target.value)}>
-                <option value="DO">Republica Dominicana</option>
-                <option value="US">Estados Unidos</option>
-                <option value="MX">Mexico</option>
-                <option value="CO">Colombia</option>
-                <option value="CL">Chile</option>
-                <option value="ES">Espana</option>
-                <option value="GT">Guatemala</option>
-                <option value="HN">Honduras</option>
-                <option value="PA">Panama</option>
-                <option value="PR">Puerto Rico</option>
-              </select>
-            </div>
-            <div className={s.field}>
-              <label>Provincia / Estado</label>
-              <input className={s.input} value={form.estado_geo} onChange={e => setF("estado_geo", e.target.value)} placeholder="Distrito Nacional" />
-            </div>
-            <div className={s.field}>
-              <label>Ciudad</label>
-              <input className={s.input} value={form.ciudad} onChange={e => setF("ciudad", e.target.value)} placeholder="Santo Domingo" />
-            </div>
+            <LocationSelect form={form} onChange={handleChange} />
           </div>
         </div>
 
@@ -229,7 +211,7 @@ export default function ConfiguracionEmpresa() {
               <button
                 key={m.id}
                 className={`${s.monedaBtn} ${String(form.moneda_id) === String(m.id) ? s.monedaActiva : ""}`}
-                onClick={() => setF("moneda_id", String(m.id))}
+                onClick={() => handleChange({ target: { name: "moneda_id", value: String(m.id) } })}
               >
                 <span className={s.monedaSimbolo}>{m.simbolo}</span>
                 <span className={s.monedaNombre}>{m.nombre}</span>

@@ -5,10 +5,18 @@ import DashboardAdmin from "./admin/DashboardAdmin"
 import DashboardVendedor from "./vendedor/DashboardVendedor"
 
 const API              = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-const USUARIO_ID       = 2
 const TIPO_SUPER_ADMIN = 1
 const TIPO_ADMIN       = 2
 const TIPO_VENDEDOR    = 3
+
+function getTokenPayload() {
+  try {
+    const token = localStorage.getItem("isiweek_token")
+    if (!token) return null
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    return JSON.parse(atob(base64))
+  } catch { return null }
+}
 
 async function obtenerDatosHeader(usuarioId) {
   try {
@@ -23,7 +31,10 @@ export default function DashboardPOS() {
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    obtenerDatosHeader(USUARIO_ID).then(data => {
+    const payload = getTokenPayload()
+    if (!payload) { setCargando(false); return }
+
+    obtenerDatosHeader(payload.id).then(data => {
       setTipo(data?.usuario?.tipo_usuario_id ?? null)
       setCargando(false)
     })
