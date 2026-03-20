@@ -2,22 +2,22 @@ import "./globals.css"
 import Script from "next/script"
 
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://isiweek.com"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://pos.ambrysoft.com"),
   title: {
-    default: "IsiWeek - Sistema Multi Empresa",
-    template: "%s | IsiWeek",
+    default: "Ambrysoft — Sistema de Gestión Empresarial",
+    template: "%s | Ambrysoft",
   },
-  description: "IsiWeek es el sistema de gestion multi empresa para ventas, obras, inventario y mas.",
-  keywords: ["sistema pos", "gestion empresarial", "isiweek", "ventas", "inventario"],
-  authors: [{ name: "Angel Luis Batista Mendoza" }],
+  description: "Ambrysoft es el sistema todo-en-uno para ventas, inventario, créditos y obras. Gestiona tu negocio desde cualquier lugar.",
+  keywords: ["sistema pos", "gestion empresarial", "ambrysoft", "ventas", "inventario", "creditos", "financiamiento", "obras"],
+  authors: [{ name: "Ambrysoft" }],
   icons: {
     icon: "/logo.png",
   },
   openGraph: {
-    title: "IsiWeek - Sistema Multi Empresa",
-    description: "Gestion empresarial completa para POS, obras, inventario y mas.",
-    url: "https://isiweek.com",
-    siteName: "IsiWeek",
+    title: "Ambrysoft — Sistema de Gestión Empresarial",
+    description: "POS, créditos, inventario y obras en un solo sistema. Hecho para negocios que quieren crecer.",
+    url: "https://pos.ambrysoft.com",
+    siteName: "Ambrysoft",
     locale: "es_DO",
     type: "website",
   },
