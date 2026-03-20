@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import s from "./Control.module.css"
 
 const API      = process.env.NEXT_PUBLIC_BACKEND_URL  ?? "http://localhost:3001"
-const BASE_URL = process.env.NEXT_PUBLIC_FRONTEND_URL ?? "http://localhost:3000"
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 
 function getTokenPayload() {
   try {
