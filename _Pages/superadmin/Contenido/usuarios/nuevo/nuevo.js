@@ -7,13 +7,6 @@ import s from "./nuevo.module.css"
 const API            = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 const SUPER_ADMIN_ID = 1
 
-const MODO_MODULOS = {
-  POS:           ["vender", "mis-ventas", "productos"],
-  OBRAS:         ["mis-obras", "asistencia-diaria"],
-  CREDITOS:      ["creditos-dashboard"],
-  VENTAS_ONLINE: ["ventas-online-pedidos"],
-}
-
 async function obtenerTiposUsuario() {
   try {
     const res = await fetch(`${API}/api/superadmin/usuarios/tipos`)
@@ -89,19 +82,17 @@ export default function NuevoUsuarioPage() {
   useEffect(() => {
     if (!form.empresa_id) { setEmpresaModulos([]); return }
     obtenerEmpresa(Number(form.empresa_id)).then(emp => {
-      const slugs = emp?.empresa_modulos?.map(em => em.modulo?.slug).filter(Boolean) ?? []
-      setEmpresaModulos(slugs)
+      const modulos = emp?.empresa_modulos?.map(em => em.modulo).filter(Boolean) ?? []
+      setEmpresaModulos(modulos)
       setForm(f => ({ ...f, modos_ids: [] }))
     })
   }, [form.empresa_id])
 
   const modosDisponibles = useMemo(() => {
     if (!form.empresa_id) return []
-    return modos.filter(m => {
-      const requeridos = MODO_MODULOS[m.nombre]
-      if (!requeridos) return false
-      return requeridos.some(slug => empresaModulos.includes(slug))
-    })
+    return modos.filter(m =>
+      empresaModulos.some(mod => mod.modo_sistema_id === m.id)
+    )
   }, [modos, empresaModulos, form.empresa_id])
 
   function handleChange(e) {
