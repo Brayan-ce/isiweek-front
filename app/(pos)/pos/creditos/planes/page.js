@@ -1,5 +1,4 @@
-import PlanesCredito from "@/_Pages/pos/Creditos/Planes/PlanesCredito"
-
+import Planes from "@/_Pages/pos/Creditos/Planes/Planes"
 export default function PlanesCreditoPage() {
-  return <PlanesCredito />
+  return <Planes />
 }

@@ -21,7 +21,7 @@ const GRUPOS = [
     icon: "card-outline",
     slugs: [
       "creditos/dashboard", "creditos/planes", "creditos/contratos",
-      "creditos/cuotas", "creditos/pagos", "creditos/mora",
+      "creditos/control", "creditos/pagos", "creditos/mora",
     ],
   },
   {
@@ -55,7 +55,7 @@ const SLUG_LABEL = {
   "creditos/dashboard":           "Dashboard Creditos",
   "creditos/planes":              "Planes de Credito",
   "creditos/contratos":           "Contratos",
-  "creditos/cuotas":              "Cuotas",
+  "creditos/control":             "Control",
   "creditos/pagos":               "Pagos",
   "creditos/mora":                "Mora y Alertas",
   "ventas-online/pedidos":        "Pedidos",
@@ -86,7 +86,7 @@ const SLUG_ICON = {
   "creditos/dashboard":           "grid-outline",
   "creditos/planes":              "list-outline",
   "creditos/contratos":           "document-outline",
-  "creditos/cuotas":              "calendar-outline",
+  "creditos/control":             "calendar-outline",
   "creditos/pagos":               "cash-outline",
   "creditos/mora":                "alert-circle-outline",
   "ventas-online/pedidos":        "bag-outline",
@@ -105,7 +105,6 @@ export default function Sidebar({ data, open, onClose, onToggleDark, darkMode })
   const router   = useRouter()
 
   const slugsDisponibles = new Set((data?.modulos ?? []).map(m => m.slug))
-  
   const esVendedor = data?.usuario?.tipo_usuario_id === 3
 
   const grupoActivoId = GRUPOS.find(g =>

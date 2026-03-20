@@ -1,5 +1,4 @@
-
-import Proximamente from "@/_Pages/pos/Creditos/Proximamente/Proximamente"
+import Pagos from "@/_Pages/pos/Creditos/Pagos/Pagos"
 export default function PagosCreditosPage() {
-  return <Proximamente titulo="Pagos" />
+  return <Pagos />
 }

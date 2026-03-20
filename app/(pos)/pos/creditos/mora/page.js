@@ -1,5 +1,4 @@
-
-import Proximamente from "@/_Pages/pos/Creditos/Proximamente/Proximamente"
+import Mora from "@/_Pages/pos/Creditos/Mora/Mora"
 export default function MoraPage() {
-  return <Proximamente titulo="Mora y Alertas" />
+  return <Mora />
 }

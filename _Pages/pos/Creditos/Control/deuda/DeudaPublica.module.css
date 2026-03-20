@@ -1,0 +1,325 @@
+.shell {
+  min-height: 100vh;
+  background: #f0f4f8;
+  display: flex;
+  flex-direction: column;
+}
+
+.loadWrap, .errorWrap {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 20px;
+  min-height: 100vh; padding: 32px; text-align: center; color: #64748b;
+}
+.spinner {
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 3px solid #e2e8f0; border-top-color: #1d6fce;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loadWrap p { font-size: 16px; font-weight: 600; color: #64748b; margin: 0; }
+.errorWrap h2 { font-size: 22px; font-weight: 900; color: #0f172a; margin: 0; }
+.errorWrap p  { font-size: 15px; max-width: 340px; line-height: 1.7; color: #64748b; margin: 0; }
+
+.header {
+  background: white;
+  border-bottom: 1.5px solid #e2e8f0;
+  position: sticky; top: 0; z-index: 10;
+}
+.headerInner {
+  max-width: 680px; margin: 0 auto;
+  padding: 16px 20px;
+  display: flex; align-items: center; gap: 14px;
+}
+.logo { width: 38px; height: 38px; object-fit: contain; border-radius: 10px; }
+.empresaInfo  { display: flex; flex-direction: column; gap: 3px; }
+.empresaNombre { font-size: 16px; font-weight: 900; color: #0f172a; }
+.empresaContact {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 13px; color: #64748b; text-decoration: none; font-weight: 600;
+}
+.empresaContact:hover { color: #1d6fce; }
+
+.main {
+  max-width: 680px; margin: 0 auto; width: 100%;
+  padding: 28px 18px 64px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+
+.clienteCard {
+  background: white; border-radius: 20px; padding: 24px 22px;
+  border: 1.5px solid #e2e8f0;
+  display: flex; align-items: center; gap: 18px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+}
+.clienteAvatar {
+  width: 60px; height: 60px; border-radius: 50%; flex-shrink: 0;
+  background: #1d6fce;
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-size: 26px; font-weight: 900;
+}
+.clienteInfo  { display: flex; flex-direction: column; gap: 4px; }
+.clienteNombre { font-size: 22px; font-weight: 900; color: #0f172a; margin: 0; }
+.clienteSubtitulo { font-size: 14px; color: #64748b; font-weight: 600; }
+.clienteMeta   { font-size: 13px; color: #94a3b8; font-weight: 500; }
+
+.alertaBanner {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 16px 18px; border-radius: 14px;
+  background: #fff8f0; border: 1.5px solid #f59e0b;
+  font-size: 15px; color: #92400e; line-height: 1.6;
+}
+.alertaBanner svg { flex-shrink: 0; color: #f59e0b; margin-top: 1px; }
+.alertaBanner strong { font-weight: 800; }
+
+.resumenBloque { display: flex; flex-direction: column; gap: 10px; }
+.resumenMonedaLbl { font-size: 13px; color: #64748b; margin: 0; }
+.resumenMonedaLbl strong { color: #0f172a; }
+
+.resumenGrid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.resumenCard {
+  background: white; border-radius: 16px; padding: 18px 16px;
+  border: 1.5px solid #e2e8f0;
+  display: flex; flex-direction: column; gap: 6px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+.resumenCardMora  { border-color: #fca5a5; background: #fff8f8; }
+.resumenCardTotal {
+  border-color: #93c5fd; background: #eff6ff;
+  padding: 20px 18px;
+}
+.resumenLbl { font-size: 13px; font-weight: 700; color: #64748b; }
+.resumenVal { font-size: 22px; font-weight: 900; color: #0f172a; }
+.resumenValMora  { color: #dc2626; }
+.resumenValCero  { color: #16a34a; font-size: 18px; }
+.resumenValTotal { color: #1d4ed8; font-size: 26px; }
+
+.contratosSeccion { display: flex; flex-direction: column; gap: 12px; }
+
+.contratosHeader {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.contratostitulo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 17px; font-weight: 900; color: #0f172a;
+}
+.contratosTituloCount {
+  font-size: 12px; font-weight: 800;
+  background: #1d6fce; color: white;
+  padding: 2px 9px; border-radius: 20px;
+}
+.btnExpandAll {
+  border: 1.5px solid #e2e8f0; background: white; color: #64748b;
+  border-radius: 8px; padding: 6px 14px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: background 0.15s;
+}
+.btnExpandAll:hover { background: #f1f5f9; }
+
+.contratoCard {
+  background: white; border-radius: 18px;
+  border: 1.5px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  transition: box-shadow 0.15s;
+}
+.contratoCard:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.contratoCardAlerta { border-color: #fca5a5; }
+
+.contratoToggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px; gap: 12px;
+  background: transparent; border: none; cursor: pointer;
+  text-align: left;
+}
+.contratoToggle:hover { background: #f8fafc; }
+
+.contratoToggleLeft  { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.contratoToggleRight { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+
+.contratoIcono {
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.contratoIconoAlerta { background: #fef2f2; color: #dc2626; }
+.contratoIconoOk     { background: #f0fdf4; color: #16a34a; }
+
+.contratoToggleInfo { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.contratoNum  { font-size: 15px; font-weight: 900; color: #0f172a; }
+.contratoPlan { font-size: 13px; color: #64748b; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.alertaBadge {
+  font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 20px;
+  background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5;
+}
+.contratoEstado {
+  font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px;
+  flex-shrink: 0;
+}
+.estActivo         { background: #f0fdf4; color: #16a34a; }
+.estIncumplido     { background: #fef2f2; color: #dc2626; }
+.estReestructurado { background: #fffbeb; color: #d97706; }
+
+.contratoResumenRapido {
+  display: flex; gap: 0; flex-wrap: wrap;
+  border-top: 1px solid #f1f5f9;
+}
+.miniStat {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 12px 20px; flex: 1; min-width: 130px;
+  border-right: 1px solid #f1f5f9;
+}
+.miniStat:last-child { border-right: none; }
+.miniStatLbl { font-size: 12px; color: #94a3b8; font-weight: 600; }
+.miniStatVal { font-size: 14px; font-weight: 800; color: #0f172a; }
+.miniStatMora { color: #dc2626; }
+
+.contratoDetalle {
+  display: flex; flex-direction: column; gap: 20px;
+  padding: 20px; border-top: 1.5px solid #f1f5f9;
+  background: #fafbfc;
+}
+
+.progresoWrap { display: flex; flex-direction: column; gap: 8px; }
+.progresoLabelRow {
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;
+}
+.progresoLbl { font-size: 13px; color: #64748b; font-weight: 500; }
+.progresoLbl strong { color: #0f172a; font-weight: 800; }
+.progresoBar {
+  height: 10px; border-radius: 10px; background: #e2e8f0; overflow: hidden;
+}
+.progresoFill {
+  height: 100%; border-radius: 10px;
+  background: #1d6fce;
+  transition: width 0.6s ease;
+}
+.progresoFechas {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: #94a3b8; font-weight: 600;
+}
+
+.contratoStats {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.cStat    { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; }
+.cStatLbl { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.3px; }
+.cStatVal { font-size: 15px; font-weight: 800; color: #0f172a; }
+.cStatMora { color: #dc2626; }
+
+.cuotasSeccion {
+  display: flex; flex-direction: column; gap: 10px;
+  border-radius: 14px; overflow: hidden;
+  border: 1.5px solid #e2e8f0;
+}
+.cuotasSeccionVencida { border-color: #fca5a5; }
+.cuotasSeccionPend    { border-color: #bfdbfe; }
+
+.cuotasSeccionHead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  background: white; border-bottom: 1px solid #f1f5f9;
+}
+.cuotasSeccionTitulo {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 14px; font-weight: 800; color: #374151;
+}
+.cuotasBadge {
+  font-size: 12px; font-weight: 800; padding: 2px 9px; border-radius: 20px;
+}
+.cuotasBadgeRojo { background: #fef2f2; color: #dc2626; }
+.cuotasBadgeAzul { background: #eff6ff; color: #1d4ed8; }
+
+.cuotasLista { display: flex; flex-direction: column; background: white; }
+
+.cuotaItem {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; gap: 14px;
+  border-bottom: 1px solid #f8fafc;
+  transition: background 0.1s;
+}
+.cuotaItem:last-child { border-bottom: none; }
+.cuotaItem:hover { background: #f8fafc; }
+.cuotaItemUrgente { background: #fffbeb; }
+.cuotaItemUrgente:hover { background: #fef9c3; }
+
+.cuotaItemLeft  { display: flex; flex-direction: column; gap: 3px; }
+.cuotaNumero    { font-size: 15px; font-weight: 800; color: #0f172a; }
+.cuotaFecha     { font-size: 13px; color: #64748b; }
+
+.cuotaItemRight { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.cuotaMonto     { font-size: 17px; font-weight: 900; color: #0f172a; }
+.cuotaMora      { font-size: 13px; font-weight: 700; color: #dc2626; }
+
+.cuotaTag { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+.tagVencida { background: #fef2f2; color: #dc2626; }
+.tagHoy     { background: #fef2f2; color: #dc2626; }
+.tagUrgente { background: #fffbeb; color: #d97706; }
+.tagNormal  { background: #f0fdf4; color: #16a34a; }
+
+.paginacion {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: #f8fafc; border-top: 1px solid #e2e8f0;
+}
+.btnPag {
+  display: flex; align-items: center; gap: 5px;
+  border: 1.5px solid #e2e8f0; background: white; color: #374151;
+  border-radius: 10px; padding: 8px 14px;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: background 0.15s;
+}
+.btnPag:hover:not(:disabled)  { background: #f1f5f9; }
+.btnPag:disabled { opacity: 0.35; cursor: not-allowed; }
+.paginacionInfo {
+  font-size: 13px; color: #64748b; font-weight: 600; text-align: center;
+}
+
+.ctaCard {
+  background: white; border-radius: 18px; padding: 22px 20px;
+  border: 1.5px solid #e2e8f0;
+  display: flex; align-items: center; gap: 16px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  flex-wrap: wrap;
+}
+.ctaTexto  { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 160px; }
+.ctaTitulo   { font-size: 16px; font-weight: 900; color: #0f172a; }
+.ctaSubtitulo { font-size: 13px; color: #64748b; }
+.ctaBtn {
+  display: flex; align-items: center; gap: 8px;
+  background: #25d366; color: white; border: none;
+  border-radius: 12px; padding: 0 22px; height: 48px;
+  font-size: 15px; font-weight: 800; cursor: pointer;
+  text-decoration: none; white-space: nowrap; flex-shrink: 0;
+  transition: background 0.15s;
+}
+.ctaBtn:hover { background: #1ea552; }
+
+.generadoAt {
+  text-align: center; font-size: 12px; color: #cbd5e1;
+  font-weight: 600; margin: 0; padding-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .main          { padding: 20px 14px 60px; gap: 14px; }
+  .clienteCard   { padding: 18px 16px; gap: 14px; }
+  .clienteAvatar { width: 50px; height: 50px; font-size: 22px; }
+  .clienteNombre { font-size: 19px; }
+  .resumenGrid   { grid-template-columns: 1fr 1fr; }
+  .resumenVal    { font-size: 18px; }
+  .resumenValTotal { font-size: 22px; }
+  .contratoToggle { padding: 14px 16px; }
+  .contratoNum   { font-size: 14px; }
+  .miniStat      { padding: 10px 14px; min-width: 100px; }
+  .miniStatVal   { font-size: 13px; }
+  .cuotaMonto    { font-size: 15px; }
+  .ctaBtn        { width: 100%; justify-content: center; height: 52px; font-size: 16px; }
+  .btnPag        { padding: 8px 10px; font-size: 13px; }
+}
+
+@media (max-width: 360px) {
+  .resumenGrid   { grid-template-columns: 1fr; }
+  .contratoStats { grid-template-columns: 1fr; }
+}

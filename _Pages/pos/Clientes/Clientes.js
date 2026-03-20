@@ -193,33 +193,44 @@ export default function Clientes() {
   const [eliminando, setEliminando]           = useState(false)
   const debounceRef                           = useRef(null)
 
+  // Refs para acceder siempre al valor actual sin re-crear cargar
+  const empresaIdRef = useRef(null)
+  const busquedaRef  = useRef("")
+  const paginaRef    = useRef(1)
+
   useEffect(() => {
     const payload = getTokenPayload()
     if (!payload) { router.push("/login"); return }
+    empresaIdRef.current = payload.empresa_id
     setEmpresaId(payload.empresa_id)
   }, [])
 
-  const cargar = useCallback(async (b = busqueda, p = pagina) => {
-    if (!empresaId) return
+  const cargar = useCallback(async (b, p) => {
+    const eid = empresaIdRef.current
+    if (!eid) return
+    const busq = b !== undefined ? b : busquedaRef.current
+    const pag  = p !== undefined ? p : paginaRef.current
     setCargando(true)
-    const res = await getClientes(empresaId, { busqueda: b, pagina: p, limite: LIMITE })
+    const res = await getClientes(eid, { busqueda: busq, pagina: pag, limite: LIMITE })
     setClientes(res.clientes ?? [])
     setTotal(res.total ?? 0)
     setPaginas(res.paginas ?? 1)
     setCargando(false)
-  }, [empresaId, busqueda, pagina])
+  }, [])
 
   useEffect(() => {
     if (!empresaId) return
     cargar()
-  }, [cargar, empresaId])
+  }, [empresaId])
 
   function handleBusqueda(val) {
     setInputVal(val)
+    busquedaRef.current = val
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       setBusqueda(val)
       setPagina(1)
+      paginaRef.current = 1
       cargar(val, 1)
     }, 400)
   }
@@ -228,6 +239,8 @@ export default function Clientes() {
     setInputVal("")
     setBusqueda("")
     setPagina(1)
+    busquedaRef.current = ""
+    paginaRef.current   = 1
     cargar("", 1)
   }
 
@@ -238,20 +251,22 @@ export default function Clientes() {
 
   function irPagina(p) {
     setPagina(p)
-    cargar(busqueda, p)
+    paginaRef.current = p
+    cargar(busquedaRef.current, p)
   }
 
   async function handleEliminar() {
     if (!confirmEliminar) return
     setEliminando(true)
-    const res = await eliminarCliente(empresaId, confirmEliminar.id)
+    const res = await eliminarCliente(empresaIdRef.current, confirmEliminar.id)
     setEliminando(false)
     if (res?.error) return mostrarAlerta("error", res.error)
     mostrarAlerta("ok", "Cliente eliminado")
     setConfirmEliminar(null)
-    const nuevaPagina = clientes.length === 1 && pagina > 1 ? pagina - 1 : pagina
+    const nuevaPagina = clientes.length === 1 && paginaRef.current > 1 ? paginaRef.current - 1 : paginaRef.current
     setPagina(nuevaPagina)
-    cargar(busqueda, nuevaPagina)
+    paginaRef.current = nuevaPagina
+    cargar(busquedaRef.current, nuevaPagina)
   }
 
   const paginasArr = () => {
@@ -358,9 +373,7 @@ export default function Clientes() {
                 </span>
               </div>
               <div className={s.colStats}>
-                <span className={s.ventasBadge}>
-                  {c.total_ventas}
-                </span>
+                <span className={s.ventasBadge}>{c.total_ventas}</span>
                 {c.total_cotizaciones > 0 && (
                   <span className={s.cotizBadge}>{c.total_cotizaciones}</span>
                 )}
