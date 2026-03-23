@@ -20,7 +20,7 @@ const ESTADO_META = {
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("ambrysoft_token")
+    const token = localStorage.getItem("isiweek_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))

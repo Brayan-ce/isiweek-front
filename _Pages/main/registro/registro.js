@@ -1,5 +1,4 @@
 "use client"
-import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useRef } from "react"
 import LocationMoneda from "./extras/LocationMoneda"
@@ -29,7 +28,7 @@ function generarPassword() {
 
 async function obtenerConfigSistema() {
   try {
-    const res = await apiFetch(`/api/auth/config`)
+    const res = await fetch(`${API}/api/auth/config`)
     if (!res.ok) return {}
     return await res.json()
   } catch { return {} }
@@ -196,7 +195,7 @@ export default function RegistroPage() {
     setError("")
     const password = generarPassword()
     try {
-      const res = await apiFetch(`/api/registro`, {
+      const res = await fetch(`${API}/api/registro`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -377,7 +376,7 @@ function Paso1({ data, onChange }) {
   async function verificarEmail(email) {
     setEmailCheck({ estado: "cargando", msg: "" })
     try {
-      const res  = await apiFetch(`/api/registro/verificar-email?email=${encodeURIComponent(email)}`)
+      const res  = await fetch(`${API}/api/registro/verificar-email?email=${encodeURIComponent(email)}`)
       const json = await res.json()
       if (json.existe) {
         setEmailCheck({ estado: "ocupado", msg: "Este correo ya tiene una cuenta registrada" })
@@ -484,7 +483,7 @@ function Paso2({ data, onChange }) {
   async function verificarEmpresa(nombre) {
     setEmpresaCheck({ estado: "cargando", msg: "" })
     try {
-      const res  = await apiFetch(`/api/registro/verificar-empresa?nombre=${encodeURIComponent(nombre)}`)
+      const res  = await fetch(`${API}/api/registro/verificar-empresa?nombre=${encodeURIComponent(nombre)}`)
       const json = await res.json()
       if (json.existe) {
         setEmpresaCheck({ estado: "ocupado", msg: "Ya existe una empresa con ese nombre" })
