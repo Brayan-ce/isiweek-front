@@ -4,7 +4,6 @@ import { apiFetch } from "@/_EXTRAS/peticion"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import s from "./dashboard.module.css"
-import { apiFetch } from "@/_EXTRAS/peticion"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
