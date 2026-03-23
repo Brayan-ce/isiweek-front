@@ -191,7 +191,7 @@
 }
 :global([data-theme="dark"]) .cardActions { border-top-color: rgba(255,255,255,0.05); }
 
-.btnAprobar, .btnRechazar, .btnPendiente {
+.btnAprobar, .btnRechazar, .btnPendiente, .btnEliminar {
   flex: 1;
   display: flex;
   align-items: center;
@@ -210,12 +210,15 @@
 .btnAprobar:hover:not(:disabled) { background: rgba(34,197,94,0.07); }
 .btnRechazar { color: #dc2626; border-right: 1px solid #f1f5f9; }
 .btnRechazar:hover:not(:disabled) { background: rgba(239,68,68,0.06); }
-.btnPendiente { color: #d97706; flex: 0; padding: 10px 14px; }
+.btnPendiente { color: #d97706; border-right: 1px solid #f1f5f9; flex: 0; padding: 10px 14px; }
 .btnPendiente:hover:not(:disabled) { background: rgba(245,158,11,0.07); }
+.btnEliminar { color: #ef4444; flex: 0; padding: 10px 14px; }
+.btnEliminar:hover:not(:disabled) { background: rgba(239,68,68,0.06); }
 
-.btnAprobar:disabled, .btnRechazar:disabled, .btnPendiente:disabled { opacity: 0.5; cursor: not-allowed; }
+.btnAprobar:disabled, .btnRechazar:disabled, .btnPendiente:disabled, .btnEliminar:disabled { opacity: 0.5; cursor: not-allowed; }
 :global([data-theme="dark"]) .btnAprobar { border-right-color: rgba(255,255,255,0.05); }
 :global([data-theme="dark"]) .btnRechazar { border-right-color: rgba(255,255,255,0.05); }
+:global([data-theme="dark"]) .btnPendiente { border-right-color: rgba(255,255,255,0.05); }
 
 .loadingGrid {
   display: grid;
@@ -275,6 +278,74 @@
 .pageBtnActive { background: #1d6fce; color: white; border-color: #1d6fce; }
 :global([data-theme="dark"]) .pageBtn { background: #0d1f3c; border-color: rgba(255,255,255,0.08); color: #94a3b8; }
 :global([data-theme="dark"]) .pageBtnActive { background: #1d6fce; color: white; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: white;
+  border-radius: 18px;
+  padding: 32px 28px;
+  width: 90%;
+  max-width: 380px;
+  text-align: center;
+  animation: slideUp 0.25s ease;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+}
+:global([data-theme="dark"]) .modal { background: #0d1f3c; border: 1px solid rgba(255,255,255,0.07); }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.modalIcon { font-size: 44px; color: #ef4444; margin-bottom: 12px; }
+.modalTitle { font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+:global([data-theme="dark"]) .modalTitle { color: #f1f5f9; }
+.modalText { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 24px; }
+:global([data-theme="dark"]) .modalText { color: #94a3b8; }
+
+.modalBtns { display: flex; gap: 10px; }
+
+.modalCancelar {
+  flex: 1;
+  padding: 11px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.modalCancelar:hover { background: #f1f5f9; }
+:global([data-theme="dark"]) .modalCancelar { border-color: rgba(255,255,255,0.1); color: #94a3b8; }
+
+.modalConfirmar {
+  flex: 1;
+  padding: 11px;
+  border-radius: 10px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modalConfirmar:hover { background: #dc2626; }
+.modalConfirmar:disabled { opacity: 0.7; cursor: not-allowed; }
 
 .spinner {
   width: 14px;

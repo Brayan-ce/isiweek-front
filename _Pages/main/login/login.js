@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Flag from "react-world-flags"
 import TourGuia from "./extras/pasos/pasos"
+import AltchaWidget from "@/_EXTRAS/Recapchat/AltchaWidget"
 import s from "./login.module.css"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
@@ -26,9 +27,9 @@ async function obtenerConfigSistema() {
   } catch { return {} }
 }
 
-async function loginConEmail(email, password) {
+async function loginConEmail(email, password, altcha) {
   try {
-    const res = await post("/api/auth/login", { email, password })
+    const res = await post("/api/auth/login", { email, password, altcha })
     if (res.error) return { error: res.error }
     localStorage.setItem("isiweek_token", res.token)
     return { ok: true, ruta: res.ruta, usuario: res.usuario }
@@ -169,6 +170,8 @@ export default function LoginPage() {
   const [tourActivo, setTourActivo]         = useState(false)
   const [cartelAbierto, setCartelAbierto]   = useState(false)
   const [featurePopup, setFeaturePopup]     = useState(null)
+  const [altchaPayload, setAltchaPayload]   = useState(null)
+  const [altchaVerified, setAltchaVerified] = useState(false)
 
   const emailRef     = useRef()
   const passRef      = useRef()
@@ -196,6 +199,11 @@ export default function LoginPage() {
   }, [])
 
   useEffect(() => {
+    setAltchaPayload(null)
+    setAltchaVerified(false)
+  }, [tab])
+
+  useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext("2d")
@@ -209,7 +217,7 @@ export default function LoginPage() {
     let raf
     const draw = () => {
       ctx.clearRect(0, 0, W, H)
-      const isDk = document.documentElement.getAttribute("data-theme") === "dark"
+      const isDk      = document.documentElement.getAttribute("data-theme") === "dark"
       const dotColor  = isDk ? "rgba(96,165,250,0.55)"  : "rgba(29,111,206,0.35)"
       const lineColor = isDk ? "rgba(96,165,250,0.12)"  : "rgba(29,111,206,0.10)"
       dots.forEach(d => {
@@ -230,7 +238,7 @@ export default function LoginPage() {
             ctx.moveTo(dots[i].x, dots[i].y)
             ctx.lineTo(dots[j].x, dots[j].y)
             ctx.strokeStyle = lineColor
-            ctx.lineWidth = 1
+            ctx.lineWidth   = 1
             ctx.stroke()
           }
         }
@@ -261,8 +269,8 @@ export default function LoginPage() {
     if (!window.google || !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) return
     window.google.accounts.id.initialize({
       client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-      callback: handleGoogleCallback,
-      ux_mode: "popup",
+      callback:  handleGoogleCallback,
+      ux_mode:   "popup",
     })
   }, [])
 
@@ -296,11 +304,16 @@ export default function LoginPage() {
     const email    = emailRef.current.value.trim().toLowerCase()
     const password = passRef.current.value
     if (!email || !password) return setAlerta({ tipo: "error", msg: "Completa todos los campos" })
+    if (!altchaVerified || !altchaPayload) return setAlerta({ tipo: "error", msg: "Completa la verificacion de seguridad" })
     setCargando(true)
     setAlerta(null)
-    const res = await loginConEmail(email, password)
+    const res = await loginConEmail(email, password, altchaPayload)
     setCargando(false)
-    if (res.error) return setAlerta({ tipo: "error", msg: res.error })
+    if (res.error) {
+      setAltchaPayload(null)
+      setAltchaVerified(false)
+      return setAlerta({ tipo: "error", msg: res.error })
+    }
     setLoginOk(true)
     setTimeout(() => router.push(res.ruta), 900)
   }
@@ -341,9 +354,9 @@ export default function LoginPage() {
     setAlerta({ tipo: "ok", msg: "Si el correo existe, recibiras un codigo" })
   }
 
-  const waNumero  = config.whatsapp_numero ?? "18494324597"
-  const waMensaje = encodeURIComponent(config.whatsapp_mensaje ?? "Hola, necesito soporte con IsiWeek")
-  const waUrl     = `https://wa.me/${waNumero}?text=${waMensaje}`
+  const waNumero      = config.whatsapp_numero ?? "18494324597"
+  const waMensaje     = encodeURIComponent(config.whatsapp_mensaje ?? "Hola, necesito soporte con IsiWeek")
+  const waUrl         = `https://wa.me/${waNumero}?text=${waMensaje}`
   const sistemaNombre = config.sistema_nombre ?? "IsiWeek"
 
   return (
@@ -355,33 +368,25 @@ export default function LoginPage() {
         <div className={s.hero}>
           <div className={s.heroInner}>
             <div className={s.heroCenterContent}>
-
               <h1 className={s.heroTitle}>
                 Gestiona tu empresa<br />
                 <span className={s.heroTitleAccent}>desde cualquier lugar</span>
               </h1>
-
               <p className={s.heroSub}>
                 Multi empresa con POS, obras, creditos y ventas online. Todo en uno.
               </p>
-
               <div className={s.features}>
                 {FEATURES.map(f => (
                   <div key={f.label} className={s.featureCard} onClick={() => setFeaturePopup(f)}>
-                    <div className={s.featureCardIcon}>
-                      <ion-icon name={f.icon} />
-                    </div>
+                    <div className={s.featureCardIcon}><ion-icon name={f.icon} /></div>
                     <div className={s.featureCardBody}>
                       <span className={s.featureCardLabel}>{f.label}</span>
                       <span className={s.featureCardDesc}>{f.desc}</span>
                     </div>
-                    <div className={s.featureCardArrow}>
-                      <ion-icon name="chevron-forward-outline" />
-                    </div>
+                    <div className={s.featureCardArrow}><ion-icon name="chevron-forward-outline" /></div>
                   </div>
                 ))}
               </div>
-
               {countryInfo && (
                 <div className={s.countryBar}>
                   <Flag code={countryInfo.cc} className={s.flag} fallback={<span>{countryInfo.cc}</span>} />
@@ -392,7 +397,6 @@ export default function LoginPage() {
                   <span className={s.clockVal}>{hora}</span>
                 </div>
               )}
-
             </div>
           </div>
         </div>
@@ -400,50 +404,32 @@ export default function LoginPage() {
         <div className={s.formSide}>
 
           <div className={s.infoCartel}>
-            <button
-              className={s.infoCartelToggle}
-              onClick={() => setCartelAbierto(p => !p)}
-              type="button"
-            >
+            <button className={s.infoCartelToggle} onClick={() => setCartelAbierto(p => !p)} type="button">
               <div className={s.infoCartelToggleLeft}>
-                <div className={s.infoCartelToggleIconWrap}>
-                  <ion-icon name="grid-outline" />
-                </div>
+                <div className={s.infoCartelToggleIconWrap}><ion-icon name="grid-outline" /></div>
                 <div className={s.infoCartelToggleTexts}>
                   <span className={s.infoCartelToggleTitle}>{sistemaNombre}</span>
                   <span className={s.infoCartelToggleHint}>Ver que incluye el sistema</span>
                 </div>
               </div>
-              <ion-icon
-                name={cartelAbierto ? "chevron-up-outline" : "chevron-down-outline"}
-                class={s.infoCartelToggleArrow}
-              />
+              <ion-icon name={cartelAbierto ? "chevron-up-outline" : "chevron-down-outline"} class={s.infoCartelToggleArrow} />
             </button>
-
             <div className={`${s.infoCartelBody} ${cartelAbierto ? s.infoCartelBodyOpen : ""}`}>
               <div className={s.infoCartelInner}>
                 <h2 className={s.infoCartelTitle}>
                   Gestiona tu empresa<br />
                   <span className={s.infoCartelTitleAccent}>desde cualquier lugar</span>
                 </h2>
-                <p className={s.infoCartelSub}>
-                  Multi empresa con POS, obras, creditos y ventas online. Todo en uno.
-                </p>
+                <p className={s.infoCartelSub}>Multi empresa con POS, obras, creditos y ventas online. Todo en uno.</p>
                 <div className={s.infoCartelFeatures}>
                   {FEATURES.map(f => (
                     <div key={f.label} className={s.infoCartelFeatureRow} onClick={() => setFeaturePopup(f)}>
-                      <div className={s.infoCartelFeatureIcon}>
-                        <ion-icon name={f.icon} />
-                      </div>
+                      <div className={s.infoCartelFeatureIcon}><ion-icon name={f.icon} /></div>
                       <div className={s.infoCartelFeatureTexts}>
                         <span className={s.infoCartelFeatureLabel}>{f.label}</span>
                         <span className={s.infoCartelFeatureDesc}>{f.desc}</span>
                       </div>
-                      <button
-                        type="button"
-                        className={s.infoCartelFeatureArrow}
-                        onClick={() => setFeaturePopup(f)}
-                      >
+                      <button type="button" className={s.infoCartelFeatureArrow} onClick={() => setFeaturePopup(f)}>
                         <ion-icon name="chevron-forward-outline" />
                       </button>
                     </div>
@@ -466,9 +452,7 @@ export default function LoginPage() {
           <div className={`${s.card} ${loginOk ? s.cardOk : ""}`}>
             {loginOk ? (
               <div className={s.successState}>
-                <div className={s.successCircle}>
-                  <ion-icon name="checkmark-outline" />
-                </div>
+                <div className={s.successCircle}><ion-icon name="checkmark-outline" /></div>
                 <p className={s.successMsg}>Bienvenido</p>
               </div>
             ) : (
@@ -478,15 +462,13 @@ export default function LoginPage() {
                     className={`${s.tab}${tab === "email" ? " " + s.tabActive : ""}`}
                     onClick={() => { setTab("email"); setAlerta(null) }}
                   >
-                    <ion-icon name="mail-outline" />
-                    Correo
+                    <ion-icon name="mail-outline" /> Correo
                   </button>
                   <button
                     className={`${s.tab}${tab === "otp" ? " " + s.tabActive : ""}`}
                     onClick={() => { setTab("otp"); setAlerta(null) }}
                   >
-                    <ion-icon name="key-outline" />
-                    Codigo OTP
+                    <ion-icon name="key-outline" /> Codigo OTP
                   </button>
                 </div>
 
@@ -518,14 +500,25 @@ export default function LoginPage() {
                     </div>
                     <div className={s.rememberRow}>
                       <label className={s.checkLabel}>
-                        <input type="checkbox" className={s.checkbox} />
-                        Recuerdame
+                        <input type="checkbox" className={s.checkbox} /> Recuerdame
                       </label>
                       <button type="button" className={s.forgotLink} onClick={() => setModal("forgot")}>
                         Olvide mi contrasena
                       </button>
                     </div>
-                    <button type="submit" className={s.submitBtn} disabled={cargando}>
+
+                    <AltchaWidget
+                      onVerified={(payload) => {
+                        setAltchaPayload(payload)
+                        setAltchaVerified(true)
+                      }}
+                      onReset={() => {
+                        setAltchaPayload(null)
+                        setAltchaVerified(false)
+                      }}
+                    />
+
+                    <button type="submit" className={s.submitBtn} disabled={cargando || !altchaVerified}>
                       {cargando
                         ? <span className={s.spinner} />
                         : <><ion-icon name="log-in-outline" />Ingresar</>
@@ -587,8 +580,7 @@ export default function LoginPage() {
                 </p>
 
                 <button className={s.tourBtn} onClick={() => setTourActivo(true)}>
-                  <ion-icon name="help-circle-outline" />
-                  Como funciona?
+                  <ion-icon name="help-circle-outline" /> Como funciona?
                 </button>
               </>
             )}
@@ -599,9 +591,7 @@ export default function LoginPage() {
       {modal && (
         <div className={s.overlay} onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className={s.modal}>
-            <button className={s.closeBtn} onClick={() => setModal(null)}>
-              <ion-icon name="close-outline" />
-            </button>
+            <button className={s.closeBtn} onClick={() => setModal(null)}><ion-icon name="close-outline" /></button>
             {modal === "forgot" && (
               <>
                 <div className={s.modalTitle}>Recuperar contrasena</div>
@@ -635,9 +625,7 @@ export default function LoginPage() {
         <div className={s.overlay} onClick={e => e.target === e.currentTarget && setFeaturePopup(null)}>
           <div className={s.featureModal}>
             <div className={s.featureModalHeader}>
-              <div className={s.featureModalIconWrap}>
-                <ion-icon name={featurePopup.icon} />
-              </div>
+              <div className={s.featureModalIconWrap}><ion-icon name={featurePopup.icon} /></div>
               <div className={s.featureModalTitles}>
                 <span className={s.featureModalTitle}>{featurePopup.label}</span>
                 <span className={s.featureModalDesc}>{featurePopup.desc}</span>
@@ -646,8 +634,7 @@ export default function LoginPage() {
                 <ion-icon name="close-outline" />
               </button>
             </div>
-            <div className={s.featureModalBody}>
-            </div>
+            <div className={s.featureModalBody} />
           </div>
         </div>
       )}

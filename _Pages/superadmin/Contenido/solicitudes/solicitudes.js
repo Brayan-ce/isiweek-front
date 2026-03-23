@@ -53,6 +53,14 @@ async function ponerPendiente(id) {
   } catch { return { error: "Error de conexion" } }
 }
 
+async function eliminarSolicitud(id) {
+  try {
+    const res = await fetch(`${API}/api/superadmin/solicitudes/${id}`, { method: "DELETE" })
+    if (!res.ok) return { error: "Error al eliminar" }
+    return { ok: true }
+  } catch { return { error: "Error de conexion" } }
+}
+
 export default function SolicitudesPage() {
   const router = useRouter()
   const [data, setData]             = useState(null)
@@ -61,6 +69,8 @@ export default function SolicitudesPage() {
   const [estado, setEstado]         = useState("")
   const [pagina, setPagina]         = useState(1)
   const [accionando, setAccionando] = useState(null)
+  const [confirmId, setConfirmId]   = useState(null)
+  const [eliminando, setEliminando] = useState(false)
 
   const cargar = useCallback(async () => {
     setCargando(true)
@@ -78,6 +88,15 @@ export default function SolicitudesPage() {
     if (accion === "rechazar")  await rechazarSolicitud(id)
     if (accion === "pendiente") await ponerPendiente(id)
     setAccionando(null)
+    cargar()
+  }
+
+  async function handleEliminar() {
+    if (!confirmId) return
+    setEliminando(true)
+    await eliminarSolicitud(confirmId)
+    setConfirmId(null)
+    setEliminando(false)
     cargar()
   }
 
@@ -179,6 +198,9 @@ export default function SolicitudesPage() {
                       <ion-icon name="time-outline" />
                     </button>
                   )}
+                  <button className={s.btnEliminar} onClick={() => setConfirmId(sol.id)} disabled={cargandoEsta}>
+                    <ion-icon name="trash-outline" />
+                  </button>
                 </div>
               </div>
             )
@@ -203,6 +225,22 @@ export default function SolicitudesPage() {
           <button className={s.pageBtn} disabled={pagina === totalPaginas} onClick={() => setPagina(p => p + 1)}>
             <ion-icon name="chevron-forward-outline" />
           </button>
+        </div>
+      )}
+
+      {confirmId && (
+        <div className={s.overlay} onClick={() => setConfirmId(null)}>
+          <div className={s.modal} onClick={e => e.stopPropagation()}>
+            <div className={s.modalIcon}><ion-icon name="warning-outline" /></div>
+            <div className={s.modalTitle}>Eliminar solicitud</div>
+            <div className={s.modalText}>Esta accion es irreversible. La solicitud sera eliminada permanentemente.</div>
+            <div className={s.modalBtns}>
+              <button className={s.modalCancelar} onClick={() => setConfirmId(null)}>Cancelar</button>
+              <button className={s.modalConfirmar} onClick={handleEliminar} disabled={eliminando}>
+                {eliminando ? <span className={s.spinner} /> : "Eliminar"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

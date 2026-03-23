@@ -1063,3 +1063,29 @@
 
   .infoCartel { display: block; }
 }
+
+.altchaWrap {
+  width: 100%;
+}
+
+.altchaWrap altcha-widget {
+  width: 100%;
+  --altcha-color-base:        #f8fafc;
+  --altcha-color-text:        #374151;
+  --altcha-color-border:      #e2e8f0;
+  --altcha-color-border-focus:#1d6fce;
+  --altcha-border-radius:     10px;
+  --altcha-border-width:      1.5px;
+  --altcha-color-footer-text: #94a3b8;
+  --altcha-color-success-text:#16a34a;
+  --altcha-max-width:         100%;
+}
+
+[data-theme="dark"] .altchaWrap altcha-widget {
+  --altcha-color-base:        #0d1f3c;
+  --altcha-color-text:        #cbd5e1;
+  --altcha-color-border:      rgba(255,255,255,0.1);
+  --altcha-color-border-focus:#60a5fa;
+  --altcha-color-footer-text: #64748b;
+  --altcha-color-success-text:#4ade80;
+}

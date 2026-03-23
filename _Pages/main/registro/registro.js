@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import LocationMoneda from "./extras/LocationMoneda"
+import AltchaWidget from "@/_EXTRAS/Recapchat/AltchaWidget"
 import s from "./registro.module.css"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
@@ -45,6 +46,9 @@ export default function RegistroPage() {
   const [empresa,  setEmpresa]  = useState({ nombre:"", rnc:"", pais:"DO", telefono:"", prefijo:"", moneda:"" })
   const [sistemas, setSistemas] = useState([])
 
+  const [altchaPayload,  setAltchaPayload]  = useState(null)
+  const [altchaVerified, setAltchaVerified] = useState(false)
+
   const tieneComercial = sistemas.some(id => ["pos","creditos","ventas_online"].includes(id))
   const tieneObras     = sistemas.includes("obras")
 
@@ -60,20 +64,17 @@ export default function RegistroPage() {
     let H = canvas.height = canvas.offsetHeight
 
     const dots = Array.from({ length: 70 }, () => ({
-      x:    Math.random() * W,
-      y:    Math.random() * H,
-      vx:   (Math.random() - .5) * .5,
-      vy:   (Math.random() - .5) * .5,
-      r:    Math.random() * 2.5 + 1,
+      x:       Math.random() * W,
+      y:       Math.random() * H,
+      vx:      (Math.random() - .5) * .5,
+      vy:      (Math.random() - .5) * .5,
+      r:       Math.random() * 2.5 + 1,
       opacity: Math.random() * 0.5 + 0.3,
-      pulse: Math.random() * Math.PI * 2,
+      pulse:   Math.random() * Math.PI * 2,
     }))
 
     let raf
-    let tick = 0
-
     const draw = () => {
-      tick++
       ctx.clearRect(0, 0, W, H)
       const isDk = document.documentElement.getAttribute("data-theme") === "dark"
 
@@ -83,8 +84,8 @@ export default function RegistroPage() {
         if (d.y < 0) d.y = H; if (d.y > H) d.y = 0
         d.pulse += 0.02
 
-        const pulsedR    = d.r + Math.sin(d.pulse) * 0.6
-        const pulsedA    = d.opacity + Math.sin(d.pulse) * 0.15
+        const pulsedR = d.r + Math.sin(d.pulse) * 0.6
+        const pulsedA = d.opacity + Math.sin(d.pulse) * 0.15
 
         const grad = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, pulsedR * 2.5)
         if (isDk) {
@@ -115,19 +116,19 @@ export default function RegistroPage() {
             const alpha = (1 - dist / 130) * (isDk ? 0.18 : 0.13)
             const grad  = ctx.createLinearGradient(dots[i].x, dots[i].y, dots[j].x, dots[j].y)
             if (isDk) {
-              grad.addColorStop(0, `rgba(96,165,250,${alpha})`)
+              grad.addColorStop(0,   `rgba(96,165,250,${alpha})`)
               grad.addColorStop(0.5, `rgba(147,197,253,${alpha * 1.4})`)
-              grad.addColorStop(1, `rgba(96,165,250,${alpha})`)
+              grad.addColorStop(1,   `rgba(96,165,250,${alpha})`)
             } else {
-              grad.addColorStop(0, `rgba(29,111,206,${alpha})`)
+              grad.addColorStop(0,   `rgba(29,111,206,${alpha})`)
               grad.addColorStop(0.5, `rgba(14,165,233,${alpha * 1.4})`)
-              grad.addColorStop(1, `rgba(29,111,206,${alpha})`)
+              grad.addColorStop(1,   `rgba(29,111,206,${alpha})`)
             }
             ctx.beginPath()
             ctx.moveTo(dots[i].x, dots[i].y)
             ctx.lineTo(dots[j].x, dots[j].y)
             ctx.strokeStyle = grad
-            ctx.lineWidth = (1 - dist / 130) * 1.2
+            ctx.lineWidth   = (1 - dist / 130) * 1.2
             ctx.stroke()
           }
         }
@@ -164,13 +165,14 @@ export default function RegistroPage() {
   }
 
   function validarPaso2() {
-    if (!empresa.nombre.trim()) return "El nombre de la empresa es obligatorio"
+    if (!empresa.nombre.trim())   return "El nombre de la empresa es obligatorio"
     if (!empresa.telefono.trim()) return "El teléfono es obligatorio"
     return ""
   }
 
   function validarPaso3() {
     if (sistemas.length === 0) return "Selecciona al menos un sistema"
+    if (!altchaVerified)       return "Completa la verificación de seguridad"
     return ""
   }
 
@@ -208,6 +210,7 @@ export default function RegistroPage() {
           moneda:   empresa.moneda,
           sistemas,
           password,
+          altcha:   altchaPayload,
         }),
       })
       const json = await res.json()
@@ -247,6 +250,9 @@ export default function RegistroPage() {
             <Paso3
               sistemas={sistemas} toggle={toggleSistema}
               tieneComercial={tieneComercial} tieneObras={tieneObras}
+              altchaVerified={altchaVerified}
+              onAltchaVerified={(p) => { setAltchaPayload(p); setAltchaVerified(true) }}
+              onAltchaReset={() => { setAltchaPayload(null); setAltchaVerified(false) }}
             />
           )}
           {paso === 4 && (
@@ -269,15 +275,23 @@ export default function RegistroPage() {
         {paso < 4 && (
           <div className={s.footer}>
             {paso > 1 && (
-              <button type="button" className={s.btnAtras} onClick={()=>{ setError(""); setPaso(p=>p-1) }}>
+              <button
+                type="button"
+                className={s.btnAtras}
+                onClick={() => {
+                  setError("")
+                  if (paso === 3) { setAltchaPayload(null); setAltchaVerified(false) }
+                  setPaso(p => p - 1)
+                }}
+              >
                 <ion-icon name="arrow-back-outline" />Atrás
               </button>
             )}
             <button
               type="button"
-              className={`${s.btnSig} ${paso===3?s.btnSigFinal:""}`}
+              className={`${s.btnSig} ${paso === 3 ? s.btnSigFinal : ""}`}
               onClick={handleSiguiente}
-              disabled={guardando}
+              disabled={guardando || (paso === 3 && !altchaVerified)}
             >
               {guardando
                 ? <span className={s.spinner} />
@@ -314,10 +328,10 @@ const DOMINIOS_RAPIDOS = ["@gmail.com", "@hotmail.com", "@outlook.com"]
 
 function Paso1({ data, onChange }) {
   const set = (k, v) => onChange(p => ({ ...p, [k]: v }))
-  const [dominioIdx, setDominioIdx] = useState(0)
+  const [dominioIdx, setDominioIdx]     = useState(0)
   const [personalizado, setPersonalizado] = useState(false)
-  const [emailCheck, setEmailCheck] = useState({ estado: null, msg: "" })
-  const [checkTimer, setCheckTimer] = useState(null)
+  const [emailCheck, setEmailCheck]     = useState({ estado: null, msg: "" })
+  const [checkTimer, setCheckTimer]     = useState(null)
 
   const dominio = DOMINIOS_RAPIDOS[dominioIdx]
   const usuario = personalizado ? "" : (data.email.includes("@") ? data.email.split("@")[0] : data.email)
@@ -339,7 +353,7 @@ function Paso1({ data, onChange }) {
   }
 
   function handleUsuario(e) {
-    const user = e.target.value.replace(/@.*/, "")
+    const user  = e.target.value.replace(/@.*/, "")
     const email = user ? `${user}${dominio}` : ""
     set("email", email)
     setEmailCheck({ estado: null, msg: "" })
@@ -521,7 +535,7 @@ function Paso2({ data, onChange }) {
   )
 }
 
-function Paso3({ sistemas, toggle, tieneComercial, tieneObras }) {
+function Paso3({ sistemas, toggle, tieneComercial, tieneObras, altchaVerified, onAltchaVerified, onAltchaReset }) {
   return (
     <div className={s.campos}>
       <div className={s.pasoHead}>
@@ -542,18 +556,18 @@ function Paso3({ sistemas, toggle, tieneComercial, tieneObras }) {
             const on = sistemas.includes(sis.id)
             return (
               <button key={sis.id} type="button"
-                className={`${s.sisCard} ${on?s.sisCardOn:""}`}
-                onClick={()=>toggle(sis.id)}
+                className={`${s.sisCard} ${on ? s.sisCardOn : ""}`}
+                onClick={() => toggle(sis.id)}
               >
-                <div className={`${s.sisIcono} ${on?s.sisIconoOn:""}`}>
+                <div className={`${s.sisIcono} ${on ? s.sisIconoOn : ""}`}>
                   <ion-icon name={sis.icono} />
                 </div>
                 <div className={s.sisInfo}>
                   <span className={s.sisLabel}>{sis.label}</span>
                   <span className={s.sisDesc}>{sis.desc}</span>
                 </div>
-                <div className={`${s.sisCheck} ${on?s.sisCheckOn:""}`}>
-                  <ion-icon name={on?"checkmark-outline":"add-outline"} />
+                <div className={`${s.sisCheck} ${on ? s.sisCheckOn : ""}`}>
+                  <ion-icon name={on ? "checkmark-outline" : "add-outline"} />
                 </div>
               </button>
             )
@@ -579,24 +593,29 @@ function Paso3({ sistemas, toggle, tieneComercial, tieneObras }) {
             const on = sistemas.includes(sis.id)
             return (
               <button key={sis.id} type="button"
-                className={`${s.sisCard} ${s.sisCardObras} ${on?s.sisCardObrasOn:""}`}
-                onClick={()=>toggle(sis.id)}
+                className={`${s.sisCard} ${s.sisCardObras} ${on ? s.sisCardObrasOn : ""}`}
+                onClick={() => toggle(sis.id)}
               >
-                <div className={`${s.sisIcono} ${s.sisIconoObras} ${on?s.sisIconoObrasOn:""}`}>
+                <div className={`${s.sisIcono} ${s.sisIconoObras} ${on ? s.sisIconoObrasOn : ""}`}>
                   <ion-icon name={sis.icono} />
                 </div>
                 <div className={s.sisInfo}>
                   <span className={s.sisLabel}>{sis.label}</span>
                   <span className={s.sisDesc}>{sis.desc}</span>
                 </div>
-                <div className={`${s.sisCheck} ${on?s.sisCheckObrasOn:""}`}>
-                  <ion-icon name={on?"checkmark-outline":"add-outline"} />
+                <div className={`${s.sisCheck} ${on ? s.sisCheckObrasOn : ""}`}>
+                  <ion-icon name={on ? "checkmark-outline" : "add-outline"} />
                 </div>
               </button>
             )
           })}
         </div>
       </div>
+
+      <AltchaWidget
+        onVerified={onAltchaVerified}
+        onReset={onAltchaReset}
+      />
     </div>
   )
 }
@@ -604,8 +623,8 @@ function Paso3({ sistemas, toggle, tieneComercial, tieneObras }) {
 function Paso4({ resultado, personal, empresa, sistemas, sistemaNombre }) {
   const waNum = resultado?.whatsapp ?? "18494324597"
   const sistemasLabel = sistemas.map(id => {
-    const s = { pos:"POS", creditos:"Financiamiento", ventas_online:"Ventas online", obras:"Obras" }
-    return s[id] ?? id
+    const m = { pos:"POS", creditos:"Financiamiento", ventas_online:"Ventas online", obras:"Obras" }
+    return m[id] ?? id
   }).join(", ")
 
   const msg = encodeURIComponent(
