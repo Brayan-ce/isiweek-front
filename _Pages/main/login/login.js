@@ -4,11 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Flag from "react-world-flags"
-import {
-  Sun, Moon, Eye, EyeOff, Mail, Lock, KeyRound,
-  RefreshCw, LogIn, Send, CheckCircle, MessageCircle,
-  ChevronDown, ChevronUp, X
-} from "lucide-react"
+import TourGuia from "./extras/pasos/pasos"
 import s from "./login.module.css"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
@@ -148,22 +144,31 @@ function getCountryFromTz(tz) {
   }
 }
 
+const FEATURES = [
+  { icon: "storefront-outline", label: "POS Avanzado",     desc: "Ventas rapidas con caja integrada"  },
+  { icon: "construct-outline",  label: "Gestion de Obras", desc: "Control de proyectos y asistencia"  },
+  { icon: "card-outline",       label: "Cartera Creditos", desc: "Contratos, cuotas y mora"           },
+  { icon: "bag-handle-outline", label: "Ventas Online",    desc: "Catalogo publico con pedidos"       },
+]
+
 export default function LoginPage() {
   const router = useRouter()
 
-  const [dark, setDark]                     = useState(false)
   const [tab, setTab]                       = useState("email")
   const [cargando, setCargando]             = useState(false)
   const [googleCargando, setGoogleCargando] = useState(false)
   const [alerta, setAlerta]                 = useState(null)
   const [verPass, setVerPass]               = useState(false)
   const [modal, setModal]                   = useState(null)
-  const [footerOn, setFooterOn]             = useState(true)
   const [hora, setHora]                     = useState("")
   const [countryInfo, setCountry]           = useState(null)
   const [otpEnviado, setOtpEnviado]         = useState(false)
   const [otpTimer, setOtpTimer]             = useState(0)
   const [config, setConfig]                 = useState({})
+  const [loginOk, setLoginOk]               = useState(false)
+  const [tourActivo, setTourActivo]         = useState(false)
+  const [cartelAbierto, setCartelAbierto]   = useState(false)
+  const [featurePopup, setFeaturePopup]     = useState(null)
 
   const emailRef     = useRef()
   const passRef      = useRef()
@@ -171,21 +176,74 @@ export default function LoginPage() {
   const otpCodigoRef = useRef()
   const recoveryRef  = useRef()
   const timerRef     = useRef(null)
+  const canvasRef    = useRef()
+
+  const tourRefs = {
+    tabs:   useRef(),
+    email:  useRef(),
+    google: useRef(),
+    signup: useRef(),
+  }
 
   useEffect(() => {
-    const saved       = localStorage.getItem("isiweek_theme")
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-    const isDark      = saved === "dark" || (!saved && prefersDark)
-    setDark(isDark)
-    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light")
-    setFooterOn(localStorage.getItem("isiweek_footer") !== "0")
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
     setCountry(getCountryFromTz(tz))
     const tick = () => setHora(new Date().toLocaleTimeString("es-DO", { hour: "2-digit", minute: "2-digit", second: "2-digit" }))
     tick()
     const id = setInterval(tick, 1000)
-    obtenerConfigSistema().then(setConfig)
+    obtenerConfigSistema().then(d => setConfig(d))
     return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext("2d")
+    let W = canvas.width  = canvas.offsetWidth
+    let H = canvas.height = canvas.offsetHeight
+    const dots = Array.from({ length: 55 }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - .5) * .4, vy: (Math.random() - .5) * .4,
+      r: Math.random() * 2 + 1,
+    }))
+    let raf
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H)
+      const isDk = document.documentElement.getAttribute("data-theme") === "dark"
+      const dotColor  = isDk ? "rgba(96,165,250,0.55)"  : "rgba(29,111,206,0.35)"
+      const lineColor = isDk ? "rgba(96,165,250,0.12)"  : "rgba(29,111,206,0.10)"
+      dots.forEach(d => {
+        d.x += d.vx; d.y += d.vy
+        if (d.x < 0) d.x = W; if (d.x > W) d.x = 0
+        if (d.y < 0) d.y = H; if (d.y > H) d.y = 0
+        ctx.beginPath()
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2)
+        ctx.fillStyle = dotColor
+        ctx.fill()
+      })
+      for (let i = 0; i < dots.length; i++) {
+        for (let j = i + 1; j < dots.length; j++) {
+          const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist < 110) {
+            ctx.beginPath()
+            ctx.moveTo(dots[i].x, dots[i].y)
+            ctx.lineTo(dots[j].x, dots[j].y)
+            ctx.strokeStyle = lineColor
+            ctx.lineWidth = 1
+            ctx.stroke()
+          }
+        }
+      }
+      raf = requestAnimationFrame(draw)
+    }
+    draw()
+    const onResize = () => {
+      W = canvas.width  = canvas.offsetWidth
+      H = canvas.height = canvas.offsetHeight
+    }
+    window.addEventListener("resize", onResize)
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize) }
   }, [])
 
   useEffect(() => {
@@ -224,8 +282,8 @@ export default function LoginPage() {
     const res = await loginConGoogle(response.credential)
     setGoogleCargando(false)
     if (res.error) return setAlerta({ tipo: "error", msg: res.error })
-    setAlerta({ tipo: "ok", msg: "Bienvenido " + res.usuario.nombre })
-    setTimeout(() => router.push(res.ruta), 800)
+    setLoginOk(true)
+    setTimeout(() => router.push(res.ruta), 900)
   }
 
   function triggerGoogle() {
@@ -243,8 +301,8 @@ export default function LoginPage() {
     const res = await loginConEmail(email, password)
     setCargando(false)
     if (res.error) return setAlerta({ tipo: "error", msg: res.error })
-    setAlerta({ tipo: "ok", msg: "Bienvenido " + res.usuario.nombre })
-    setTimeout(() => router.push(res.ruta), 800)
+    setLoginOk(true)
+    setTimeout(() => router.push(res.ruta), 900)
   }
 
   async function handleEnviarOTP(e) {
@@ -271,8 +329,8 @@ export default function LoginPage() {
     const res = await verificarCodigoOTP(email, codigo)
     setCargando(false)
     if (res.error) return setAlerta({ tipo: "error", msg: res.error })
-    setAlerta({ tipo: "ok", msg: "Bienvenido " + res.usuario.nombre })
-    setTimeout(() => router.push(res.ruta), 800)
+    setLoginOk(true)
+    setTimeout(() => router.push(res.ruta), 900)
   }
 
   async function handleRecuperar(e) {
@@ -283,150 +341,257 @@ export default function LoginPage() {
     setAlerta({ tipo: "ok", msg: "Si el correo existe, recibiras un codigo" })
   }
 
-  function toggleDark() {
-    const next = !dark
-    setDark(next)
-    localStorage.setItem("isiweek_theme", next ? "dark" : "light")
-    document.documentElement.setAttribute("data-theme", next ? "dark" : "light")
-  }
-
-  function toggleFooter() {
-    setFooterOn(p => {
-      localStorage.setItem("isiweek_footer", p ? "0" : "1")
-      return !p
-    })
-  }
-
   const waNumero  = config.whatsapp_numero ?? "18494324597"
   const waMensaje = encodeURIComponent(config.whatsapp_mensaje ?? "Hola, necesito soporte con IsiWeek")
   const waUrl     = `https://wa.me/${waNumero}?text=${waMensaje}`
+  const sistemaNombre = config.sistema_nombre ?? "IsiWeek"
 
   return (
     <div className={s.page}>
-      <div className={s.pageBg} />
-      <div className={s.shapes}>
-        <div className={`${s.shape} ${s.shapeA}`} />
-        <div className={`${s.shape} ${s.shapeB}`} />
-        <div className={`${s.shape} ${s.shapeC}`} />
-      </div>
+      <canvas ref={canvasRef} className={s.canvas} />
 
-      <button className={s.themeBtn} onClick={toggleDark} aria-label="Cambiar tema" title={dark ? "Modo claro" : "Modo oscuro"}>
-        {dark
-          ? <Sun size={16} strokeWidth={2} className={s.themeBtnIcon} />
-          : <Moon size={16} strokeWidth={2} className={s.themeBtnIcon} />
-        }
-      </button>
+      <div className={s.layout}>
 
-      <div className={s.container}>
-        <div className={s.card}>
-          <div className={s.header}>
-            <div className={s.brand}>{config.sistema_nombre ?? "IsiWeek"}</div>
-            <div className={s.subtitle}>Sistema Multi Empresa</div>
-            <div className={s.dividerAccent} />
-          </div>
+        <div className={s.hero}>
+          <div className={s.heroInner}>
+            <div className={s.heroCenterContent}>
 
-          <div className={s.tabs}>
-            {[{ id: "email", label: "Correo", icon: <Mail size={13} /> }, { id: "otp", label: "Codigo OTP", icon: <KeyRound size={13} /> }].map(t => (
-              <button
-                key={t.id}
-                className={`${s.tab}${tab === t.id ? " " + s.tabActive : ""}`}
-                onClick={() => { setTab(t.id); setAlerta(null) }}
-              >
-                {t.icon}{t.label}
-              </button>
-            ))}
-          </div>
+              <h1 className={s.heroTitle}>
+                Gestiona tu empresa<br />
+                <span className={s.heroTitleAccent}>desde cualquier lugar</span>
+              </h1>
 
-          {alerta && (
-            <div className={`${s.alert} ${alerta.tipo === "error" ? s.alertError : s.alertSuccess}`}>
-              {alerta.msg}
-            </div>
-          )}
+              <p className={s.heroSub}>
+                Multi empresa con POS, obras, creditos y ventas online. Todo en uno.
+              </p>
 
-          {tab === "email" && (
-            <form className={s.form} onSubmit={handleEmailLogin} noValidate>
-              <div className={s.field}>
-                <label className={s.label}>Correo Electronico</label>
-                <div className={s.inputWrap}>
-                  <span className={s.inputIcon}><Mail size={15} /></span>
-                  <input ref={emailRef} type="email" placeholder="tu@correo.com" className={s.input} required autoComplete="email" />
-                </div>
-              </div>
-              <div className={s.field}>
-                <label className={s.label}>Contrasena</label>
-                <div className={s.inputWrap}>
-                  <span className={s.inputIcon}><Lock size={15} /></span>
-                  <input ref={passRef} type={verPass ? "text" : "password"} placeholder="••••••••" className={s.input} required autoComplete="current-password" />
-                  <button type="button" className={s.eyeBtn} onClick={() => setVerPass(p => !p)}>
-                    {verPass ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
-              </div>
-              <div className={s.rememberRow}>
-                <label className={s.checkLabel}>
-                  <input type="checkbox" className={s.checkbox} />
-                  Recuerdame
-                </label>
-                <button type="button" className={s.forgotLink} onClick={() => setModal("forgot")}>
-                  Olvide mi contrasena
-                </button>
-              </div>
-              <button type="submit" className={s.submitBtn} disabled={cargando}>
-                {cargando ? <span className={s.spinner} /> : <><LogIn size={16} />Ingresar</>}
-              </button>
-            </form>
-          )}
-
-          {tab === "otp" && (
-            <form className={s.form} onSubmit={otpEnviado ? handleVerificarOTP : handleEnviarOTP} noValidate>
-              <div className={s.field}>
-                <label className={s.label}>Correo Electronico</label>
-                <div className={s.inputWrap}>
-                  <span className={s.inputIcon}><Mail size={15} /></span>
-                  <input ref={otpEmailRef} type="email" placeholder="tu@correo.com" className={s.input} required autoComplete="email" disabled={otpEnviado} />
-                </div>
-              </div>
-              {otpEnviado && (
-                <div className={s.field}>
-                  <label className={s.label}>Codigo de 6 digitos</label>
-                  <div className={s.otpRow}>
-                    <input ref={otpCodigoRef} type="text" maxLength={6} placeholder="000000" className={s.otpInput} inputMode="numeric" autoComplete="one-time-code" />
-                    <button type="button" className={s.sendOtpBtn} disabled={otpTimer > 0 || cargando} onClick={handleEnviarOTP}>
-                      {otpTimer > 0 ? `${otpTimer}s` : <><RefreshCw size={13} />Reenviar</>}
-                    </button>
+              <div className={s.features}>
+                {FEATURES.map(f => (
+                  <div key={f.label} className={s.featureCard} onClick={() => setFeaturePopup(f)}>
+                    <div className={s.featureCardIcon}>
+                      <ion-icon name={f.icon} />
+                    </div>
+                    <div className={s.featureCardBody}>
+                      <span className={s.featureCardLabel}>{f.label}</span>
+                      <span className={s.featureCardDesc}>{f.desc}</span>
+                    </div>
+                    <div className={s.featureCardArrow}>
+                      <ion-icon name="chevron-forward-outline" />
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              {countryInfo && (
+                <div className={s.countryBar}>
+                  <Flag code={countryInfo.cc} className={s.flag} fallback={<span>{countryInfo.cc}</span>} />
+                  <span className={s.countryName}>{countryInfo.nombre}</span>
+                  <span className={s.countrySep}>·</span>
+                  <span className={s.countryCurrency}>{countryInfo.codigo} {countryInfo.moneda}</span>
+                  <span className={s.countrySep}>·</span>
+                  <span className={s.clockVal}>{hora}</span>
                 </div>
               )}
-              <button type="submit" className={s.submitBtn} disabled={cargando}>
-                {cargando
-                  ? <span className={s.spinner} />
-                  : otpEnviado
-                    ? <><CheckCircle size={16} />Verificar Codigo</>
-                    : <><Send size={16} />Enviar Codigo</>
-                }
-              </button>
-            </form>
-          )}
 
-          <div className={s.dividerText}>O continua con</div>
+            </div>
+          </div>
+        </div>
 
-          <button className={s.googleBtnCustom} onClick={triggerGoogle} disabled={googleCargando} type="button">
-            {googleCargando ? <span className={s.spinner} style={{ borderTopColor: "#4285F4" }} /> : (
+        <div className={s.formSide}>
+
+          <div className={s.infoCartel}>
+            <button
+              className={s.infoCartelToggle}
+              onClick={() => setCartelAbierto(p => !p)}
+              type="button"
+            >
+              <div className={s.infoCartelToggleLeft}>
+                <div className={s.infoCartelToggleIconWrap}>
+                  <ion-icon name="grid-outline" />
+                </div>
+                <div className={s.infoCartelToggleTexts}>
+                  <span className={s.infoCartelToggleTitle}>{sistemaNombre}</span>
+                  <span className={s.infoCartelToggleHint}>Ver que incluye el sistema</span>
+                </div>
+              </div>
+              <ion-icon
+                name={cartelAbierto ? "chevron-up-outline" : "chevron-down-outline"}
+                class={s.infoCartelToggleArrow}
+              />
+            </button>
+
+            <div className={`${s.infoCartelBody} ${cartelAbierto ? s.infoCartelBodyOpen : ""}`}>
+              <div className={s.infoCartelInner}>
+                <h2 className={s.infoCartelTitle}>
+                  Gestiona tu empresa<br />
+                  <span className={s.infoCartelTitleAccent}>desde cualquier lugar</span>
+                </h2>
+                <p className={s.infoCartelSub}>
+                  Multi empresa con POS, obras, creditos y ventas online. Todo en uno.
+                </p>
+                <div className={s.infoCartelFeatures}>
+                  {FEATURES.map(f => (
+                    <div key={f.label} className={s.infoCartelFeatureRow} onClick={() => setFeaturePopup(f)}>
+                      <div className={s.infoCartelFeatureIcon}>
+                        <ion-icon name={f.icon} />
+                      </div>
+                      <div className={s.infoCartelFeatureTexts}>
+                        <span className={s.infoCartelFeatureLabel}>{f.label}</span>
+                        <span className={s.infoCartelFeatureDesc}>{f.desc}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className={s.infoCartelFeatureArrow}
+                        onClick={() => setFeaturePopup(f)}
+                      >
+                        <ion-icon name="chevron-forward-outline" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {countryInfo && (
+                  <div className={s.infoCartelCountry}>
+                    <Flag code={countryInfo.cc} className={s.flag} fallback={<span>{countryInfo.cc}</span>} />
+                    <span>{countryInfo.nombre}</span>
+                    <span className={s.countrySep}>·</span>
+                    <span>{countryInfo.codigo} {countryInfo.moneda}</span>
+                    <span className={s.countrySep}>·</span>
+                    <span>{hora}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className={`${s.card} ${loginOk ? s.cardOk : ""}`}>
+            {loginOk ? (
+              <div className={s.successState}>
+                <div className={s.successCircle}>
+                  <ion-icon name="checkmark-outline" />
+                </div>
+                <p className={s.successMsg}>Bienvenido</p>
+              </div>
+            ) : (
               <>
-                <svg className={s.googleLogo} viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Continuar con Google
+                <div ref={tourRefs.tabs} className={s.tabs}>
+                  <button
+                    className={`${s.tab}${tab === "email" ? " " + s.tabActive : ""}`}
+                    onClick={() => { setTab("email"); setAlerta(null) }}
+                  >
+                    <ion-icon name="mail-outline" />
+                    Correo
+                  </button>
+                  <button
+                    className={`${s.tab}${tab === "otp" ? " " + s.tabActive : ""}`}
+                    onClick={() => { setTab("otp"); setAlerta(null) }}
+                  >
+                    <ion-icon name="key-outline" />
+                    Codigo OTP
+                  </button>
+                </div>
+
+                {alerta && (
+                  <div className={`${s.alert} ${alerta.tipo === "error" ? s.alertError : s.alertSuccess}`}>
+                    <ion-icon name={alerta.tipo === "error" ? "alert-circle-outline" : "checkmark-circle-outline"} />
+                    {alerta.msg}
+                  </div>
+                )}
+
+                {tab === "email" && (
+                  <form ref={tourRefs.email} className={s.form} onSubmit={handleEmailLogin} noValidate>
+                    <div className={s.field}>
+                      <label className={s.label}>Correo electronico</label>
+                      <div className={s.inputWrap}>
+                        <ion-icon name="mail-outline" class={s.inputIcon} />
+                        <input ref={emailRef} type="email" placeholder="tu@correo.com" className={s.input} required autoComplete="email" />
+                      </div>
+                    </div>
+                    <div className={s.field}>
+                      <label className={s.label}>Contrasena</label>
+                      <div className={s.inputWrap}>
+                        <ion-icon name="lock-closed-outline" class={s.inputIcon} />
+                        <input ref={passRef} type={verPass ? "text" : "password"} placeholder="••••••••" className={s.input} required autoComplete="current-password" />
+                        <button type="button" className={s.eyeBtn} onClick={() => setVerPass(p => !p)}>
+                          <ion-icon name={verPass ? "eye-off-outline" : "eye-outline"} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className={s.rememberRow}>
+                      <label className={s.checkLabel}>
+                        <input type="checkbox" className={s.checkbox} />
+                        Recuerdame
+                      </label>
+                      <button type="button" className={s.forgotLink} onClick={() => setModal("forgot")}>
+                        Olvide mi contrasena
+                      </button>
+                    </div>
+                    <button type="submit" className={s.submitBtn} disabled={cargando}>
+                      {cargando
+                        ? <span className={s.spinner} />
+                        : <><ion-icon name="log-in-outline" />Ingresar</>
+                      }
+                    </button>
+                  </form>
+                )}
+
+                {tab === "otp" && (
+                  <form className={s.form} onSubmit={otpEnviado ? handleVerificarOTP : handleEnviarOTP} noValidate>
+                    <div className={s.field}>
+                      <label className={s.label}>Correo electronico</label>
+                      <div className={s.inputWrap}>
+                        <ion-icon name="mail-outline" class={s.inputIcon} />
+                        <input ref={otpEmailRef} type="email" placeholder="tu@correo.com" className={s.input} required autoComplete="email" disabled={otpEnviado} />
+                      </div>
+                    </div>
+                    {otpEnviado && (
+                      <div className={s.field}>
+                        <label className={s.label}>Codigo de 6 digitos</label>
+                        <div className={s.otpRow}>
+                          <input ref={otpCodigoRef} type="text" maxLength={6} placeholder="000000" className={s.otpInput} inputMode="numeric" autoComplete="one-time-code" />
+                          <button type="button" className={s.resendBtn} disabled={otpTimer > 0 || cargando} onClick={handleEnviarOTP}>
+                            {otpTimer > 0 ? `${otpTimer}s` : <><ion-icon name="refresh-outline" />Reenviar</>}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <button type="submit" className={s.submitBtn} disabled={cargando}>
+                      {cargando
+                        ? <span className={s.spinner} />
+                        : otpEnviado
+                          ? <><ion-icon name="checkmark-circle-outline" />Verificar Codigo</>
+                          : <><ion-icon name="send-outline" />Enviar Codigo</>
+                      }
+                    </button>
+                  </form>
+                )}
+
+                <div className={s.divider}><span>O continua con</span></div>
+
+                <button ref={tourRefs.google} className={s.googleBtn} onClick={triggerGoogle} disabled={googleCargando} type="button">
+                  {googleCargando ? <span className={s.spinner} style={{ borderTopColor: "#4285F4" }} /> : (
+                    <>
+                      <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                      </svg>
+                      Continuar con Google
+                    </>
+                  )}
+                </button>
+
+                <p ref={tourRefs.signup} className={s.signupText}>
+                  Sin cuenta?{" "}
+                  <Link href="/registrar" className={s.signupLink}>Registrate aqui</Link>
+                </p>
+
+                <button className={s.tourBtn} onClick={() => setTourActivo(true)}>
+                  <ion-icon name="help-circle-outline" />
+                  Como funciona?
+                </button>
               </>
             )}
-          </button>
-
-          <div className={s.signupText}>
-            No tienes cuenta?{" "}
-            <button className={s.signupLink} onClick={() => setModal("signup")}>Registrate aqui</button>
           </div>
         </div>
       </div>
@@ -434,61 +599,58 @@ export default function LoginPage() {
       {modal && (
         <div className={s.overlay} onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className={s.modal}>
-            <button className={s.closeBtn} onClick={() => setModal(null)}><X size={18} /></button>
+            <button className={s.closeBtn} onClick={() => setModal(null)}>
+              <ion-icon name="close-outline" />
+            </button>
             {modal === "forgot" && (
               <>
-                <div className={s.modalTitle}>Recuperar Contrasena</div>
+                <div className={s.modalTitle}>Recuperar contrasena</div>
                 <form className={s.form} onSubmit={handleRecuperar}>
                   <div className={s.field}>
                     <label className={s.label}>Tu correo registrado</label>
                     <div className={s.inputWrap}>
-                      <span className={s.inputIcon}><Mail size={15} /></span>
+                      <ion-icon name="mail-outline" class={s.inputIcon} />
                       <input ref={recoveryRef} type="email" placeholder="tu@correo.com" className={s.input} required />
                     </div>
                   </div>
-                  <button type="submit" className={s.submitBtn}><Send size={16} />Enviar Codigo</button>
+                  <button type="submit" className={s.submitBtn}>
+                    <ion-icon name="send-outline" />Enviar Codigo
+                  </button>
                 </form>
-              </>
-            )}
-            {modal === "signup" && (
-              <>
-                <div className={s.modalTitle}>Crear Cuenta</div>
-                <p style={{ color: "#64748b", fontSize: 14, marginBottom: 16, lineHeight: 1.6 }}>
-                  Para registrar tu empresa contacta al administrador o escribenos por WhatsApp.
-                </p>
-                <Link href={waUrl} target="_blank" rel="noopener noreferrer" className={s.submitBtn} style={{ display: "flex", textDecoration: "none" }}>
-                  <MessageCircle size={16} />Contactar por WhatsApp
-                </Link>
               </>
             )}
           </div>
         </div>
       )}
 
-      {countryInfo && (
-        <footer className={`${s.footer}${!footerOn ? " " + s.footerHidden : ""}`}>
-          <div className={s.footerInner}>
-            <div className={s.footerChip}>
-              <Flag code={countryInfo.cc} className={s.footerFlag} fallback={<span>{countryInfo.cc}</span>} />
-              <div>
-                <div className={s.footerChipLabel}>{countryInfo.nombre}</div>
-                <div className={s.footerChipSub}>{countryInfo.codigo} · {countryInfo.moneda}</div>
-              </div>
-            </div>
-            <div className={s.footerChip}>
-              <span className={s.footerTime}>{hora}</span>
-            </div>
-          </div>
-        </footer>
-      )}
-
-      <button className={s.toggleFooterBtn} onClick={toggleFooter} title={footerOn ? "Ocultar barra" : "Mostrar barra"}>
-        {footerOn ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-      </button>
-
-      <Link href={waUrl} target="_blank" rel="noopener noreferrer" className={s.whatsappBtn}>
+      <Link href={waUrl} target="_blank" rel="noopener noreferrer" className={s.waBtn}>
         <ion-icon name="logo-whatsapp" />
       </Link>
+
+      {tourActivo && (
+        <TourGuia anchorRefs={tourRefs} onClose={() => setTourActivo(false)} />
+      )}
+
+      {featurePopup && (
+        <div className={s.overlay} onClick={e => e.target === e.currentTarget && setFeaturePopup(null)}>
+          <div className={s.featureModal}>
+            <div className={s.featureModalHeader}>
+              <div className={s.featureModalIconWrap}>
+                <ion-icon name={featurePopup.icon} />
+              </div>
+              <div className={s.featureModalTitles}>
+                <span className={s.featureModalTitle}>{featurePopup.label}</span>
+                <span className={s.featureModalDesc}>{featurePopup.desc}</span>
+              </div>
+              <button className={s.closeBtn} onClick={() => setFeaturePopup(null)} type="button">
+                <ion-icon name="close-outline" />
+              </button>
+            </div>
+            <div className={s.featureModalBody}>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
