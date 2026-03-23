@@ -2,12 +2,12 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 export function getToken() {
   if (typeof window === "undefined") return null
-  return localStorage.getItem("isiweek_token")
+  return localStorage.getItem("ambrysoft_token")
 }
 
 export function removeToken() {
   if (typeof window === "undefined") return
-  localStorage.removeItem("isiweek_token")
+  localStorage.removeItem("ambrysoft_token")
 }
 
 export async function apiFetch(path, options = {}) {
