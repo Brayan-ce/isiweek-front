@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -20,7 +21,7 @@ const ESTADO_STYLE = {
 async function obtenerSolicitudes({ busqueda = "", estado = "", pagina = 1 } = {}) {
   try {
     const p = new URLSearchParams({ busqueda, estado, pagina, limite: 12 })
-    const res = await fetch(`${API}/api/superadmin/solicitudes?${p}`)
+    const res = await apiFetch(`/api/superadmin/solicitudes?${p}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -28,7 +29,7 @@ async function obtenerSolicitudes({ busqueda = "", estado = "", pagina = 1 } = {
 
 async function aprobarSolicitud(id) {
   try {
-    const res = await fetch(`${API}/api/superadmin/solicitudes/${id}/aprobar`, { method: "PATCH" })
+    const res = await apiFetch(`/api/superadmin/solicitudes/${id}/aprobar`, { method: "PATCH" })
     const json = await res.json()
     if (!res.ok) return { error: json.error ?? "Error al aprobar" }
     return { ok: true, ...json }
@@ -37,7 +38,7 @@ async function aprobarSolicitud(id) {
 
 async function rechazarSolicitud(id) {
   try {
-    const res = await fetch(`${API}/api/superadmin/solicitudes/${id}/rechazar`, { method: "PATCH" })
+    const res = await apiFetch(`/api/superadmin/solicitudes/${id}/rechazar`, { method: "PATCH" })
     const json = await res.json()
     if (!res.ok) return { error: json.error ?? "Error al rechazar" }
     return { ok: true }
@@ -46,7 +47,7 @@ async function rechazarSolicitud(id) {
 
 async function ponerPendiente(id) {
   try {
-    const res = await fetch(`${API}/api/superadmin/solicitudes/${id}/pendiente`, { method: "PATCH" })
+    const res = await apiFetch(`/api/superadmin/solicitudes/${id}/pendiente`, { method: "PATCH" })
     const json = await res.json()
     if (!res.ok) return { error: json.error ?? "Error al actualizar" }
     return { ok: true }
@@ -55,7 +56,7 @@ async function ponerPendiente(id) {
 
 async function eliminarSolicitud(id) {
   try {
-    const res = await fetch(`${API}/api/superadmin/solicitudes/${id}`, { method: "DELETE" })
+    const res = await apiFetch(`/api/superadmin/solicitudes/${id}`, { method: "DELETE" })
     if (!res.ok) return { error: "Error al eliminar" }
     return { ok: true }
   } catch { return { error: "Error de conexion" } }

@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
@@ -10,8 +11,8 @@ const CACHE_KEY = "isiweek_header_datos"
 
 async function obtenerDatosHeader() {
   try {
-    const token = localStorage.getItem("isiweek_token")
-    const res = await fetch(`${API}/api/superadmin/header/datos`, {
+    const token = localStorage.getItem("ambrysoft_token")
+    const res = await apiFetch(`/api/superadmin/header/datos`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!res.ok) return null
@@ -87,7 +88,7 @@ export default function HeaderSuperAdmin({ sesion }) {
   }
 
   function handleLogout() {
-    localStorage.removeItem("isiweek_token")
+    localStorage.removeItem("ambrysoft_token")
     sessionStorage.removeItem(CACHE_KEY)
     router.push("/login")
   }

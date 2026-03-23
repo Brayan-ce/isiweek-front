@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"

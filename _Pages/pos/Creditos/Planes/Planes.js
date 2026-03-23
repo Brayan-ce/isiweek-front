@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -25,7 +26,7 @@ function ModalEliminar({ plan, empresaId, onClose, onDeleted }) {
   const confirmar = async () => {
     setEliminando(true); setError("")
     try {
-      const res  = await fetch(`${API}/api/pos/creditos/planes/${empresaId}/${plan.id}`, { method: "DELETE" })
+      const res  = await apiFetch(`/api/pos/creditos/planes/${empresaId}/${plan.id}`, { method: "DELETE" })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "Error al eliminar")
       onDeleted()
@@ -83,7 +84,7 @@ export default function Planes() {
     if (!empresaId) return
     setCargando(true)
     try {
-      const res = await fetch(`${API}/api/pos/creditos/planes/${empresaId}`)
+      const res = await apiFetch(`/api/pos/creditos/planes/${empresaId}`)
       setPlanes(res.ok ? await res.json() : [])
     } catch { setPlanes([]) }
     setCargando(false)
@@ -94,7 +95,7 @@ export default function Planes() {
   const toggleActivo = async (plan) => {
     setToggling(plan.id)
     try {
-      await fetch(`${API}/api/pos/creditos/planes/${empresaId}/${plan.id}/toggle`, {
+      await apiFetch(`/api/pos/creditos/planes/${empresaId}/${plan.id}/toggle`, {
         method: "PATCH",
       })
       await cargar()

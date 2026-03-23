@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -19,7 +20,7 @@ const ESTADO_META = {
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -28,7 +29,7 @@ function getTokenPayload() {
 
 async function getDashboardCreditos(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/creditos/dashboard/${empresaId}`)
+    const res = await apiFetch(`/api/pos/creditos/dashboard/${empresaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }

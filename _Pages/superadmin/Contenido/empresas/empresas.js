@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -9,7 +10,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 async function obtenerEmpresas({ busqueda = "", estado = "", pagina = 1 } = {}) {
   try {
     const params = new URLSearchParams({ busqueda, estado, pagina, limite: 12 })
-    const res = await fetch(`${API}/api/superadmin/empresas?${params}`)
+    const res = await apiFetch(`/api/superadmin/empresas?${params}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -17,7 +18,7 @@ async function obtenerEmpresas({ busqueda = "", estado = "", pagina = 1 } = {}) 
 
 async function eliminarEmpresa(id) {
   try {
-    const res = await fetch(`${API}/api/superadmin/empresas/${id}`, { method: "DELETE" })
+    const res = await apiFetch(`/api/superadmin/empresas/${id}`, { method: "DELETE" })
     if (!res.ok) return { error: "Error al eliminar empresa" }
     return { ok: true }
   } catch { return { error: "Error de conexion" } }

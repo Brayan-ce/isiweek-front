@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -15,7 +16,7 @@ const CONFIG_VACIA = {
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -28,7 +29,7 @@ function fmt(n) {
 
 async function getConfigCatalogo(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/config/${empresaId}`)
+    const res = await apiFetch(`/api/pos/ventas-online/catalogo/config/${empresaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -36,7 +37,7 @@ async function getConfigCatalogo(empresaId) {
 
 async function guardarConfigCatalogo(empresaId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/config/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/ventas-online/catalogo/config/${empresaId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -47,7 +48,7 @@ async function guardarConfigCatalogo(empresaId, body) {
 
 async function getProductosCatalogo(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/productos/${empresaId}`)
+    const res = await apiFetch(`/api/pos/ventas-online/catalogo/productos/${empresaId}`)
     if (!res.ok) return []
     return await res.json()
   } catch { return [] }
@@ -55,7 +56,7 @@ async function getProductosCatalogo(empresaId) {
 
 async function toggleProductoCatalogo(empresaId, productoId, campo, valor) {
   try {
-    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/productos/${empresaId}/${productoId}`, {
+    const res = await apiFetch(`/api/pos/ventas-online/catalogo/productos/${empresaId}/${productoId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [campo]: valor }),
@@ -66,7 +67,7 @@ async function toggleProductoCatalogo(empresaId, productoId, campo, valor) {
 
 async function subirLogoCatalogo(empresaId, formData) {
   try {
-    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/logo/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/ventas-online/catalogo/logo/${empresaId}`, {
       method: "POST",
       body: formData,
     })
@@ -76,7 +77,7 @@ async function subirLogoCatalogo(empresaId, formData) {
 
 async function generarQR(url) {
   try {
-    const res = await fetch(`${API}/api/pos/ventas-online/catalogo/qr`, {
+    const res = await apiFetch(`/api/pos/ventas-online/catalogo/qr`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url }),

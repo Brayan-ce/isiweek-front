@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect } from "react"
 import s from "./DeudaPublica.module.css"
@@ -236,7 +237,7 @@ export default function DeudaPublica({ token }) {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const res = await fetch(`${API}/api/pos/creditos/control/deuda/${token}`)
+        const res = await apiFetch(`/api/pos/creditos/control/deuda/${token}`)
         if (!res.ok) throw new Error("Enlace inválido o expirado")
         const d = await res.json()
         setData(d)

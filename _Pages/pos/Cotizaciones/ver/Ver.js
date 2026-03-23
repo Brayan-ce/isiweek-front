@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -16,7 +17,7 @@ const API        = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001
 
 async function getCotizacion(id) {
   try {
-    const res = await fetch(`${API}/api/pos/cotizaciones/ver/${id}`)
+    const res = await apiFetch(`/api/pos/cotizaciones/ver/${id}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }

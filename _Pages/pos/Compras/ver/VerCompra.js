@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -17,7 +18,7 @@ function getTokenPayload() {
 
 async function getCompra(empresaId, compraId) {
   try {
-    const res = await fetch(`${API}/api/pos/compras/ver/${empresaId}/${compraId}`)
+    const res = await apiFetch(`/api/pos/compras/ver/${empresaId}/${compraId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }

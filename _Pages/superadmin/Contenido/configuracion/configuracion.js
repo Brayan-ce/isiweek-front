@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useRef } from "react"
 import s from "./configuracion.module.css"
@@ -13,7 +14,7 @@ function urlCompleta(ruta) {
 
 async function obtenerConfiguracion() {
   try {
-    const res = await fetch(`${API}/api/superadmin/configuracion`)
+    const res = await apiFetch(`/api/superadmin/configuracion`)
     if (!res.ok) return null
     const data = await res.json()
     if (data?.sistema_logo) data.sistema_logo = urlCompleta(data.sistema_logo)
@@ -27,7 +28,7 @@ async function guardarConfiguracion(data) {
     if (payload.sistema_logo?.startsWith("http")) {
       try { payload.sistema_logo = new URL(payload.sistema_logo).pathname } catch {}
     }
-    const res = await fetch(`${API}/api/superadmin/configuracion`, {
+    const res = await apiFetch(`/api/superadmin/configuracion`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -40,7 +41,7 @@ async function guardarConfiguracion(data) {
 
 async function subirLogo(formData) {
   try {
-    const res = await fetch(`${API}/api/superadmin/configuracion/logo`, {
+    const res = await apiFetch(`/api/superadmin/configuracion/logo`, {
       method: "POST",
       body: formData,
     })

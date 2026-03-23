@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -36,7 +37,7 @@ const AÑOS = [AÑO_ACTUAL, AÑO_ACTUAL - 1, AÑO_ACTUAL - 2]
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -69,7 +70,7 @@ async function getReporteVentas(empresaId, periodo, año, mes) {
   try {
     const p = new URLSearchParams({ periodo, año })
     if (periodo === "mes" && mes !== undefined) p.set("mes", mes)
-    const res = await fetch(`${API}/api/pos/reportes/ventas/${empresaId}?${p}`)
+    const res = await apiFetch(`/api/pos/reportes/ventas/${empresaId}?${p}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -79,7 +80,7 @@ async function getReporteProductos(empresaId, periodo, año, mes) {
   try {
     const p = new URLSearchParams({ periodo, año })
     if (periodo === "mes" && mes !== undefined) p.set("mes", mes)
-    const res = await fetch(`${API}/api/pos/reportes/productos/${empresaId}?${p}`)
+    const res = await apiFetch(`/api/pos/reportes/productos/${empresaId}?${p}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -89,7 +90,7 @@ async function getReporteClientes(empresaId, periodo, año, mes) {
   try {
     const p = new URLSearchParams({ periodo, año })
     if (periodo === "mes" && mes !== undefined) p.set("mes", mes)
-    const res = await fetch(`${API}/api/pos/reportes/clientes/${empresaId}?${p}`)
+    const res = await apiFetch(`/api/pos/reportes/clientes/${empresaId}?${p}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -99,7 +100,7 @@ async function getReporteGastos(empresaId, periodo, año, mes) {
   try {
     const p = new URLSearchParams({ periodo, año })
     if (periodo === "mes" && mes !== undefined) p.set("mes", mes)
-    const res = await fetch(`${API}/api/pos/reportes/gastos/${empresaId}?${p}`)
+    const res = await apiFetch(`/api/pos/reportes/gastos/${empresaId}?${p}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }

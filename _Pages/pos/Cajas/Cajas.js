@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -31,7 +32,7 @@ function fmtHora(f) {
 
 async function getDatosCaja(usuarioId, empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/cajas/datos/${usuarioId}/${empresaId}`)
+    const res = await apiFetch(`/api/pos/cajas/datos/${usuarioId}/${empresaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -39,7 +40,7 @@ async function getDatosCaja(usuarioId, empresaId) {
 
 async function abrirCaja(usuarioId, empresaId, montoInicial) {
   try {
-    const res = await fetch(`${API}/api/pos/cajas/abrir`, {
+    const res = await apiFetch(`/api/pos/cajas/abrir`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ usuarioId, empresaId, montoInicial }),
@@ -50,7 +51,7 @@ async function abrirCaja(usuarioId, empresaId, montoInicial) {
 
 async function cerrarCaja(sesionId, usuarioId, montoFinalManual = null, notas = "") {
   try {
-    const res = await fetch(`${API}/api/pos/cajas/cerrar`, {
+    const res = await apiFetch(`/api/pos/cajas/cerrar`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sesionId, usuarioId, montoFinalManual, notas }),
@@ -61,7 +62,7 @@ async function cerrarCaja(sesionId, usuarioId, montoFinalManual = null, notas = 
 
 async function registrarGasto(usuarioId, empresaId, concepto, monto, tipo) {
   try {
-    const res = await fetch(`${API}/api/pos/cajas/gasto`, {
+    const res = await apiFetch(`/api/pos/cajas/gasto`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ usuarioId, empresaId, concepto, monto, tipo }),
@@ -73,7 +74,7 @@ async function registrarGasto(usuarioId, empresaId, concepto, monto, tipo) {
 async function getHistorialCajas(usuarioId, empresaId, pagina = 1, limite = 10) {
   try {
     const params = new URLSearchParams({ pagina, limite })
-    const res = await fetch(`${API}/api/pos/cajas/historial/${usuarioId}/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/cajas/historial/${usuarioId}/${empresaId}?${params}`)
     if (!res.ok) return { sesiones: [], total: 0, paginas: 1 }
     return await res.json()
   } catch { return { sesiones: [], total: 0, paginas: 1 } }

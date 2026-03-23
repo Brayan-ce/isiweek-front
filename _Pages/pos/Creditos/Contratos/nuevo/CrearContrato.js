@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -961,7 +962,7 @@ export default function CrearContrato() {
         }),
       }
 
-      const res  = await fetch(`${API}/api/pos/creditos/contratos/${payload.empresa_id}`, {
+      const res  = await apiFetch(`/api/pos/creditos/contratos/${payload.empresa_id}`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify(body),

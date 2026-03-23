@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -26,7 +27,7 @@ function fmtFecha(d) {
 
 async function getDatosCuota(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/cuotas/datos/${empresaId}`)
+    const res = await apiFetch(`/api/pos/cuotas/datos/${empresaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -36,7 +37,7 @@ async function getVentasCuotas(empresaId, filtros = {}) {
   try {
     const params = new URLSearchParams()
     Object.entries(filtros).forEach(([k, v]) => { if (v) params.set(k, v) })
-    const res = await fetch(`${API}/api/pos/cuotas/lista/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/cuotas/lista/${empresaId}?${params}`)
     if (!res.ok) return { ventas: [], total: 0, paginas: 1 }
     return await res.json()
   } catch { return { ventas: [], total: 0, paginas: 1 } }
@@ -44,7 +45,7 @@ async function getVentasCuotas(empresaId, filtros = {}) {
 
 async function getUsuariosEmpresa(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/cuotas/usuarios/${empresaId}`)
+    const res = await apiFetch(`/api/pos/cuotas/usuarios/${empresaId}`)
     if (!res.ok) return []
     return await res.json()
   } catch { return [] }
@@ -52,7 +53,7 @@ async function getUsuariosEmpresa(empresaId) {
 
 async function editarEstadoCuota(empresaId, cuotaId, estado) {
   try {
-    const res = await fetch(`${API}/api/pos/cuotas/editar-cuota/${empresaId}/${cuotaId}`, {
+    const res = await apiFetch(`/api/pos/cuotas/editar-cuota/${empresaId}/${cuotaId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado }),
@@ -63,7 +64,7 @@ async function editarEstadoCuota(empresaId, cuotaId, estado) {
 
 async function pagarCuota(empresaId, cuotaId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/cuotas/pagar/${empresaId}/${cuotaId}`, {
+    const res = await apiFetch(`/api/pos/cuotas/pagar/${empresaId}/${cuotaId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

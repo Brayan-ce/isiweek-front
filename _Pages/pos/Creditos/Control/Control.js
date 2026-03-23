@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -9,7 +10,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -127,7 +128,7 @@ export default function Control() {
     if (!empresaId) return
     setCargando(true)
     try {
-      const res = await fetch(`${API}/api/pos/creditos/control/${empresaId}`)
+      const res = await apiFetch(`/api/pos/creditos/control/${empresaId}`)
       setClientes(res.ok ? await res.json() : [])
     } catch { setClientes([]) }
     setCargando(false)

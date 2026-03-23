@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -19,7 +20,7 @@ const ESTADO_META = {
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -46,7 +47,7 @@ async function getPedidos(empresaId, filtros = {}) {
     Object.entries(filtros).forEach(([k, v]) => {
       if (v !== undefined && v !== null && v !== "") params.set(k, v)
     })
-    const res = await fetch(`${API}/api/pos/ventas-online/pedidos/lista/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/ventas-online/pedidos/lista/${empresaId}?${params}`)
     if (!res.ok) return { pedidos: [], total: 0, paginas: 1 }
     return await res.json()
   } catch { return { pedidos: [], total: 0, paginas: 1 } }
@@ -54,7 +55,7 @@ async function getPedidos(empresaId, filtros = {}) {
 
 async function getPedido(empresaId, pedidoId) {
   try {
-    const res = await fetch(`${API}/api/pos/ventas-online/pedidos/${empresaId}/${pedidoId}`)
+    const res = await apiFetch(`/api/pos/ventas-online/pedidos/${empresaId}/${pedidoId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -62,7 +63,7 @@ async function getPedido(empresaId, pedidoId) {
 
 async function cambiarEstadoPedido(empresaId, pedidoId, estado) {
   try {
-    const res = await fetch(`${API}/api/pos/ventas-online/pedidos/${empresaId}/${pedidoId}/estado`, {
+    const res = await apiFetch(`/api/pos/ventas-online/pedidos/${empresaId}/${pedidoId}/estado`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado }),
@@ -73,7 +74,7 @@ async function cambiarEstadoPedido(empresaId, pedidoId, estado) {
 
 async function getResumenPedidos(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/ventas-online/pedidos/resumen/${empresaId}`)
+    const res = await apiFetch(`/api/pos/ventas-online/pedidos/resumen/${empresaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }

@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -23,7 +24,7 @@ const FORM_VACIO = {
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -32,7 +33,7 @@ function getTokenPayload() {
 
 async function getUsuarios(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/usuarios/${empresaId}`)
+    const res = await apiFetch(`/api/pos/usuarios/${empresaId}`)
     if (!res.ok) return []
     return await res.json()
   } catch { return [] }
@@ -40,7 +41,7 @@ async function getUsuarios(empresaId) {
 
 async function crearUsuario(empresaId, data) {
   try {
-    const res = await fetch(`${API}/api/pos/usuarios/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/usuarios/${empresaId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -51,7 +52,7 @@ async function crearUsuario(empresaId, data) {
 
 async function editarUsuario(id, data) {
   try {
-    const res = await fetch(`${API}/api/pos/usuarios/${id}`, {
+    const res = await apiFetch(`/api/pos/usuarios/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -62,7 +63,7 @@ async function editarUsuario(id, data) {
 
 async function toggleUsuario(id, estado) {
   try {
-    const res = await fetch(`${API}/api/pos/usuarios/${id}/toggle`, {
+    const res = await apiFetch(`/api/pos/usuarios/${id}/toggle`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado }),
@@ -73,7 +74,7 @@ async function toggleUsuario(id, estado) {
 
 async function resetPassword(id, nuevaPassword) {
   try {
-    const res = await fetch(`${API}/api/pos/usuarios/${id}/reset-password`, {
+    const res = await apiFetch(`/api/pos/usuarios/${id}/reset-password`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password: nuevaPassword }),

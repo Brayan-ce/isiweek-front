@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -9,7 +10,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 async function obtenerEmpresa(id) {
   try {
-    const res = await fetch(`${API}/api/superadmin/empresas/${id}`)
+    const res = await apiFetch(`/api/superadmin/empresas/${id}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -17,7 +18,7 @@ async function obtenerEmpresa(id) {
 
 async function obtenerMonedas() {
   try {
-    const res = await fetch(`${API}/api/superadmin/empresas/monedas`)
+    const res = await apiFetch(`/api/superadmin/empresas/monedas`)
     if (!res.ok) return []
     return await res.json()
   } catch { return [] }
@@ -25,7 +26,7 @@ async function obtenerMonedas() {
 
 async function obtenerModulos() {
   try {
-    const res = await fetch(`${API}/api/superadmin/empresas/modulos`)
+    const res = await apiFetch(`/api/superadmin/empresas/modulos`)
     if (!res.ok) return []
     return await res.json()
   } catch { return [] }
@@ -33,7 +34,7 @@ async function obtenerModulos() {
 
 async function actualizarEmpresa(id, data) {
   try {
-    const res = await fetch(`${API}/api/superadmin/empresas/${id}`, {
+    const res = await apiFetch(`/api/superadmin/empresas/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),

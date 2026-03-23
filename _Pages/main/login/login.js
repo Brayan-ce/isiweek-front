@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -11,7 +12,7 @@ import s from "./login.module.css"
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 async function post(path, body) {
-  const res = await fetch(`${API}${path}`, {
+  const res = await apiFetch(`${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -21,7 +22,7 @@ async function post(path, body) {
 
 async function obtenerConfigSistema() {
   try {
-    const res = await fetch(`${API}/api/auth/config`)
+    const res = await apiFetch(`/api/auth/config`)
     if (!res.ok) return {}
     return await res.json()
   } catch { return {} }
@@ -31,7 +32,7 @@ async function loginConEmail(email, password, altcha) {
   try {
     const res = await post("/api/auth/login", { email, password, altcha })
     if (res.error) return { error: res.error }
-    localStorage.setItem("isiweek_token", res.token)
+    localStorage.setItem("ambrysoft_token", res.token)
     return { ok: true, ruta: res.ruta, usuario: res.usuario }
   } catch { return { error: "No se pudo conectar con el servidor" } }
 }
@@ -40,7 +41,7 @@ async function loginConGoogle(idToken) {
   try {
     const res = await post("/api/auth/google", { idToken })
     if (res.error) return { error: res.error }
-    localStorage.setItem("isiweek_token", res.token)
+    localStorage.setItem("ambrysoft_token", res.token)
     return { ok: true, ruta: res.ruta, usuario: res.usuario }
   } catch { return { error: "No se pudo conectar con el servidor" } }
 }
@@ -57,7 +58,7 @@ async function verificarCodigoOTP(email, codigo) {
   try {
     const res = await post("/api/auth/otp/verificar", { email, codigo })
     if (res.error) return { error: res.error }
-    localStorage.setItem("isiweek_token", res.token)
+    localStorage.setItem("ambrysoft_token", res.token)
     return { ok: true, ruta: res.ruta, usuario: res.usuario }
   } catch { return { error: "No se pudo conectar con el servidor" } }
 }

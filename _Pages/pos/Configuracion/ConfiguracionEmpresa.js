@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -14,7 +15,7 @@ const FORM_VACIO = {
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -23,7 +24,7 @@ function getTokenPayload() {
 
 async function getEmpresa(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/configuracion/${empresaId}`)
+    const res = await apiFetch(`/api/pos/configuracion/${empresaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -31,7 +32,7 @@ async function getEmpresa(empresaId) {
 
 async function getMonedas() {
   try {
-    const res = await fetch(`${API}/api/pos/configuracion/monedas`)
+    const res = await apiFetch(`/api/pos/configuracion/monedas`)
     if (!res.ok) return []
     return await res.json()
   } catch { return [] }
@@ -39,7 +40,7 @@ async function getMonedas() {
 
 async function guardarEmpresa(empresaId, data) {
   try {
-    const res = await fetch(`${API}/api/pos/configuracion/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/configuracion/${empresaId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -50,7 +51,7 @@ async function guardarEmpresa(empresaId, data) {
 
 async function subirLogoEmpresa(empresaId, formData) {
   try {
-    const res = await fetch(`${API}/api/pos/configuracion/${empresaId}/logo`, {
+    const res = await apiFetch(`/api/pos/configuracion/${empresaId}/logo`, {
       method: "POST",
       body: formData,
     })

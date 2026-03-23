@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -10,7 +11,7 @@ const FORM_VACIO = { nombre: "", rnc: "", telefono: "", email: "", direccion: ""
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -23,7 +24,7 @@ async function getProveedores(empresaId, filtros = {}) {
     Object.entries(filtros).forEach(([k, v]) => {
       if (v !== undefined && v !== null && v !== "") params.set(k, v)
     })
-    const res = await fetch(`${API}/api/pos/proveedores/lista/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/proveedores/lista/${empresaId}?${params}`)
     if (!res.ok) return { proveedores: [], total: 0, paginas: 1, pagina: 1 }
     return await res.json()
   } catch {
@@ -33,7 +34,7 @@ async function getProveedores(empresaId, filtros = {}) {
 
 async function crearProveedor(empresaId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/proveedores/crear/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/proveedores/crear/${empresaId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -46,7 +47,7 @@ async function crearProveedor(empresaId, body) {
 
 async function editarProveedor(empresaId, proveedorId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/proveedores/editar/${empresaId}/${proveedorId}`, {
+    const res = await apiFetch(`/api/pos/proveedores/editar/${empresaId}/${proveedorId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -59,7 +60,7 @@ async function editarProveedor(empresaId, proveedorId, body) {
 
 async function eliminarProveedor(empresaId, proveedorId) {
   try {
-    const res = await fetch(`${API}/api/pos/proveedores/eliminar/${empresaId}/${proveedorId}`, {
+    const res = await apiFetch(`/api/pos/proveedores/eliminar/${empresaId}/${proveedorId}`, {
       method: "DELETE",
     })
     return await res.json()

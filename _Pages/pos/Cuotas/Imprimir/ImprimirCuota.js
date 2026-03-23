@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -21,7 +22,7 @@ const OPCIONES_DEFAULT = {
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -39,7 +40,7 @@ function fmtFecha(d) {
 
 async function getVentaCuota(ventaId, empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/cuotas/imprimir/${empresaId}/${ventaId}`)
+    const res = await apiFetch(`/api/pos/cuotas/imprimir/${empresaId}/${ventaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }

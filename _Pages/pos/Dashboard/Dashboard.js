@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect } from "react"
 import DashboardAdmin from "./admin/DashboardAdmin"
@@ -11,7 +12,7 @@ const TIPO_VENDEDOR    = 3
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -20,7 +21,7 @@ function getTokenPayload() {
 
 async function obtenerDatosHeader(usuarioId) {
   try {
-    const res = await fetch(`${API}/api/pos/header/${usuarioId}`)
+    const res = await apiFetch(`/api/pos/header/${usuarioId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }

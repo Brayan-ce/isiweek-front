@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import s from "./depuracion.module.css"
@@ -27,7 +28,7 @@ const TAB_ICON  = { bd: "server-outline", peticiones: "swap-horizontal-outline",
 
 async function obtenerEstadoBD() {
   try {
-    const res = await fetch(`${API}/api/superadmin/depuracion/bd`)
+    const res = await apiFetch(`/api/superadmin/depuracion/bd`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -35,7 +36,7 @@ async function obtenerEstadoBD() {
 
 async function obtenerLogs() {
   try {
-    const res = await fetch(`${API}/api/superadmin/depuracion/logs`)
+    const res = await apiFetch(`/api/superadmin/depuracion/logs`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -43,7 +44,7 @@ async function obtenerLogs() {
 
 async function limpiarLogs() {
   try {
-    const res = await fetch(`${API}/api/superadmin/depuracion/logs`, { method: "DELETE" })
+    const res = await apiFetch(`/api/superadmin/depuracion/logs`, { method: "DELETE" })
     if (!res.ok) return { error: "Error al limpiar" }
     return { ok: true }
   } catch { return { error: "Error de conexion" } }

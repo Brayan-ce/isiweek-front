@@ -1,8 +1,10 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import s from "./dashboard.module.css"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
@@ -22,7 +24,7 @@ const ESTADO_VENTA     = { completada: { label: "Pagada",    cls: "chipGreen" },
 
 async function obtenerDatosDashboard() {
   try {
-    const res = await fetch(`${API}/api/superadmin/dashboard/datos`)
+    const res = await apiFetch(`/api/superadmin/dashboard/datos`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }

@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 const ESC = 0x1b
 const GS  = 0x1d

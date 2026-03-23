@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -27,7 +28,7 @@ const FORM_VACIO = {
 
 async function getEmpresa(empresaId) {
   try {
-    const res = await fetch(`${API}/api/superadmin/empresas/${empresaId}`)
+    const res = await apiFetch(`/api/superadmin/empresas/${empresaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -36,7 +37,7 @@ async function getEmpresa(empresaId) {
 async function getProductos(empresaId, busqueda = "", pagina = 1, limite = 20) {
   try {
     const params = new URLSearchParams({ busqueda, pagina, limite })
-    const res = await fetch(`${API}/api/pos/productos/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/productos/${empresaId}?${params}`)
     if (!res.ok) return { productos: [], total: 0, paginas: 1 }
     return await res.json()
   } catch { return { productos: [], total: 0, paginas: 1 } }
@@ -44,7 +45,7 @@ async function getProductos(empresaId, busqueda = "", pagina = 1, limite = 20) {
 
 async function getDatosFormulario(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/productos/formulario/${empresaId}`)
+    const res = await apiFetch(`/api/pos/productos/formulario/${empresaId}`)
     if (!res.ok) return { categorias: [], marcas: [] }
     return await res.json()
   } catch { return { categorias: [], marcas: [] } }
@@ -52,7 +53,7 @@ async function getDatosFormulario(empresaId) {
 
 async function crearProducto(empresaId, data) {
   try {
-    const res = await fetch(`${API}/api/pos/productos/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/productos/${empresaId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -63,7 +64,7 @@ async function crearProducto(empresaId, data) {
 
 async function editarProducto(id, data) {
   try {
-    const res = await fetch(`${API}/api/pos/productos/${id}`, {
+    const res = await apiFetch(`/api/pos/productos/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -74,14 +75,14 @@ async function editarProducto(id, data) {
 
 async function generarBarcode(id) {
   try {
-    const res = await fetch(`${API}/api/pos/productos/${id}/barcode`, { method: "POST" })
+    const res = await apiFetch(`/api/pos/productos/${id}/barcode`, { method: "POST" })
     return await res.json()
   } catch { return { error: "No se pudo generar el código de barras" } }
 }
 
 async function subirImagenProducto(id, formData) {
   try {
-    const res = await fetch(`${API}/api/pos/productos/${id}/imagen`, {
+    const res = await apiFetch(`/api/pos/productos/${id}/imagen`, {
       method: "POST",
       body: formData,
     })
@@ -92,7 +93,7 @@ async function subirImagenProducto(id, formData) {
 async function getSiguienteCodigo(empresaId, nombre = "") {
   try {
     const params = new URLSearchParams({ nombre })
-    const res = await fetch(`${API}/api/pos/productos/siguiente-codigo/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/productos/siguiente-codigo/${empresaId}?${params}`)
     if (!res.ok) return { codigo: null }
     return await res.json()
   } catch { return { codigo: null } }
@@ -100,7 +101,7 @@ async function getSiguienteCodigo(empresaId, nombre = "") {
 
 async function eliminarProducto(id) {
   try {
-    const res = await fetch(`${API}/api/pos/productos/${id}`, { method: "DELETE" })
+    const res = await apiFetch(`/api/pos/productos/${id}`, { method: "DELETE" })
     return await res.json()
   } catch { return { error: "No se pudo conectar con el servidor" } }
 }

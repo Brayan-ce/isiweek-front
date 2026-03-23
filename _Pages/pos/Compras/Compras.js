@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -17,7 +18,7 @@ function getTokenPayload() {
 
 async function getDatosCompra(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/compras/datos/${empresaId}`)
+    const res = await apiFetch(`/api/pos/compras/datos/${empresaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -27,7 +28,7 @@ async function getCompras(empresaId, filtros = {}) {
   try {
     const params = new URLSearchParams()
     Object.entries(filtros).forEach(([k, v]) => { if (v) params.set(k, v) })
-    const res = await fetch(`${API}/api/pos/compras/lista/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/compras/lista/${empresaId}?${params}`)
     if (!res.ok) return { compras: [], total: 0, paginas: 1 }
     return await res.json()
   } catch { return { compras: [], total: 0, paginas: 1 } }
@@ -35,7 +36,7 @@ async function getCompras(empresaId, filtros = {}) {
 
 async function crearCompra(empresaId, usuarioId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/compras/crear/${empresaId}/${usuarioId}`, {
+    const res = await apiFetch(`/api/pos/compras/crear/${empresaId}/${usuarioId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -46,7 +47,7 @@ async function crearCompra(empresaId, usuarioId, body) {
 
 async function editarCompra(empresaId, compraId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/compras/editar/${empresaId}/${compraId}`, {
+    const res = await apiFetch(`/api/pos/compras/editar/${empresaId}/${compraId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -57,7 +58,7 @@ async function editarCompra(empresaId, compraId, body) {
 
 async function eliminarCompra(empresaId, compraId) {
   try {
-    const res = await fetch(`${API}/api/pos/compras/eliminar/${empresaId}/${compraId}`, {
+    const res = await apiFetch(`/api/pos/compras/eliminar/${empresaId}/${compraId}`, {
       method: "DELETE",
     })
     return await res.json()

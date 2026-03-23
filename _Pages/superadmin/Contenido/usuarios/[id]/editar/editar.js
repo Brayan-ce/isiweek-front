@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
@@ -9,7 +10,7 @@ const SUPER_ADMIN_ID = 1
 
 async function obtenerUsuario(id) {
   try {
-    const res = await fetch(`${API}/api/superadmin/usuarios/${id}`)
+    const res = await apiFetch(`/api/superadmin/usuarios/${id}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -17,7 +18,7 @@ async function obtenerUsuario(id) {
 
 async function obtenerTiposUsuario() {
   try {
-    const res = await fetch(`${API}/api/superadmin/usuarios/tipos`)
+    const res = await apiFetch(`/api/superadmin/usuarios/tipos`)
     if (!res.ok) return []
     return await res.json()
   } catch { return [] }
@@ -25,7 +26,7 @@ async function obtenerTiposUsuario() {
 
 async function obtenerModosSistema() {
   try {
-    const res = await fetch(`${API}/api/superadmin/usuarios/modos`)
+    const res = await apiFetch(`/api/superadmin/usuarios/modos`)
     if (!res.ok) return []
     return await res.json()
   } catch { return [] }
@@ -33,7 +34,7 @@ async function obtenerModosSistema() {
 
 async function obtenerEmpresasActivas() {
   try {
-    const res = await fetch(`${API}/api/superadmin/usuarios/empresas`)
+    const res = await apiFetch(`/api/superadmin/usuarios/empresas`)
     if (!res.ok) return []
     return await res.json()
   } catch { return [] }
@@ -41,7 +42,7 @@ async function obtenerEmpresasActivas() {
 
 async function obtenerEmpresa(id) {
   try {
-    const res = await fetch(`${API}/api/superadmin/empresas/${id}`)
+    const res = await apiFetch(`/api/superadmin/empresas/${id}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -49,7 +50,7 @@ async function obtenerEmpresa(id) {
 
 async function actualizarUsuario(id, data) {
   try {
-    const res = await fetch(`${API}/api/superadmin/usuarios/${id}`, {
+    const res = await apiFetch(`/api/superadmin/usuarios/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),

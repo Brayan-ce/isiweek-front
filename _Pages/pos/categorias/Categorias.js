@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -18,7 +19,7 @@ function getTokenPayload() {
 async function getCategorias(empresaId, busqueda = "", pagina = 1, limite = 20) {
   try {
     const params = new URLSearchParams({ busqueda, pagina, limite })
-    const res = await fetch(`${API}/api/pos/categorias/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/categorias/${empresaId}?${params}`)
     if (!res.ok) return { categorias: [], total: 0, paginas: 1 }
     return await res.json()
   } catch { return { categorias: [], total: 0, paginas: 1 } }
@@ -26,7 +27,7 @@ async function getCategorias(empresaId, busqueda = "", pagina = 1, limite = 20) 
 
 async function crearCategoria(empresaId, nombre) {
   try {
-    const res = await fetch(`${API}/api/pos/categorias/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/categorias/${empresaId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nombre }),
@@ -37,7 +38,7 @@ async function crearCategoria(empresaId, nombre) {
 
 async function editarCategoria(id, nombre) {
   try {
-    const res = await fetch(`${API}/api/pos/categorias/${id}`, {
+    const res = await apiFetch(`/api/pos/categorias/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nombre }),
@@ -48,7 +49,7 @@ async function editarCategoria(id, nombre) {
 
 async function eliminarCategoria(id) {
   try {
-    const res = await fetch(`${API}/api/pos/categorias/${id}`, {
+    const res = await apiFetch(`/api/pos/categorias/${id}`, {
       method: "DELETE",
     })
     return await res.json()

@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect } from "react"
 import s from "./perfil.module.css"
@@ -13,7 +14,7 @@ function fmtFecha(f) {
 
 async function obtenerPerfil(id) {
   try {
-    const res = await fetch(`${API}/api/superadmin/perfil/${id}`)
+    const res = await apiFetch(`/api/superadmin/perfil/${id}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -21,7 +22,7 @@ async function obtenerPerfil(id) {
 
 async function actualizarPerfil(id, data) {
   try {
-    const res = await fetch(`${API}/api/superadmin/perfil/${id}`, {
+    const res = await apiFetch(`/api/superadmin/perfil/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -34,7 +35,7 @@ async function actualizarPerfil(id, data) {
 
 async function cambiarPassword(id, data) {
   try {
-    const res = await fetch(`${API}/api/superadmin/perfil/${id}/password`, {
+    const res = await apiFetch(`/api/superadmin/perfil/${id}/password`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),

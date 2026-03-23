@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -10,7 +11,7 @@ const FORM_VACIO = { nombre: "", cedula_rnc: "", telefono: "", email: "", direcc
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -23,7 +24,7 @@ async function getClientes(empresaId, filtros = {}) {
     Object.entries(filtros).forEach(([k, v]) => {
       if (v !== undefined && v !== null && v !== "") params.set(k, v)
     })
-    const res = await fetch(`${API}/api/pos/clientes/lista/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/clientes/lista/${empresaId}?${params}`)
     if (!res.ok) return { clientes: [], total: 0, paginas: 1, pagina: 1 }
     return await res.json()
   } catch {
@@ -33,7 +34,7 @@ async function getClientes(empresaId, filtros = {}) {
 
 async function crearCliente(empresaId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/clientes/crear/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/clientes/crear/${empresaId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -46,7 +47,7 @@ async function crearCliente(empresaId, body) {
 
 async function editarCliente(empresaId, clienteId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/clientes/editar/${empresaId}/${clienteId}`, {
+    const res = await apiFetch(`/api/pos/clientes/editar/${empresaId}/${clienteId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -59,7 +60,7 @@ async function editarCliente(empresaId, clienteId, body) {
 
 async function eliminarCliente(empresaId, clienteId) {
   try {
-    const res = await fetch(`${API}/api/pos/clientes/eliminar/${empresaId}/${clienteId}`, {
+    const res = await apiFetch(`/api/pos/clientes/eliminar/${empresaId}/${clienteId}`, {
       method: "DELETE",
     })
     return await res.json()

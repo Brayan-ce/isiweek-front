@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useRef } from "react"
 import s from "./AltchaWidget.module.css"
@@ -6,7 +7,7 @@ import s from "./AltchaWidget.module.css"
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 async function fetchChallenge() {
-  const res = await fetch(`${API}/api/auth/captcha`)
+  const res = await apiFetch(`/api/auth/captcha`)
   if (!res.ok) throw new Error("No se pudo obtener el challenge")
   return res.json()
 }

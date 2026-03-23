@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -40,7 +41,7 @@ function ModalEliminar({ contrato, empresaId, onClose, onDeleted }) {
   const confirmar = async () => {
     setEliminando(true); setError("")
     try {
-      const res  = await fetch(`${API}/api/pos/creditos/contratos/${empresaId}/${contrato.id}`, { method: "DELETE" })
+      const res  = await apiFetch(`/api/pos/creditos/contratos/${empresaId}/${contrato.id}`, { method: "DELETE" })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "Error al eliminar")
       onDeleted()
@@ -95,7 +96,7 @@ export default function Contratos() {
     if (!empresaId) return
     setCargando(true)
     try {
-      const res = await fetch(`${API}/api/pos/creditos/contratos/${empresaId}`)
+      const res = await apiFetch(`/api/pos/creditos/contratos/${empresaId}`)
       setContratos(res.ok ? await res.json() : [])
     } catch { setContratos([]) }
     setCargando(false)
@@ -106,7 +107,7 @@ export default function Contratos() {
   const toggle = async (c) => {
     setToggling(c.id)
     try {
-      await fetch(`${API}/api/pos/creditos/contratos/${empresaId}/${c.id}/toggle`, { method: "PATCH" })
+      await apiFetch(`/api/pos/creditos/contratos/${empresaId}/${c.id}/toggle`, { method: "PATCH" })
       await cargar()
     } finally { setToggling(null) }
   }

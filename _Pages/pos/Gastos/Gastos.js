@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -11,7 +12,7 @@ const FORM_VACIO = { concepto: "", monto: "", tipo: "" }
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -34,7 +35,7 @@ function fmtHora(f) {
 
 async function getDatosCaja(usuarioId, empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/cajas/datos/${usuarioId}/${empresaId}`)
+    const res = await apiFetch(`/api/pos/cajas/datos/${usuarioId}/${empresaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -46,7 +47,7 @@ async function getGastos(empresaId, filtros = {}) {
     Object.entries(filtros).forEach(([k, v]) => {
       if (v !== undefined && v !== null && v !== "") params.set(k, v)
     })
-    const res = await fetch(`${API}/api/pos/gastos/lista/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/gastos/lista/${empresaId}?${params}`)
     if (!res.ok) return { gastos: [], total: 0, paginas: 1, pagina: 1 }
     return await res.json()
   } catch { return { gastos: [], total: 0, paginas: 1, pagina: 1 } }
@@ -54,7 +55,7 @@ async function getGastos(empresaId, filtros = {}) {
 
 async function getTiposGasto(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/gastos/tipos/${empresaId}`)
+    const res = await apiFetch(`/api/pos/gastos/tipos/${empresaId}`)
     if (!res.ok) return []
     return await res.json()
   } catch { return [] }
@@ -62,7 +63,7 @@ async function getTiposGasto(empresaId) {
 
 async function getResumenGastos(empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/gastos/resumen/${empresaId}`)
+    const res = await apiFetch(`/api/pos/gastos/resumen/${empresaId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -70,7 +71,7 @@ async function getResumenGastos(empresaId) {
 
 async function crearGasto(empresaId, usuarioId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/gastos/crear/${empresaId}/${usuarioId}`, {
+    const res = await apiFetch(`/api/pos/gastos/crear/${empresaId}/${usuarioId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -81,7 +82,7 @@ async function crearGasto(empresaId, usuarioId, body) {
 
 async function editarGasto(empresaId, gastoId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/gastos/editar/${empresaId}/${gastoId}`, {
+    const res = await apiFetch(`/api/pos/gastos/editar/${empresaId}/${gastoId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -92,7 +93,7 @@ async function editarGasto(empresaId, gastoId, body) {
 
 async function eliminarGasto(empresaId, gastoId) {
   try {
-    const res = await fetch(`${API}/api/pos/gastos/eliminar/${empresaId}/${gastoId}`, {
+    const res = await apiFetch(`/api/pos/gastos/eliminar/${empresaId}/${gastoId}`, {
       method: "DELETE",
     })
     return await res.json()

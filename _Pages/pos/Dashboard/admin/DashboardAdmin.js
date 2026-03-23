@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -10,7 +11,7 @@ const COLORES = ["#1d6fce", "#0ea5e9", "#22c55e", "#f59e0b", "#8b5cf6", "#ef4444
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))

@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -17,7 +18,7 @@ function getTokenPayload() {
 
 async function getDatos(empresaId, usuarioId) {
   try {
-    const res = await fetch(`${API}/api/pos/cotizaciones/datos/${empresaId}/${usuarioId}`)
+    const res = await apiFetch(`/api/pos/cotizaciones/datos/${empresaId}/${usuarioId}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -25,7 +26,7 @@ async function getDatos(empresaId, usuarioId) {
 
 async function getCotizacion(id) {
   try {
-    const res = await fetch(`${API}/api/pos/cotizaciones/ver/${id}`)
+    const res = await apiFetch(`/api/pos/cotizaciones/ver/${id}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -33,7 +34,7 @@ async function getCotizacion(id) {
 
 async function actualizarCotizacion(id, empresaId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/cotizaciones/editar/${id}/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/cotizaciones/editar/${id}/${empresaId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

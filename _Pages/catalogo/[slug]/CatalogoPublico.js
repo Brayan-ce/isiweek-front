@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useMemo, useEffect } from "react"
 import { useParams } from "next/navigation"
@@ -374,7 +375,7 @@ export default function CatalogoPublico() {
 
   async function enviarPedido(datos) {
     try {
-      await fetch(`${API}/api/catalogo/pedido`, {
+      await apiFetch(`/api/catalogo/pedido`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

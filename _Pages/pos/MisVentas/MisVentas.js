@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -26,7 +27,7 @@ function fmtFecha(f) {
 
 async function obtenerDatosHeader(usuarioId) {
   try {
-    const res = await fetch(`${API}/api/pos/header/${usuarioId}`)
+    const res = await apiFetch(`/api/pos/header/${usuarioId}`)
     if (!res.ok) return null
     return res.json()
   } catch { return null }
@@ -40,7 +41,7 @@ async function getMisVentas({ empresaId, usuarioId, tipoUsuarioId, fechaDesde, f
     if (estado)     params.set("estado", estado)
     params.set("pagina", pagina)
     params.set("limite", limite)
-    const res = await fetch(`${API}/api/pos/mis-ventas/${empresaId}/${usuarioId}/${tipoUsuarioId}?${params}`)
+    const res = await apiFetch(`/api/pos/mis-ventas/${empresaId}/${usuarioId}/${tipoUsuarioId}?${params}`)
     if (!res.ok) return { ventas: [], total: 0, paginas: 1 }
     return res.json()
   } catch { return { ventas: [], total: 0, paginas: 1 } }
@@ -48,7 +49,7 @@ async function getMisVentas({ empresaId, usuarioId, tipoUsuarioId, fechaDesde, f
 
 async function cancelarVenta(ventaId, empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/mis-ventas/cancelar/${ventaId}/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/mis-ventas/cancelar/${ventaId}/${empresaId}`, {
       method: "PATCH",
     })
     return res.json()

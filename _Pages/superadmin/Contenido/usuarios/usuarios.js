@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -9,7 +10,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 async function obtenerUsuarios({ busqueda = "", estado = "", tipo = "", empresaId = "", pagina = 1 } = {}) {
   try {
     const p = new URLSearchParams({ busqueda, estado, tipo, empresaId, pagina, limite: 12 })
-    const res = await fetch(`${API}/api/superadmin/usuarios?${p}`)
+    const res = await apiFetch(`/api/superadmin/usuarios?${p}`)
     if (!res.ok) return null
     return await res.json()
   } catch { return null }
@@ -17,7 +18,7 @@ async function obtenerUsuarios({ busqueda = "", estado = "", tipo = "", empresaI
 
 async function obtenerEmpresasActivas() {
   try {
-    const res = await fetch(`${API}/api/superadmin/usuarios/empresas`)
+    const res = await apiFetch(`/api/superadmin/usuarios/empresas`)
     if (!res.ok) return []
     return await res.json()
   } catch { return [] }
@@ -25,7 +26,7 @@ async function obtenerEmpresasActivas() {
 
 async function eliminarUsuario(id) {
   try {
-    const res = await fetch(`${API}/api/superadmin/usuarios/${id}`, { method: "DELETE" })
+    const res = await apiFetch(`/api/superadmin/usuarios/${id}`, { method: "DELETE" })
     if (!res.ok) return { error: "Error al eliminar usuario" }
     return { ok: true }
   } catch { return { error: "Error de conexion" } }

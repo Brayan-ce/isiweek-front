@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -33,7 +34,7 @@ function fmt(n, simbolo = "RD$") {
 
 async function getVenta(id) {
   try {
-    const res = await fetch(`${API}/api/pos/vender/recibo/${id}`)
+    const res = await apiFetch(`/api/pos/vender/recibo/${id}`)
     if (!res.ok) return null
     return res.json()
   } catch { return null }

@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -22,7 +23,7 @@ function fmt(n, simbolo = "RD$") {
 async function getVentasCuotas(empresaId, busqueda = "", pagina = 1, limite = 20) {
   try {
     const params = new URLSearchParams({ busqueda, pagina, limite })
-    const res = await fetch(`${API}/api/pos/conduces/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/conduces/${empresaId}?${params}`)
     if (!res.ok) return { ventas: [], total: 0, paginas: 1 }
     return await res.json()
   } catch { return { ventas: [], total: 0, paginas: 1 } }
@@ -30,7 +31,7 @@ async function getVentasCuotas(empresaId, busqueda = "", pagina = 1, limite = 20
 
 async function pagarCuota(cuotaId, ventaId, empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/conduces/pagar-cuota/${cuotaId}`, {
+    const res = await apiFetch(`/api/pos/conduces/pagar-cuota/${cuotaId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ventaId, empresaId }),

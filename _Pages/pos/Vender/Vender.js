@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -21,7 +22,7 @@ function fmt(n, simbolo = "RD$") {
 
 async function getDatosVender(empresaId, usuarioId) {
   try {
-    const res = await fetch(`${API}/api/pos/vender/datos/${empresaId}/${usuarioId}`)
+    const res = await apiFetch(`/api/pos/vender/datos/${empresaId}/${usuarioId}`)
     if (!res.ok) return null
     return res.json()
   } catch { return null }
@@ -30,7 +31,7 @@ async function getDatosVender(empresaId, usuarioId) {
 async function fetchProductos(empresaId, busqueda = "", pagina = 1, limite = 20) {
   try {
     const params = new URLSearchParams({ busqueda, pagina, limite })
-    const res = await fetch(`${API}/api/pos/vender/productos/${empresaId}?${params}`)
+    const res = await apiFetch(`/api/pos/vender/productos/${empresaId}?${params}`)
     if (!res.ok) return { productos: [], total: 0, paginas: 1 }
     return res.json()
   } catch { return { productos: [], total: 0, paginas: 1 } }
@@ -38,7 +39,7 @@ async function fetchProductos(empresaId, busqueda = "", pagina = 1, limite = 20)
 
 async function getProductoPorCodigo(empresaId, codigo) {
   try {
-    const res = await fetch(`${API}/api/pos/vender/codigo/${empresaId}/${encodeURIComponent(codigo)}`)
+    const res = await apiFetch(`/api/pos/vender/codigo/${empresaId}/${encodeURIComponent(codigo)}`)
     if (!res.ok) return null
     return res.json()
   } catch { return null }
@@ -46,7 +47,7 @@ async function getProductoPorCodigo(empresaId, codigo) {
 
 async function crearClienteRapido(empresaId, nombre) {
   try {
-    const res = await fetch(`${API}/api/pos/vender/cliente-rapido/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/vender/cliente-rapido/${empresaId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nombre }),
@@ -57,7 +58,7 @@ async function crearClienteRapido(empresaId, nombre) {
 
 async function actualizarStock(empresaId, productoId, stock) {
   try {
-    const res = await fetch(`${API}/api/pos/vender/stock/${empresaId}/${productoId}`, {
+    const res = await apiFetch(`/api/pos/vender/stock/${empresaId}/${productoId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stock: Number(stock) }),
@@ -68,7 +69,7 @@ async function actualizarStock(empresaId, productoId, stock) {
 
 async function crearVenta(empresaId, usuarioId, body) {
   try {
-    const res = await fetch(`${API}/api/pos/vender/crear/${empresaId}/${usuarioId}`, {
+    const res = await apiFetch(`/api/pos/vender/crear/${empresaId}/${usuarioId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

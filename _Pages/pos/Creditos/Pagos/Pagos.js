@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -162,7 +163,7 @@ function HistorialPagos({ contratoId, empresaId, simbolo, onRevertido }) {
   const cargar = useCallback(async () => {
     setCargando(true)
     try {
-      const res = await fetch(`${API}/api/pos/creditos/pagos/${empresaId}/contratos/${contratoId}`)
+      const res = await apiFetch(`/api/pos/creditos/pagos/${empresaId}/contratos/${contratoId}`)
       if (res.ok) { const d = await res.json(); setPagos(d.pagos ?? []) }
     } catch {}
     setCargando(false)
@@ -174,7 +175,7 @@ function HistorialPagos({ contratoId, empresaId, simbolo, onRevertido }) {
     if (!confirm("Revertir este pago?")) return
     setRevert(pagoId)
     try {
-      const res  = await fetch(`${API}/api/pos/creditos/pagos/${empresaId}/pagos/${pagoId}/revertir`, { method: "DELETE" })
+      const res  = await apiFetch(`/api/pos/creditos/pagos/${empresaId}/pagos/${pagoId}/revertir`, { method: "DELETE" })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "Error")
       await cargar(); onRevertido()
@@ -226,7 +227,7 @@ function ContratoExpandido({ contrato, empresaId, payload, metodos, onActualizad
   const cargar = useCallback(async () => {
     setCargando(true)
     try {
-      const res = await fetch(`${API}/api/pos/creditos/pagos/${empresaId}/contratos/${contrato.id}`)
+      const res = await apiFetch(`/api/pos/creditos/pagos/${empresaId}/contratos/${contrato.id}`)
       if (res.ok) { const d = await res.json(); setCuotas(d.contrato?.cuotas ?? []) }
     } catch {}
     setCargando(false)

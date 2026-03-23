@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,7 @@ const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -18,7 +19,7 @@ function getTokenPayload() {
 async function getCotizaciones(empresaId, params = {}) {
   try {
     const q = new URLSearchParams(params)
-    const res = await fetch(`${API}/api/pos/cotizaciones/${empresaId}?${q}`)
+    const res = await apiFetch(`/api/pos/cotizaciones/${empresaId}?${q}`)
     if (!res.ok) return { cotizaciones: [], total: 0, paginas: 1 }
     return await res.json()
   } catch { return { cotizaciones: [], total: 0, paginas: 1 } }
@@ -26,7 +27,7 @@ async function getCotizaciones(empresaId, params = {}) {
 
 async function cambiarEstado(id, empresaId, estado) {
   try {
-    const res = await fetch(`${API}/api/pos/cotizaciones/estado/${id}/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/cotizaciones/estado/${id}/${empresaId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado }),
@@ -37,7 +38,7 @@ async function cambiarEstado(id, empresaId, estado) {
 
 async function eliminarCotizacion(id, empresaId) {
   try {
-    const res = await fetch(`${API}/api/pos/cotizaciones/eliminar/${id}/${empresaId}`, {
+    const res = await apiFetch(`/api/pos/cotizaciones/eliminar/${id}/${empresaId}`, {
       method: "DELETE",
     })
     return await res.json()

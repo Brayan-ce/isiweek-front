@@ -1,4 +1,5 @@
 "use client"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -9,7 +10,7 @@ const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL ?? "http://localhost:3
 
 function getTokenPayload() {
   try {
-    const token = localStorage.getItem("isiweek_token")
+    const token = localStorage.getItem("ambrysoft_token")
     if (!token) return null
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
     return JSON.parse(atob(base64))
@@ -178,7 +179,7 @@ function ModalMasiva({ empresaId, totalCuotas, onClose, onAplicada }) {
   const aplicar = async () => {
     setAplicando(true); setError("")
     try {
-      const res  = await fetch(`${API}/api/pos/creditos/mora/${empresaId}/aplicar-masiva`, { method: "POST" })
+      const res  = await apiFetch(`/api/pos/creditos/mora/${empresaId}/aplicar-masiva`, { method: "POST" })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "Error al aplicar")
       onAplicada(data.actualizadas)
@@ -267,7 +268,7 @@ export default function Mora() {
     const fmt = makeFmt(cuota.contrato?.moneda?.simbolo ?? "RD$")
     setAplicandoId(cuota.id)
     try {
-      const res  = await fetch(`${API}/api/pos/creditos/mora/${empresaId}/cuotas/${cuota.id}/aplicar`, { method: "POST" })
+      const res  = await apiFetch(`/api/pos/creditos/mora/${empresaId}/cuotas/${cuota.id}/aplicar`, { method: "POST" })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "Error")
       mostrarToast(`Mora aplicada: ${fmt(data.mora)}`)
