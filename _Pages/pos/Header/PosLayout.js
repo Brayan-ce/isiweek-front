@@ -7,8 +7,6 @@ import Sidebar from "./Sidebar"
 import Topbar from "./Topbar"
 import s from "./PosLayout.module.css"
 
-const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
-
 const PRIMER_SLUG_POR_GRUPO = [
   "mis-ventas",
   "creditos/dashboard",
@@ -42,9 +40,9 @@ export default function PosLayout({ children }) {
     const payload = getTokenPayload()
     if (!payload) { router.push("/login"); return }
 
-    fetch(`${API}/api/pos/header/${payload.id}`)
-      .then(r => r.json())
-      .then(d => setData(d))
+    apiFetch(`/api/pos/header/${payload.id}`)
+      .then(r => { if (r?.ok) return r.json(); return null })
+      .then(d => { if (d) setData(d) })
       .catch(() => {})
   }, [])
 
@@ -73,6 +71,8 @@ export default function PosLayout({ children }) {
   }
 
   const slug = pathname.split("/")[2] ?? ""
+
+  if (!data) return null
 
   return (
     <div className={s.layout}>
