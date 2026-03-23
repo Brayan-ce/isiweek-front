@@ -12,7 +12,7 @@ export default function LoginHeader() {
   const [dark, setDark]         = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [config, setConfig]     = useState({})
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const pathname                = usePathname()
 
   const enRegistrar = pathname === "/registrar"
@@ -36,7 +36,12 @@ export default function LoginHeader() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  useEffect(() => { setMenuOpen(false) }, [pathname])
+  useEffect(() => { setDrawerOpen(false) }, [pathname])
+
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? "hidden" : ""
+    return () => { document.body.style.overflow = "" }
+  }, [drawerOpen])
 
   function toggleDark() {
     const next = !dark
@@ -49,93 +54,98 @@ export default function LoginHeader() {
   const logoPath = config.sistema_logo   ?? null
   const logoUrl  = logoPath ? `${API}${logoPath}` : null
 
-  const navSecundario = enPlanes || enRegistrar ? (
-    <Link href="/" className={s.navLink}>
-      <ion-icon name="home-outline" />
-      Inicio
-    </Link>
-  ) : (
-    <Link href="/planes" className={s.navLink}>
-      <ion-icon name="pricetags-outline" />
-      Planes
-    </Link>
-  )
+  const navSecundario = enPlanes || enRegistrar
+    ? { href: "/",       icon: "home-outline",       label: "Inicio" }
+    : { href: "/planes", icon: "pricetags-outline",  label: "Planes" }
 
-  const navCTA = enRegistrar ? (
-    <Link href="/login" className={s.navLinkBtn}>
-      <ion-icon name="log-in-outline" />
-      Iniciar sesión
-    </Link>
-  ) : (
-    <Link href="/registrar" className={s.navLinkBtn}>
-      <ion-icon name="person-add-outline" />
-      Crear cuenta
-    </Link>
-  )
-
-  const mobileSecundario = enPlanes || enRegistrar ? (
-    <Link href="/" className={s.mobileLink} onClick={() => setMenuOpen(false)}>
-      <ion-icon name="home-outline" />
-      Inicio
-    </Link>
-  ) : (
-    <Link href="/planes" className={s.mobileLink} onClick={() => setMenuOpen(false)}>
-      <ion-icon name="pricetags-outline" />
-      Planes
-    </Link>
-  )
-
-  const mobileCTA = enRegistrar ? (
-    <Link href="/login" className={s.mobileLinkBtn} onClick={() => setMenuOpen(false)}>
-      <ion-icon name="log-in-outline" />
-      Iniciar sesión
-    </Link>
-  ) : (
-    <Link href="/registrar" className={s.mobileLinkBtn} onClick={() => setMenuOpen(false)}>
-      <ion-icon name="person-add-outline" />
-      Crear cuenta
-    </Link>
-  )
+  const navCTA = enRegistrar
+    ? { href: "/login",     icon: "log-in-outline",     label: "Iniciar sesión" }
+    : { href: "/registrar", icon: "person-add-outline", label: "Crear cuenta"   }
 
   return (
-    <header className={`${s.header} ${scrolled ? s.scrolled : ""}`}>
-      <div className={s.inner}>
+    <>
+      <header className={`${s.header} ${scrolled ? s.scrolled : ""}`}>
+        <div className={s.inner}>
 
-        <Link href="/" className={s.brand}>
-          {logoUrl
-            ? <img src={logoUrl} alt={nombre} className={s.logoImg} />
-            : <div className={s.logoIcon}>{nombre.charAt(0)}</div>
-          }
-          <span className={s.logoText}>{nombre}</span>
-        </Link>
+          <Link href="/" className={s.brand}>
+            {logoUrl
+              ? <img src={logoUrl} alt={nombre} className={s.logoImg} />
+              : <div className={s.logoIcon}>{nombre.charAt(0)}</div>
+            }
+            <span className={s.logoText}>{nombre}</span>
+          </Link>
 
-        <nav className={s.nav}>
-          {navSecundario}
-          {navCTA}
+          <nav className={s.nav}>
+            <Link href={navSecundario.href} className={s.navLink}>
+              <ion-icon name={navSecundario.icon} />
+              {navSecundario.label}
+            </Link>
+            <Link href={navCTA.href} className={s.navLinkBtn}>
+              <ion-icon name={navCTA.icon} />
+              {navCTA.label}
+            </Link>
+          </nav>
+
+          <div className={s.actions}>
+            <LangSelector />
+            <button className={s.themeBtn} onClick={toggleDark} title={dark ? "Modo claro" : "Modo oscuro"}>
+              <ion-icon name={dark ? "sunny-outline" : "moon-outline"} />
+            </button>
+            <button
+              className={`${s.menuBtn} ${drawerOpen ? s.menuBtnOpen : ""}`}
+              onClick={() => setDrawerOpen(p => !p)}
+              title="Menú"
+            >
+              <ion-icon name={drawerOpen ? "close-outline" : "menu-outline"} />
+            </button>
+          </div>
+
+        </div>
+      </header>
+
+      {drawerOpen && (
+        <div className={s.overlay} onClick={() => setDrawerOpen(false)} />
+      )}
+
+      <aside className={`${s.drawer} ${drawerOpen ? s.drawerOpen : ""}`}>
+        <div className={s.drawerHeader}>
+          <div className={s.drawerBrand}>
+            {logoUrl
+              ? <img src={logoUrl} alt={nombre} className={s.drawerLogoImg} />
+              : <div className={s.drawerLogoIcon}>{nombre.charAt(0)}</div>
+            }
+            <span className={s.drawerNombre}>{nombre}</span>
+          </div>
+          <button className={s.drawerClose} onClick={() => setDrawerOpen(false)}>
+            <ion-icon name="close-outline" />
+          </button>
+        </div>
+
+        <nav className={s.drawerNav}>
+          <Link href={navSecundario.href} className={s.drawerLink} onClick={() => setDrawerOpen(false)}>
+            <div className={s.drawerLinkIcon}>
+              <ion-icon name={navSecundario.icon} />
+            </div>
+            {navSecundario.label}
+          </Link>
+
+          <Link href={navCTA.href} className={s.drawerLinkBtn} onClick={() => setDrawerOpen(false)}>
+            <div className={s.drawerLinkIcon}>
+              <ion-icon name={navCTA.icon} />
+            </div>
+            {navCTA.label}
+          </Link>
         </nav>
 
-        <div className={s.actions}>
-          <LangSelector />
-          <button className={s.themeBtn} onClick={toggleDark} title={dark ? "Modo claro" : "Modo oscuro"}>
-            <ion-icon name={dark ? "sunny-outline" : "moon-outline"} />
-          </button>
-          <button
-            className={`${s.menuBtn} ${menuOpen ? s.menuBtnOpen : ""}`}
-            onClick={() => setMenuOpen(p => !p)}
-            title="Menú"
-          >
-            <ion-icon name={menuOpen ? "close-outline" : "menu-outline"} />
-          </button>
+        <div className={s.drawerFooter}>
+          <div className={s.drawerFooterRow}>
+            <LangSelector />
+            <button className={s.themeBtn} onClick={toggleDark}>
+              <ion-icon name={dark ? "sunny-outline" : "moon-outline"} />
+            </button>
+          </div>
         </div>
-
-      </div>
-
-      {menuOpen && (
-        <div className={s.mobileMenu}>
-          {mobileSecundario}
-          {mobileCTA}
-        </div>
-      )}
-    </header>
+      </aside>
+    </>
   )
 }

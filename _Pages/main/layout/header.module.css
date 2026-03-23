@@ -100,18 +100,13 @@
   background: rgba(29, 111, 206, 0.06);
 }
 
-:global([data-theme="dark"]) .navLink {
-  color: #94a3b8;
-}
-
+:global([data-theme="dark"]) .navLink { color: #94a3b8; }
 :global([data-theme="dark"]) .navLink:hover {
   color: #60a5fa;
   background: rgba(96, 165, 250, 0.08);
 }
 
-.navLink ion-icon {
-  font-size: 15px;
-}
+.navLink ion-icon { font-size: 15px; }
 
 .navLinkBtn {
   display: flex;
@@ -133,9 +128,7 @@
   box-shadow: 0 5px 16px rgba(29, 111, 206, 0.4);
 }
 
-.navLinkBtn ion-icon {
-  font-size: 15px;
-}
+.navLinkBtn ion-icon { font-size: 15px; }
 
 .actions {
   display: flex;
@@ -166,9 +159,7 @@
   color: #fbbf24;
 }
 
-.themeBtn:hover {
-  transform: scale(1.08);
-}
+.themeBtn:hover { transform: scale(1.08); }
 
 .menuBtn {
   display: none;
@@ -180,7 +171,7 @@
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 22px;
   color: #1d6fce;
   transition: all 0.2s;
 }
@@ -196,32 +187,130 @@
   border-color: #1d6fce;
 }
 
-.mobileMenu {
-  display: none;
+/* ── Overlay ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 98;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Drawer ── */
+.drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 99;
+  width: 280px;
+  background: white;
+  box-shadow: 4px 0 32px rgba(29, 111, 206, 0.12);
+  display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 20px 16px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(29, 111, 206, 0.08);
-  animation: slideDown 0.2s ease;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.34, 1.1, 0.64, 1);
 }
 
-:global([data-theme="dark"]) .mobileMenu {
-  background: rgba(6, 13, 26, 0.95);
-  border-top-color: rgba(255, 255, 255, 0.06);
+:global([data-theme="dark"]) .drawer {
+  background: #0d1f3c;
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.4);
 }
 
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
+.drawerOpen {
+  transform: translateX(0);
 }
 
-.mobileLink {
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+:global([data-theme="dark"]) .drawerHeader {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.drawerBrand {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 11px 14px;
+}
+
+.drawerLogoIcon {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, #1d6fce, #0ea5e9);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 900;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(29, 111, 206, 0.3);
+}
+
+.drawerLogoImg {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.drawerNombre {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1d6fce;
+  letter-spacing: -0.3px;
+}
+
+:global([data-theme="dark"]) .drawerNombre { color: #60a5fa; }
+
+.drawerClose {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.drawerClose:hover { background: #e2e8f0; color: #0f172a; }
+
+:global([data-theme="dark"]) .drawerClose {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+.drawerNav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 10px;
+}
+
+.drawerLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
   font-size: 14px;
   font-weight: 600;
   color: #475569;
@@ -230,25 +319,22 @@
   transition: all 0.2s;
 }
 
-.mobileLink:hover {
+.drawerLink:hover {
   background: rgba(29, 111, 206, 0.06);
   color: #1d6fce;
 }
 
-:global([data-theme="dark"]) .mobileLink {
-  color: #94a3b8;
-}
-
-:global([data-theme="dark"]) .mobileLink:hover {
+:global([data-theme="dark"]) .drawerLink { color: #94a3b8; }
+:global([data-theme="dark"]) .drawerLink:hover {
   background: rgba(96, 165, 250, 0.08);
   color: #60a5fa;
 }
 
-.mobileLinkBtn {
+.drawerLinkBtn {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
+  gap: 12px;
+  padding: 12px 14px;
   font-size: 14px;
   font-weight: 700;
   color: white;
@@ -257,23 +343,57 @@
   border-radius: 12px;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(29, 111, 206, 0.3);
-  justify-content: center;
+  margin-top: 4px;
 }
 
-.mobileLinkBtn:hover {
+.drawerLinkBtn:hover {
   box-shadow: 0 6px 18px rgba(29, 111, 206, 0.4);
+  transform: translateY(-1px);
 }
 
+.drawerLinkIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: rgba(29, 111, 206, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #1d6fce;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.drawerLinkBtn .drawerLinkIcon {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+:global([data-theme="dark"]) .drawerLinkIcon {
+  background: rgba(96, 165, 250, 0.1);
+  color: #60a5fa;
+}
+
+.drawerFooter {
+  padding: 12px 16px 24px;
+  border-top: 1px solid #f1f5f9;
+}
+
+:global([data-theme="dark"]) .drawerFooter {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+.drawerFooterRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Responsive ── */
 @media (max-width: 640px) {
-  .nav {
-    display: none;
-  }
+  .nav    { display: none; }
+  .menuBtn { display: flex; }
 
-  .menuBtn {
-    display: flex;
-  }
-
-  .mobileMenu {
-    display: flex;
-  }
+  .logoText { display: none; }
 }
