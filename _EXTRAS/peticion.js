@@ -12,7 +12,7 @@ export function removeToken() {
 
 export async function apiFetch(path, options = {}) {
   const token = getToken()
-  const res = await apiFetch(`${path}`, {
+  const res = await fetch(`${API}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",

@@ -1,11 +1,11 @@
 import { CapacitorConfig } from "@capacitor/cli"
 
 const config: CapacitorConfig = {
-  appId: "com.isiweek.app",
-  appName: "IsiWeek",
+  appId: "com.ambrysoft.app",
+  appName: "ambrysoft",
   webDir: "out",
   server: {
-    url: "https://isiweek.com",
+    url: "https://pos.ambrysoft.com",
     cleartext: false,
   },
   android: {

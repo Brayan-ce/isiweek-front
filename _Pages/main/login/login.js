@@ -31,7 +31,7 @@ async function loginConEmail(email, password, altcha) {
   try {
     const res = await post("/api/auth/login", { email, password, altcha })
     if (res.error) return { error: res.error }
-    localStorage.setItem("isiweek_token", res.token)
+    localStorage.setItem("ambrysoft_token", res.token)
     return { ok: true, ruta: res.ruta, usuario: res.usuario }
   } catch { return { error: "No se pudo conectar con el servidor" } }
 }
@@ -40,7 +40,7 @@ async function loginConGoogle(idToken) {
   try {
     const res = await post("/api/auth/google", { idToken })
     if (res.error) return { error: res.error }
-    localStorage.setItem("isiweek_token", res.token)
+    localStorage.setItem("ambrysoft_token", res.token)
     return { ok: true, ruta: res.ruta, usuario: res.usuario }
   } catch { return { error: "No se pudo conectar con el servidor" } }
 }
@@ -57,7 +57,7 @@ async function verificarCodigoOTP(email, codigo) {
   try {
     const res = await post("/api/auth/otp/verificar", { email, codigo })
     if (res.error) return { error: res.error }
-    localStorage.setItem("isiweek_token", res.token)
+    localStorage.setItem("ambrysoft_token", res.token)
     return { ok: true, ruta: res.ruta, usuario: res.usuario }
   } catch { return { error: "No se pudo conectar con el servidor" } }
 }
