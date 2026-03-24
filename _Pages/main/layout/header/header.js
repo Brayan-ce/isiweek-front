@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import s from "./header.module.css"
-import LangSelector from "./extras/lenguaje/LangSelector"
+import LangSelector from "../extras/lenguaje/LangSelector"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
 
@@ -49,7 +49,7 @@ export default function LoginHeader() {
     document.documentElement.setAttribute("data-theme", next ? "dark" : "light")
   }
 
-  const nombre   = config.sistema_nombre ?? "IsiWeek"
+  const nombre   = config.sistema_nombre ?? "Ambrysoft"
   const logoPath = config.sistema_logo   ?? null
   const logoUrl  = logoPath ? `${API}${logoPath}` : null
 

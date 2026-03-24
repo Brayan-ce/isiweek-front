@@ -152,6 +152,8 @@ const FEATURES = [
   { icon: "bag-handle-outline", label: "Ventas Online",    desc: "Catalogo publico con pedidos"       },
 ]
 
+const GSI_URL = "https://accounts.google.com/gsi/client"
+
 export default function LoginPage() {
   const router = useRouter()
 
@@ -172,6 +174,7 @@ export default function LoginPage() {
   const [featurePopup, setFeaturePopup]     = useState(null)
   const [altchaPayload, setAltchaPayload]   = useState(null)
   const [altchaVerified, setAltchaVerified] = useState(false)
+  const [gsiListo, setGsiListo]             = useState(false)
 
   const emailRef     = useRef()
   const passRef      = useRef()
@@ -180,6 +183,7 @@ export default function LoginPage() {
   const recoveryRef  = useRef()
   const timerRef     = useRef(null)
   const canvasRef    = useRef()
+  const googleInitRef = useRef(false)
 
   const tourRefs = {
     tabs:   useRef(),
@@ -187,6 +191,29 @@ export default function LoginPage() {
     google: useRef(),
     signup: useRef(),
   }
+
+  const handleGoogleCallback = useCallback(async (response) => {
+    setGoogleCargando(true)
+    setAlerta(null)
+    const res = await loginConGoogle(response.credential)
+    setGoogleCargando(false)
+    if (res.error) return setAlerta({ tipo: "error", msg: res.error })
+    setLoginOk(true)
+    setTimeout(() => router.push(res.ruta), 900)
+  }, [router])
+
+  const initGoogle = useCallback(() => {
+    if (!window.google?.accounts?.id) return
+    if (googleInitRef.current) return
+    googleInitRef.current = true
+    window.google.accounts.id.initialize({
+      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      callback:  handleGoogleCallback,
+      ux_mode:   "popup",
+      cancel_on_tap_outside: true,
+    })
+    setGsiListo(true)
+  }, [handleGoogleCallback])
 
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -202,6 +229,29 @@ export default function LoginPage() {
     setAltchaPayload(null)
     setAltchaVerified(false)
   }, [tab])
+
+  useEffect(() => {
+    if (window.google?.accounts?.id) {
+      initGoogle()
+      return
+    }
+    const existing = document.querySelector(`script[src="${GSI_URL}"]`)
+    if (existing) {
+      existing.addEventListener("load", initGoogle)
+      return () => existing.removeEventListener("load", initGoogle)
+    }
+    const script    = document.createElement("script")
+    script.src      = GSI_URL
+    script.async    = true
+    script.defer    = true
+    script.onload   = () => initGoogle()
+    script.onerror  = () => console.warn("No se pudo cargar Google GSI")
+    document.head.appendChild(script)
+    return () => {
+      script.onload  = null
+      script.onerror = null
+    }
+  }, [initGoogle])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -265,38 +315,18 @@ export default function LoginPage() {
     return () => clearInterval(timerRef.current)
   }, [otpTimer])
 
-  const initGoogle = useCallback(() => {
-    if (!window.google || !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) return
-    window.google.accounts.id.initialize({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-      callback:  handleGoogleCallback,
-      ux_mode:   "popup",
-    })
-  }, [])
-
-  useEffect(() => {
-    if (window.google) { initGoogle(); return }
-    const script  = document.createElement("script")
-    script.src    = "https://accounts.google.com/gsi/client"
-    script.async  = true
-    script.defer  = true
-    script.onload = initGoogle
-    document.head.appendChild(script)
-  }, [initGoogle])
-
-  async function handleGoogleCallback(response) {
-    setGoogleCargando(true)
-    setAlerta(null)
-    const res = await loginConGoogle(response.credential)
-    setGoogleCargando(false)
-    if (res.error) return setAlerta({ tipo: "error", msg: res.error })
-    setLoginOk(true)
-    setTimeout(() => router.push(res.ruta), 900)
-  }
-
   function triggerGoogle() {
-    if (!window.google) return setAlerta({ tipo: "error", msg: "Google no disponible, recarga la pagina" })
-    window.google.accounts.id.prompt()
+    if (!gsiListo || !window.google?.accounts?.id) {
+      return setAlerta({ tipo: "error", msg: "Google no disponible, recarga la pagina" })
+    }
+    setAlerta(null)
+    window.google.accounts.id.prompt((notification) => {
+      try {
+        if (typeof notification.isNotDisplayed === "function" && notification.isNotDisplayed()) {
+          setAlerta({ tipo: "error", msg: "Activa las cookies de terceros para iniciar con Google" })
+        }
+      } catch {}
+    })
   }
 
   async function handleEmailLogin(e) {
@@ -560,8 +590,16 @@ export default function LoginPage() {
 
                 <div className={s.divider}><span>O continua con</span></div>
 
-                <button ref={tourRefs.google} className={s.googleBtn} onClick={triggerGoogle} disabled={googleCargando} type="button">
-                  {googleCargando ? <span className={s.spinner} style={{ borderTopColor: "#4285F4" }} /> : (
+                <button
+                  ref={tourRefs.google}
+                  className={s.googleBtn}
+                  onClick={triggerGoogle}
+                  disabled={googleCargando || !gsiListo}
+                  type="button"
+                >
+                  {googleCargando ? (
+                    <span className={s.spinner} style={{ borderTopColor: "#4285F4" }} />
+                  ) : (
                     <>
                       <svg width="18" height="18" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -569,7 +607,7 @@ export default function LoginPage() {
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                       </svg>
-                      Continuar con Google
+                      {!gsiListo ? "Cargando Google..." : "Continuar con Google"}
                     </>
                   )}
                 </button>

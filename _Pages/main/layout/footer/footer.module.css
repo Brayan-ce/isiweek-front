@@ -1,0 +1,298 @@
+.footer {
+  background: #0f172a;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  color: #94a3b8;
+}
+
+:global([data-theme="dark"]) .footer {
+  background: #060d1a;
+}
+
+/* ════════════════════════════
+   DESKTOP LAYOUT
+════════════════════════════ */
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 56px 24px 40px;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 48px;
+}
+
+.mobile { display: none; }
+
+/* ── Brand ── */
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.brandLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  width: fit-content;
+}
+
+.logoIcon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #1d6fce, #0ea5e9);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 900;
+  color: white;
+  flex-shrink: 0;
+}
+
+.logoImg {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.logoText {
+  font-size: 18px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.3px;
+}
+
+.brandDesc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #64748b;
+  max-width: 260px;
+  margin: 0;
+}
+
+.waBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 9px 16px;
+  background: #25d366;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(37,211,102,0.3);
+}
+
+.waBtn ion-icon { font-size: 17px; }
+.waBtn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,211,102,0.4); }
+
+/* ── Nav columns ── */
+.nav {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.colTitulo {
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.colLinks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.colLink {
+  font-size: 13px;
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.2s;
+  line-height: 1.4;
+}
+
+.colLink:hover { color: #60a5fa; }
+
+/* ════════════════════════════
+   BOTTOM BAR (shared)
+════════════════════════════ */
+.bottom {
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.bottomInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.copy {
+  font-size: 12px;
+  color: #475569;
+}
+
+.pagos {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pagosLabel {
+  font-size: 12px;
+  color: #475569;
+}
+
+.pagosIcons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagoChip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.pagoChip ion-icon { font-size: 13px; }
+
+/* ════════════════════════════
+   MOBILE LAYOUT
+════════════════════════════ */
+@media (max-width: 768px) {
+  .inner  { display: none; }
+  .mobile { display: flex; flex-direction: column; padding: 20px 16px 4px; gap: 14px; }
+
+  .mobileBrand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .waBtnMobile {
+    width: 36px;
+    height: 36px;
+    background: #25d366;
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    text-decoration: none;
+    box-shadow: 0 3px 10px rgba(37,211,102,0.35);
+    flex-shrink: 0;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 4px;
+  }
+
+  .tabBtn {
+    flex: 1;
+    padding: 7px 8px;
+    background: none;
+    border: none;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .tabBtnActive {
+    background: #1d6fce;
+    color: white;
+  }
+
+  /* Carousel */
+  .carousel {
+    position: relative;
+    overflow: hidden;
+    min-height: 100px;
+  }
+
+  .slide {
+    display: none;
+    animation: fadeSlide 0.22s ease;
+  }
+
+  .slideActive { display: block; }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0);   }
+  }
+
+  .slideLinks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px 16px;
+  }
+
+  .slideLink {
+    font-size: 13px;
+    color: #64748b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s;
+  }
+
+  .slideLink:hover { color: #60a5fa; }
+
+  /* Bottom mobile */
+  .bottomInner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .pagos { gap: 6px; }
+  .pagosLabel { font-size: 11px; }
+  .pagoChip   { font-size: 10px; padding: 3px 8px; }
+}
