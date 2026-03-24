@@ -176,14 +176,15 @@ export default function LoginPage() {
   const [altchaVerified, setAltchaVerified] = useState(false)
   const [gsiListo, setGsiListo]             = useState(false)
 
-  const emailRef     = useRef()
-  const passRef      = useRef()
-  const otpEmailRef  = useRef()
-  const otpCodigoRef = useRef()
-  const recoveryRef  = useRef()
-  const timerRef     = useRef(null)
-  const canvasRef    = useRef()
+  const emailRef      = useRef()
+  const passRef       = useRef()
+  const otpEmailRef   = useRef()
+  const otpCodigoRef  = useRef()
+  const recoveryRef   = useRef()
+  const timerRef      = useRef(null)
+  const canvasRef     = useRef()
   const googleInitRef = useRef(false)
+  const altchaRef     = useRef(null)
 
   const tourRefs = {
     tabs:   useRef(),
@@ -315,6 +316,12 @@ export default function LoginPage() {
     return () => clearInterval(timerRef.current)
   }, [otpTimer])
 
+  function resetAltcha() {
+    setAltchaPayload(null)
+    setAltchaVerified(false)
+    altchaRef.current?.reset()
+  }
+
   function triggerGoogle() {
     if (!gsiListo || !window.google?.accounts?.id) {
       return setAlerta({ tipo: "error", msg: "Google no disponible, recarga la pagina" })
@@ -340,8 +347,7 @@ export default function LoginPage() {
     const res = await loginConEmail(email, password, altchaPayload)
     setCargando(false)
     if (res.error) {
-      setAltchaPayload(null)
-      setAltchaVerified(false)
+      resetAltcha()
       return setAlerta({ tipo: "error", msg: res.error })
     }
     setLoginOk(true)
@@ -538,6 +544,7 @@ export default function LoginPage() {
                     </div>
 
                     <AltchaWidget
+                      ref={altchaRef}
                       onVerified={(payload) => {
                         setAltchaPayload(payload)
                         setAltchaVerified(true)

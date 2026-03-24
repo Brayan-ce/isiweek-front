@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react"
 import s from "./AltchaWidget.module.css"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
@@ -12,7 +12,7 @@ async function fetchChallenge() {
 }
 
 async function solveChallenge(challenge, onProgress) {
-  const { algorithm, challenge: ch, maxnumber, salt } = challenge
+  const { challenge: ch, maxnumber, salt } = challenge
   const total = maxnumber ?? 1000000
   for (let n = 0; n <= total; n++) {
     if (n % 5000 === 0) onProgress?.(Math.round((n / total) * 100))
@@ -26,13 +26,27 @@ async function solveChallenge(challenge, onProgress) {
   return null
 }
 
-export default function AltchaWidget({ onVerified, onReset }) {
+const AltchaWidget = forwardRef(function AltchaWidget({ onVerified, onReset }, ref) {
   const [estado, setEstado] = useState("idle")
   const [progress, setProgress] = useState(0)
   const [dots, setDots] = useState([false, false, false])
   const dotTimer = useRef(null)
+  const autoRetryTimer = useRef(null)
 
-  useEffect(() => () => clearInterval(dotTimer.current), [])
+  useEffect(() => () => {
+    clearInterval(dotTimer.current)
+    clearTimeout(autoRetryTimer.current)
+  }, [])
+
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      clearInterval(dotTimer.current)
+      clearTimeout(autoRetryTimer.current)
+      setEstado("idle")
+      setProgress(0)
+      onReset?.()
+    },
+  }))
 
   function animateDots() {
     let i = 0
@@ -42,8 +56,7 @@ export default function AltchaWidget({ onVerified, onReset }) {
     }, 300)
   }
 
-  async function handleClick() {
-    if (estado !== "idle") return
+  async function solve() {
     setEstado("solving")
     setProgress(0)
     animateDots()
@@ -70,12 +83,22 @@ export default function AltchaWidget({ onVerified, onReset }) {
     } catch {
       clearInterval(dotTimer.current)
       setEstado("error")
-      setTimeout(() => { setEstado("idle"); setProgress(0) }, 2500)
+      autoRetryTimer.current = setTimeout(() => {
+        setEstado("idle")
+        setProgress(0)
+        solve()
+      }, 1500)
     }
+  }
+
+  function handleClick() {
+    if (estado !== "idle") return
+    solve()
   }
 
   function handleReset(e) {
     e.stopPropagation()
+    clearTimeout(autoRetryTimer.current)
     setEstado("idle")
     setProgress(0)
     onReset?.()
@@ -88,7 +111,7 @@ export default function AltchaWidget({ onVerified, onReset }) {
       role="button"
       tabIndex={0}
       onKeyDown={e => (e.key === " " || e.key === "Enter") && handleClick()}
-      aria-label="Verificación de seguridad"
+      aria-label="Verificacion de seguridad"
     >
       <div className={s.inner}>
         <div className={s.iconZone}>
@@ -159,8 +182,8 @@ export default function AltchaWidget({ onVerified, onReset }) {
           )}
           {estado === "error" && (
             <>
-              <span className={s.mainLabel}>Error</span>
-              <span className={s.subLabel}>Intenta de nuevo</span>
+              <span className={s.mainLabel}>Reintentando...</span>
+              <span className={s.subLabel}>Actualizando verificacion</span>
             </>
           )}
         </div>
@@ -192,4 +215,6 @@ export default function AltchaWidget({ onVerified, onReset }) {
       )}
     </div>
   )
-}
+})
+
+export default AltchaWidget
