@@ -651,8 +651,12 @@ function Paso4({ resultado, personal, empresa, sistemas, sistemaNombre }) {
       })
       const json = await res.json()
       if (!res.ok) {
-        setGoogleEstado("error")
-        setTimeout(() => setGoogleEstado("idle"), 3000)
+        if (res.status === 400) {
+          setGoogleEstado("correoDistinto")
+        } else {
+          setGoogleEstado("error")
+          setTimeout(() => setGoogleEstado("idle"), 3000)
+        }
         return
       }
       setGoogleEstado("vinculado")
@@ -692,6 +696,7 @@ function Paso4({ resultado, personal, empresa, sistemas, sistemaNombre }) {
 
   function triggerGoogle() {
     if (!gsiListo || !window.google?.accounts?.id) return
+    setGoogleEstado("idle")
     window.google.accounts.id.prompt()
   }
 
@@ -750,13 +755,24 @@ function Paso4({ resultado, personal, empresa, sistemas, sistemaNombre }) {
           </div>
           {googleEstado === "vinculado" && (
             <div className={s.googleVincularBadge}>
-              <ion-icon name="checkmark-outline" />
-              Vinculado
+              <ion-icon name="checkmark-outline" />Vinculado
             </div>
           )}
         </div>
 
-        {googleEstado !== "vinculado" && (
+        {googleEstado === "correoDistinto" ? (
+          <div className={s.avisoCorreoDistinto}>
+            <ion-icon name="information-circle-outline" />
+            <div>
+              <strong>El correo de Google no coincide con tu cuenta.</strong> Podrás vincularlo desde tu perfil una vez que un asesor active tu cuenta. También puedes actualizar tu correo desde el perfil y luego vincular Google.
+            </div>
+          </div>
+        ) : googleEstado === "vinculado" ? (
+          <div className={s.googleVincularExito}>
+            <ion-icon name="checkmark-circle-outline" />
+            Cuenta vinculada. Podrás iniciar sesión con Google o con tu contraseña.
+          </div>
+        ) : (
           <button
             type="button"
             className={`${s.btnGoogle} ${googleEstado === "error" ? s.btnGoogleError : ""}`}
@@ -771,13 +787,6 @@ function Paso4({ resultado, personal, empresa, sistemas, sistemaNombre }) {
               <><ion-icon name="link-outline" />Vincular mi cuenta de Google</>
             )}
           </button>
-        )}
-
-        {googleEstado === "vinculado" && (
-          <div className={s.googleVincularExito}>
-            <ion-icon name="checkmark-circle-outline" />
-            Cuenta vinculada. Podrás iniciar sesión con Google o con tu contraseña.
-          </div>
         )}
 
         <p className={s.googleVincularSkip}>Opcional — puedes hacerlo después desde tu perfil</p>

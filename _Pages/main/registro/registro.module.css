@@ -1266,3 +1266,30 @@
     margin-bottom: 20px;
   }
 }
+
+.avisoCorreoDistinto {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #92400e;
+  line-height: 1.6;
+}
+.avisoCorreoDistinto ion-icon {
+  font-size: 18px;
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+[data-theme="dark"] .avisoCorreoDistinto {
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.2);
+  color: #fcd34d;
+}
+[data-theme="dark"] .avisoCorreoDistinto ion-icon {
+  color: #fbbf24;
+}
