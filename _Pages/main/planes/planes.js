@@ -45,7 +45,7 @@ const NAV_MODULOS = {
     { nombre:"Trabajadores",      icono:"people-outline",    precio:5 },
     { nombre:"Asistencia diaria", icono:"calendar-outline",  precio:5 },
     { nombre:"Gastos de obra",    icono:"receipt-outline",   precio:5 },
-    { nombre:"Reportes",          icono:"bar-chart-outline", precio:6 },
+    { nombre:"Reportes",         icono:"bar-chart-outline", precio:6 },
   ],
 }
 
@@ -134,8 +134,21 @@ export default function PlanesPage() {
     return ()=>{ cancelAnimationFrame(raf); window.removeEventListener("resize", onR) }
   }, [])
 
-  const waNum  = config.whatsapp_numero ?? "18494324597"
-  const waLink = label => `https://wa.me/${waNum}?text=${encodeURIComponent(`Hola, me interesa el plan: ${label}.`)}`
+  const waNum = config.whatsapp_numero ?? "18494324597"
+
+  const waMsgDemo = (label) =>
+    `Hola! Me interesa solicitar una demo del plan *${label}*. Quisiera ver cómo funciona antes de contratar. Pueden orientarme?`
+
+  const waMsgPagar = (label, precio, cicloActual) =>
+    `Hola! Quiero contratar el plan *${label}* (${precio}/${cicloActual === "anio" ? "año" : "mes"}). Cómo procedo con el pago?`
+
+  const waMsgPagarPersonalizado = (mods, precio, cicloActual) =>
+    `Hola! Quiero contratar un plan personalizado con los módulos: *${mods}*. El total que me aparece es *${precio}/${cicloActual === "anio" ? "año" : "mes"}*. Cómo procedo?`
+
+  const waMsgDemoPersonalizado = (mods) =>
+    `Hola! Me interesa solicitar una demo del plan personalizado con: *${mods}*. Pueden mostrarme cómo funciona?`
+
+  const waLink = (msg) => `https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`
 
   const tieneComercial = ["pos","creditos","online"].some(id => (navSel[id]?.length ?? 0) > 0)
   const tieneObras     = (navSel["obras"]?.length ?? 0) > 0
@@ -200,7 +213,7 @@ export default function PlanesPage() {
         </div>
 
         {tab === "planes" && (
-          <PlanesTab ciclo={ciclo} setCiclo={setCiclo} waLink={waLink} />
+          <PlanesTab ciclo={ciclo} setCiclo={setCiclo} waLink={waLink} waMsgDemo={waMsgDemo} waMsgPagar={waMsgPagar} />
         )}
 
         {tab === "personalizado" && (
@@ -209,7 +222,8 @@ export default function PlanesPage() {
             navSel={navSel} navOpen={navOpen}
             toggleNavPill={toggleNavPill} toggleNavOpen={toggleNavOpen}
             precioMes={precioMes} precioAnio={precioAnio} ahorroAnio={ahorroAnio}
-            precioDisplay={precioDisplay} resumenMods={resumenMods} waLink={waLink}
+            precioDisplay={precioDisplay} resumenMods={resumenMods}
+            waLink={waLink} waMsgDemoPersonalizado={waMsgDemoPersonalizado} waMsgPagarPersonalizado={waMsgPagarPersonalizado}
             duracion={duracion} setDuracion={setDuracion}
             unidad={unidad} setUnidad={setUnidad}
           />
@@ -233,7 +247,7 @@ export default function PlanesPage() {
   )
 }
 
-function PlanesTab({ ciclo, setCiclo, waLink }) {
+function PlanesTab({ ciclo, setCiclo, waLink, waMsgDemo, waMsgPagar }) {
   return (
     <div className={s.planesWrap}>
 
@@ -243,14 +257,14 @@ function PlanesTab({ ciclo, setCiclo, waLink }) {
       </div>
       <div className={s.moduloGrid}>
         {["pos","creditos","online"].map(id => (
-          <ModuloCard key={id} id={id} ciclo={ciclo} waLink={waLink} />
+          <ModuloCard key={id} id={id} ciclo={ciclo} waLink={waLink} waMsgDemo={waMsgDemo} waMsgPagar={waMsgPagar} />
         ))}
       </div>
 
       <div className={s.divider} />
 
       <div className={s.sectionLabel}><ion-icon name="construct-outline" />Sistema de obras</div>
-      <ModuloCard id="obras" ciclo={ciclo} waLink={waLink} />
+      <ModuloCard id="obras" ciclo={ciclo} waLink={waLink} waMsgDemo={waMsgDemo} waMsgPagar={waMsgPagar} />
 
       <div className={s.divider} />
 
@@ -277,10 +291,10 @@ function PlanesTab({ ciclo, setCiclo, waLink }) {
                 ))}
               </div>
               <div className={s.cardBtns}>
-                <a href={waLink(`Demo: ${b.label}`)} target="_blank" rel="noopener noreferrer" className={s.demoBtn}>
-                  <ion-icon name="play-outline" />Probar demo
+                <a href={waLink(waMsgDemo(b.label))} target="_blank" rel="noopener noreferrer" className={s.demoBtn}>
+                  <ion-icon name="play-outline" />Solicitar demo
                 </a>
-                <a href={waLink(`Quiero contratar: ${b.label}`)} target="_blank" rel="noopener noreferrer" className={s.waBtn}>
+                <a href={waLink(waMsgPagar(b.label, `$${precio}`, ciclo))} target="_blank" rel="noopener noreferrer" className={s.waBtn}>
                   <ion-icon name="logo-whatsapp" />Pagar
                 </a>
               </div>
@@ -293,7 +307,7 @@ function PlanesTab({ ciclo, setCiclo, waLink }) {
   )
 }
 
-function ModuloCard({ id, ciclo, waLink }) {
+function ModuloCard({ id, ciclo, waLink, waMsgDemo, waMsgPagar }) {
   const m        = MODULOS[id]
   const price    = ciclo === "mes" ? m.mes : m.anio
   const anioDesc = Math.round(m.mes * 12 * 0.8)
@@ -316,10 +330,10 @@ function ModuloCard({ id, ciclo, waLink }) {
         ))}
       </ul>
       <div className={s.cardBtns}>
-        <a href={waLink(`Demo: ${m.label}`)} target="_blank" rel="noopener noreferrer" className={s.demoBtn}>
-          <ion-icon name="play-outline" />Probar demo
+        <a href={waLink(waMsgDemo(m.label))} target="_blank" rel="noopener noreferrer" className={s.demoBtn}>
+          <ion-icon name="play-outline" />Solicitar demo
         </a>
-        <a href={waLink(`Quiero contratar: ${m.label}`)} target="_blank" rel="noopener noreferrer" className={s.waBtn}>
+        <a href={waLink(waMsgPagar(m.label, `$${price}`, ciclo))} target="_blank" rel="noopener noreferrer" className={s.waBtn}>
           <ion-icon name="logo-whatsapp" />Pagar
         </a>
       </div>
@@ -327,7 +341,7 @@ function ModuloCard({ id, ciclo, waLink }) {
   )
 }
 
-function PersonalizadoTab({ ciclo, setCiclo, navSel, navOpen, toggleNavPill, toggleNavOpen, precioMes, precioAnio, ahorroAnio, precioDisplay, resumenMods, waLink, duracion, setDuracion, unidad, setUnidad }) {
+function PersonalizadoTab({ ciclo, setCiclo, navSel, navOpen, toggleNavPill, toggleNavOpen, precioMes, precioAnio, ahorroAnio, precioDisplay, resumenMods, waLink, waMsgDemoPersonalizado, waMsgPagarPersonalizado, duracion, setDuracion, unidad, setUnidad }) {
   const factorActual  = UNIDADES.find(u => u.id === unidad)?.factor ?? 1
   const mesesTotal    = duracion * factorActual
   const totalProyect  = Math.round((ciclo === "anio" ? precioAnio / 12 : precioMes) * mesesTotal)
@@ -344,6 +358,7 @@ function PersonalizadoTab({ ciclo, setCiclo, navSel, navOpen, toggleNavPill, tog
   })()
 
   const pct = Math.round(((duracion - 1) / (MAX_SLIDER[unidad] - 1)) * 100)
+  const modLabels = resumenMods.map(id => MODULOS[id].label).join(", ")
 
   return (
     <div className={s.personalWrap}>
@@ -486,10 +501,10 @@ function PersonalizadoTab({ ciclo, setCiclo, navSel, navOpen, toggleNavPill, tog
               </div>
 
               <div className={s.summaryBtns}>
-                <a href={waLink(`Demo plan personalizado: ${resumenMods.map(id=>MODULOS[id].label).join(", ")}`)} target="_blank" rel="noopener noreferrer" className={s.summaryDemoBtn}>
+                <a href={waLink(waMsgDemoPersonalizado(modLabels))} target="_blank" rel="noopener noreferrer" className={s.summaryDemoBtn}>
                   <ion-icon name="play-outline" />Solicitar demo
                 </a>
-                <a href={waLink(`Quiero contratar plan personalizado: ${resumenMods.map(id=>MODULOS[id].label).join(", ")}`)} target="_blank" rel="noopener noreferrer" className={s.summaryWaBtn}>
+                <a href={waLink(waMsgPagarPersonalizado(modLabels, `$${precioDisplay}`, ciclo))} target="_blank" rel="noopener noreferrer" className={s.summaryWaBtn}>
                   <ion-icon name="logo-whatsapp" />Pagar — ${precioDisplay}/{ciclo==="anio"?"año":"mes"}
                 </a>
               </div>

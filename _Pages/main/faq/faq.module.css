@@ -1,0 +1,278 @@
+.page {
+  min-height: 100vh;
+  background: #f8faff;
+}
+[data-theme="dark"] .page { background: #07101f; }
+
+.inner {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 80px 24px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1.5px solid #e2e8f0;
+}
+[data-theme="dark"] .header { border-bottom-color: rgba(255,255,255,0.07); }
+
+.headerIconWrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.25);
+}
+
+.titulo {
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.4px;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+[data-theme="dark"] .titulo { color: #f1f5f9; }
+
+.meta {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.cats {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.catBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.catBtn ion-icon { font-size: 14px; }
+.catBtn:hover { border-color: #7c3aed; color: #7c3aed; }
+.catBtnOn { border-color: #7c3aed; background: #f5f3ff; color: #7c3aed; }
+[data-theme="dark"] .catBtn {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.08);
+  color: #94a3b8;
+}
+[data-theme="dark"] .catBtnOn {
+  border-color: #7c3aed;
+  background: rgba(124,58,237,0.1);
+  color: #c4b5fd;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+}
+[data-theme="dark"] .lista {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
+}
+
+.item {
+  border-bottom: 1px solid #f1f5f9;
+}
+[data-theme="dark"] .item { border-bottom-color: rgba(255,255,255,0.05); }
+.item:last-child { border-bottom: none; }
+
+.itemOpen { background: #faf5ff; }
+[data-theme="dark"] .itemOpen { background: rgba(124,58,237,0.05); }
+
+.pregunta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.pregunta:hover { color: #7c3aed; }
+[data-theme="dark"] .pregunta { color: #f1f5f9; }
+[data-theme="dark"] .pregunta:hover { color: #c4b5fd; }
+
+.chevron {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: transform 0.2s, background 0.15s;
+}
+[data-theme="dark"] .chevron {
+  background: rgba(255,255,255,0.07);
+  color: #94a3b8;
+}
+.chevronOpen {
+  transform: rotate(180deg);
+  background: #ede9fe;
+  color: #7c3aed;
+}
+[data-theme="dark"] .chevronOpen {
+  background: rgba(124,58,237,0.15);
+  color: #c4b5fd;
+}
+
+.respuesta {
+  padding: 0 18px 16px 18px;
+  animation: fadeIn 0.18s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+.respuesta p {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.75;
+  margin: 0;
+  padding-top: 4px;
+  border-top: 1px solid #ede9fe;
+  padding-top: 12px;
+}
+[data-theme="dark"] .respuesta p {
+  color: #94a3b8;
+  border-top-color: rgba(124,58,237,0.15);
+}
+
+.noEncontro {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  flex-wrap: wrap;
+}
+[data-theme="dark"] .noEncontro {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
+}
+
+.noEncontroIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: #f5f3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+[data-theme="dark"] .noEncontroIcon {
+  background: rgba(124,58,237,0.1);
+  color: #c4b5fd;
+}
+
+.noEncontroTexts { flex: 1; min-width: 0; }
+
+.noEncontroTitulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+[data-theme="dark"] .noEncontroTitulo { color: #f1f5f9; }
+
+.noEncontroDesc {
+  font-size: 12px;
+  color: #64748b;
+}
+[data-theme="dark"] .noEncontroDesc { color: #94a3b8; }
+
+.noEncontroBtns {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.waBtnSmall {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  background: #25d366;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.waBtnSmall:hover { opacity: 0.88; }
+.waBtnSmall ion-icon { font-size: 14px; }
+
+.mailBtnSmall {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.mailBtnSmall:hover { border-color: #7c3aed; color: #7c3aed; }
+.mailBtnSmall ion-icon { font-size: 14px; }
+[data-theme="dark"] .mailBtnSmall {
+  border-color: rgba(255,255,255,0.1);
+  color: #94a3b8;
+}
+[data-theme="dark"] .mailBtnSmall:hover { border-color: #c4b5fd; color: #c4b5fd; }
+
+@media (max-width: 540px) {
+  .inner { padding: 70px 16px 56px; }
+  .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .headerIconWrap { display: none; }
+  .noEncontro { flex-direction: column; align-items: flex-start; }
+  .noEncontroBtns { width: 100%; }
+  .waBtnSmall, .mailBtnSmall { flex: 1; justify-content: center; }
+}

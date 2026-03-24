@@ -1,0 +1,243 @@
+.page {
+  min-height: 100vh;
+  background: #f8faff;
+}
+[data-theme="dark"] .page { background: #07101f; }
+
+.inner {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 80px 24px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1.5px solid #e2e8f0;
+}
+[data-theme="dark"] .header { border-bottom-color: rgba(255,255,255,0.07); }
+
+.headerIconWrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #059669, #10b981);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(5,150,105,0.25);
+}
+
+.titulo {
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.4px;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+[data-theme="dark"] .titulo { color: #f1f5f9; }
+
+.meta {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.intro {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 14px;
+  padding: 16px 20px;
+  font-size: 14px;
+  color: #166534;
+  line-height: 1.65;
+}
+[data-theme="dark"] .intro {
+  background: rgba(5,150,105,0.08);
+  border-color: rgba(16,185,129,0.2);
+  color: #6ee7b7;
+}
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #f1f5f9;
+}
+[data-theme="dark"] .seccion { border-bottom-color: rgba(255,255,255,0.05); }
+.seccion:last-of-type { border-bottom: none; }
+
+.secTitulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+[data-theme="dark"] .secTitulo { color: #f1f5f9; }
+.secTitulo ion-icon { font-size: 17px; color: #059669; }
+[data-theme="dark"] .secTitulo ion-icon { color: #34d399; }
+
+.secTexto {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.75;
+  margin: 0;
+}
+[data-theme="dark"] .secTexto { color: #94a3b8; }
+
+.casosGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.casoCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid;
+}
+
+.caso_verde {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.caso_verde .casoIcon { color: #16a34a; background: #dcfce7; }
+.caso_verde .casoTitulo { color: #166534; }
+[data-theme="dark"] .caso_verde {
+  background: rgba(22,163,74,0.07);
+  border-color: rgba(34,197,94,0.18);
+}
+[data-theme="dark"] .caso_verde .casoIcon { color: #4ade80; background: rgba(34,197,94,0.12); }
+[data-theme="dark"] .caso_verde .casoTitulo { color: #86efac; }
+
+.caso_rojo {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.caso_rojo .casoIcon { color: #dc2626; background: #fee2e2; }
+.caso_rojo .casoTitulo { color: #991b1b; }
+[data-theme="dark"] .caso_rojo {
+  background: rgba(220,38,38,0.07);
+  border-color: rgba(248,113,113,0.18);
+}
+[data-theme="dark"] .caso_rojo .casoIcon { color: #f87171; background: rgba(220,38,38,0.12); }
+[data-theme="dark"] .caso_rojo .casoTitulo { color: #fca5a5; }
+
+.casoIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.casoTitulo {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.casoDesc {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.55;
+}
+[data-theme="dark"] .casoDesc { color: #94a3b8; }
+
+.pasos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paso {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+}
+[data-theme="dark"] .paso {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.07);
+}
+
+.pasoNum {
+  font-size: 20px;
+  font-weight: 900;
+  color: #059669;
+  line-height: 1;
+  flex-shrink: 0;
+  min-width: 32px;
+}
+[data-theme="dark"] .pasoNum { color: #34d399; }
+
+.pasoTitulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 3px;
+}
+[data-theme="dark"] .pasoTitulo { color: #f1f5f9; }
+
+.pasoDesc {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.55;
+}
+[data-theme="dark"] .pasoDesc { color: #94a3b8; }
+
+.footerNote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #166534;
+  flex-wrap: wrap;
+}
+[data-theme="dark"] .footerNote {
+  background: rgba(5,150,105,0.07);
+  border-color: rgba(16,185,129,0.18);
+  color: #6ee7b7;
+}
+.footerNote ion-icon { font-size: 17px; color: #059669; flex-shrink: 0; }
+[data-theme="dark"] .footerNote ion-icon { color: #34d399; }
+
+.link {
+  color: #059669;
+  font-weight: 600;
+  text-decoration: none;
+}
+.link:hover { text-decoration: underline; }
+[data-theme="dark"] .link { color: #34d399; }
+
+@media (max-width: 540px) {
+  .inner { padding: 70px 16px 56px; }
+  .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .headerIconWrap { display: none; }
+}
