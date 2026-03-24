@@ -53,8 +53,8 @@
 }
 
 .canalesGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
@@ -126,9 +126,9 @@
   font-size: 11px;
   font-weight: 600;
   color: #94a3b8;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  word-break: break-all;
 }
 
 .canalArrow {
@@ -158,6 +158,69 @@
 .horario ion-icon { font-size: 16px; color: #94a3b8; flex-shrink: 0; }
 .horario strong { color: #0f172a; }
 [data-theme="dark"] .horario strong { color: #f1f5f9; }
+
+.legalCard {
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+[data-theme="dark"] .legalCard {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.08);
+}
+
+.legalHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-bottom: 1.5px solid #f1f5f9;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+[data-theme="dark"] .legalHead {
+  border-bottom-color: rgba(255,255,255,0.06);
+  color: #f1f5f9;
+}
+.legalHead ion-icon { font-size: 15px; color: #22c55e; }
+
+.legalGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.legalRow {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #f8fafc;
+  border-right: 1px solid #f8fafc;
+}
+[data-theme="dark"] .legalRow {
+  border-bottom-color: rgba(255,255,255,0.04);
+  border-right-color: rgba(255,255,255,0.04);
+}
+.legalRow:nth-child(2n) { border-right: none; }
+.legalRow:nth-last-child(-n+2) { border-bottom: none; }
+
+.legalLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+}
+
+.legalVal {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+[data-theme="dark"] .legalVal { color: #f1f5f9; }
 
 .formCard {
   background: white;
@@ -333,10 +396,6 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-@media (max-width: 640px) {
-  .canalesGrid { grid-template-columns: 1fr; }
-  .formRow     { grid-template-columns: 1fr; }
-}
 @media (max-width: 540px) {
   .inner { padding: 70px 16px 56px; }
   .header { flex-direction: column; align-items: flex-start; gap: 12px; }

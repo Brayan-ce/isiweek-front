@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import s from "./contacto.module.css"
 
 const API    = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
@@ -8,9 +8,9 @@ const CORREO = "ambrysoft@gmail.com"
 const SITIO  = "https://pos.ambrysoft.com"
 
 export default function ContactoPage() {
-  const [config, setConfig]   = useState({})
-  const [form, setForm]       = useState({ nombre: "", email: "", mensaje: "" })
-  const [estado, setEstado]   = useState(null)
+  const [config, setConfig]     = useState({})
+  const [form, setForm]         = useState({ nombre: "", email: "", mensaje: "" })
+  const [estado, setEstado]     = useState(null)
   const [cargando, setCargando] = useState(false)
 
   useEffect(() => {
@@ -43,13 +43,13 @@ export default function ContactoPage() {
         body: JSON.stringify({ nombre: n, email, mensaje }),
       })
       if (res.ok) {
-        setEstado({ tipo: "ok", msg: "Mensaje enviado correctamente. Te responderemos a la brevedad." })
+        setEstado({ tipo: "ok", msg: "Mensaje enviado. Te responderemos a la brevedad." })
         setForm({ nombre: "", email: "", mensaje: "" })
       } else {
-        setEstado({ tipo: "error", msg: "No se pudo enviar el mensaje. Inténtalo de nuevo o escríbenos por WhatsApp." })
+        setEstado({ tipo: "error", msg: "No se pudo enviar. Escríbenos directamente por WhatsApp." })
       }
     } catch {
-      setEstado({ tipo: "error", msg: "Error de conexión. Por favor, escríbenos directamente por WhatsApp." })
+      setEstado({ tipo: "error", msg: "Error de conexión. Por favor, escríbenos por WhatsApp." })
     } finally {
       setCargando(false)
     }
@@ -63,25 +63,22 @@ export default function ContactoPage() {
       desc: "Respuesta rápida en horario hábil",
       valor: `+${waNumero}`,
       href: waUrl,
-      etiqueta: "Abrir chat",
     },
     {
       icono: "mail-outline",
       color: "azul",
       titulo: "Correo electrónico",
-      desc: "Para consultas formales o documentación",
+      desc: "Para consultas formales",
       valor: CORREO,
       href: `mailto:${CORREO}`,
-      etiqueta: "Enviar correo",
     },
     {
       icono: "globe-outline",
       color: "gris",
       titulo: "Sitio web",
-      desc: "Información sobre planes y módulos",
+      desc: "Información sobre planes",
       valor: SITIO,
       href: SITIO,
-      etiqueta: "Visitar",
     },
   ]
 
@@ -121,6 +118,31 @@ export default function ContactoPage() {
         <div className={s.horario}>
           <ion-icon name="time-outline" />
           <span>Horario de atención: <strong>lunes a viernes, 9:00 – 18:00</strong> (hora de Perú, GMT-5)</span>
+        </div>
+
+        <div className={s.legalCard}>
+          <div className={s.legalHead}>
+            <ion-icon name="shield-checkmark-outline" />
+            <span>Información legal</span>
+          </div>
+          <div className={s.legalGrid}>
+            <div className={s.legalRow}>
+              <span className={s.legalLabel}>Responsable</span>
+              <span className={s.legalVal}>Brayan Jhoan Curasma Espinoza</span>
+            </div>
+            <div className={s.legalRow}>
+              <span className={s.legalLabel}>País</span>
+              <span className={s.legalVal}>Perú</span>
+            </div>
+            <div className={s.legalRow}>
+              <span className={s.legalLabel}>RUC</span>
+              <span className={s.legalVal}>10709019193</span>
+            </div>
+            <div className={s.legalRow}>
+              <span className={s.legalLabel}>Correo</span>
+              <span className={s.legalVal}>{CORREO}</span>
+            </div>
+          </div>
         </div>
 
         <div className={s.formCard}>
@@ -175,7 +197,7 @@ export default function ContactoPage() {
                 name="mensaje"
                 placeholder="Cuéntanos en qué podemos ayudarte..."
                 className={s.textarea}
-                rows={5}
+                rows={4}
                 value={form.mensaje}
                 onChange={handleChange}
                 required
