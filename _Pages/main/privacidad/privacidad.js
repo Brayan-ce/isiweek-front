@@ -25,7 +25,7 @@ export default function PrivacidadPage() {
     {
       icono: "person-circle-outline",
       titulo: "1. Responsable del tratamiento",
-      texto: `El responsable del tratamiento de sus datos personales es ${nombre}, operado por Ambrysoft, con correo de contacto ${CORREO} y domicilio digital en ${SITIO}. Esta Política de Privacidad cumple con lo establecido en la Ley N.° 29733, Ley de Protección de Datos Personales del Perú, y su Reglamento aprobado por Decreto Supremo N.° 003-2013-JUS.`,
+      texto: `El responsable del tratamiento de sus datos personales es ${nombre}, operado por Brayan Jhoan Curasma Espinoza, con RUC N.° 10709019193, inscrito en la República del Perú, con correo de contacto ${CORREO} y domicilio digital en ${SITIO}. Esta Política de Privacidad cumple con lo establecido en la Ley N.° 29733, Ley de Protección de Datos Personales del Perú, y su Reglamento aprobado por Decreto Supremo N.° 003-2013-JUS.`,
     },
     {
       icono: "server-outline",

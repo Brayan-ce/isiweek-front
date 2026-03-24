@@ -764,7 +764,7 @@ function Paso4({ resultado, personal, empresa, sistemas, sistemaNombre }) {
           <div className={s.avisoCorreoDistinto}>
             <ion-icon name="information-circle-outline" />
             <div>
-              <strong>El correo de Google no coincide con tu cuenta.</strong> Podrás vincularlo desde tu perfil una vez que un asesor active tu cuenta. También puedes actualizar tu correo desde el perfil y luego vincular Google.
+              <strong>El correo de Google no coincide con tu correo creado en paso 1.</strong> Podrás vincularlo desde tu perfil una vez que un asesor active tu cuenta. También puedes actualizar tu correo desde el perfil y luego vincular Google.
             </div>
           </div>
         ) : googleEstado === "vinculado" ? (

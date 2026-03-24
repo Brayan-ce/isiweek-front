@@ -24,7 +24,7 @@ export default function TerminosPage() {
   const SECCIONES = [
     {
       titulo: "1. Identificación del prestador",
-      texto: `${nombre} es una plataforma de gestión empresarial en modalidad Software como Servicio (SaaS), operada y administrada por Ambrysoft, con correo de contacto ${CORREO} y accesible en ${SITIO}. El presente documento regula la relación contractual entre ${nombre} y cualquier persona natural o jurídica que contrate o utilice sus servicios.`,
+      texto: `${nombre} es una plataforma de gestión empresarial en modalidad Software como Servicio (SaaS), operada y administrada por Brayan Jhoan Curasma Espinoza, con RUC N.° 10709019193, inscrito en la República del Perú, con correo de contacto ${CORREO} y accesible en ${SITIO}. El presente documento regula la relación contractual entre ${nombre} y cualquier persona natural o jurídica que contrate o utilice sus servicios.`,
     },
     {
       titulo: "2. Descripción del servicio",
@@ -36,7 +36,7 @@ export default function TerminosPage() {
     },
     {
       titulo: "4. Planes, precios y facturación",
-      texto: `Los precios están expresados en dólares estadounidenses (USD) y corresponden a los planes y módulos publicados en ${SITIO}/planes. Se ofrecen ciclos de facturación mensual y anual. El plan anual incluye un descuento del 20% sobre el precio mensual equivalente. El cliente puede personalizar su suscripción seleccionando únicamente los módulos que necesite. Los precios vigentes pueden actualizarse; ${nombre} notificará al cliente con al menos 30 días de anticipación antes de que cualquier cambio de precio entre en vigor para los contratos activos.`,
+      texto: `Los precios están expresados en dólares estadounidenses (USD) y corresponden a los planes y módulos publicados en https://pos.ambrysoft.com/planes. Se ofrecen ciclos de facturación mensual y anual. El plan anual incluye un descuento del 20% sobre el precio mensual equivalente. El cliente puede personalizar su suscripción seleccionando únicamente los módulos que necesite. Los precios vigentes pueden actualizarse; ${nombre} notificará al cliente con al menos 30 días de anticipación antes de que cualquier cambio de precio entre en vigor para los contratos activos.`,
     },
     {
       titulo: "5. Métodos de pago",
