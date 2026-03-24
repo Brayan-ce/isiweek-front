@@ -77,8 +77,8 @@ export default function ContactoPage() {
       color: "gris",
       titulo: "Sitio web",
       desc: "Información sobre planes",
-      valor: SITIO,
-      href: SITIO,
+      valor: `${SITIO}/planes`,
+      href: `${SITIO}/planes`,
     },
   ]
 
