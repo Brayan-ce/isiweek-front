@@ -21,7 +21,7 @@ export default function ContactoPage() {
   }, [])
 
   const nombre   = config.sistema_nombre  ?? "Ambrysoft"
-  const waNumero = config.whatsapp_numero ?? "18494324597"
+  const waNumero = config.whatsapp_numero ?? "51935790269"
   const waUrl    = `https://wa.me/${waNumero}?text=${encodeURIComponent("Hola, necesito soporte con " + nombre)}`
 
   function handleChange(e) {

@@ -700,7 +700,7 @@ function Paso4({ resultado, personal, empresa, sistemas, sistemaNombre }) {
     window.google.accounts.id.prompt()
   }
 
-  const waNum = resultado?.whatsapp ?? "18494324597"
+  const waNum = resultado?.whatsapp ?? "51935790269"
   const sistemasLabel = sistemas.map(id => {
     const m = { pos:"POS", creditos:"Financiamiento", ventas_online:"Ventas online", obras:"Obras" }
     return m[id] ?? id

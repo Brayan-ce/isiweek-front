@@ -133,7 +133,7 @@ export default function FaqPage() {
   }, [])
 
   const nombre   = config.sistema_nombre  ?? "Ambrysoft"
-  const waNumero = config.whatsapp_numero ?? "18494324597"
+  const waNumero = config.whatsapp_numero ?? "51935790269"
   const waUrl    = `https://wa.me/${waNumero}?text=${encodeURIComponent("Hola, tengo una pregunta sobre " + nombre)}`
 
   function toggle(key) {

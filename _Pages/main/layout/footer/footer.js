@@ -61,7 +61,7 @@ export default function Footer() {
   const nombre    = config.sistema_nombre ?? "IsiWeek"
   const logoPath  = config.sistema_logo   ?? null
   const logoUrl   = logoPath ? `${API}${logoPath}` : null
-  const waNumero  = config.whatsapp_numero ?? "18494324597"
+  const waNumero  = config.whatsapp_numero ?? "51935790269"
   const waMensaje = encodeURIComponent(config.whatsapp_mensaje ?? `Hola, necesito información sobre ${nombre}`)
   const waUrl     = `https://wa.me/${waNumero}?text=${waMensaje}`
   const year      = new Date().getFullYear()

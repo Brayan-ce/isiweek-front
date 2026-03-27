@@ -390,7 +390,7 @@ export default function LoginPage() {
     setAlerta({ tipo: "ok", msg: "Si el correo existe, recibiras un codigo" })
   }
 
-  const waNumero      = config.whatsapp_numero ?? "18494324597"
+  const waNumero      = config.whatsapp_numero ?? "51935790269"
   const waMensaje     = encodeURIComponent(config.whatsapp_mensaje ?? "Hola, necesito soporte con IsiWeek")
   const waUrl         = `https://wa.me/${waNumero}?text=${waMensaje}`
   const sistemaNombre = config.sistema_nombre ?? "IsiWeek"

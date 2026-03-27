@@ -134,7 +134,7 @@ export default function PlanesPage() {
     return ()=>{ cancelAnimationFrame(raf); window.removeEventListener("resize", onR) }
   }, [])
 
-  const waNum = config.whatsapp_numero ?? "18494324597"
+  const waNum = config.whatsapp_numero ?? "51935790269"
 
   const waMsgDemo = (label) =>
     `Hola! Me interesa solicitar una demo del plan *${label}*. Quisiera ver cómo funciona antes de contratar. Pueden orientarme?`

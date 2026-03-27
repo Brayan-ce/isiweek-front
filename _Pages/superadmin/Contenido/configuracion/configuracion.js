@@ -176,7 +176,7 @@ export default function ConfiguracionPage() {
               <label className={s.label}>Numero</label>
               <div className={s.inputWrap}>
                 <span className={s.inputPrefix}>+</span>
-                <input className={`${s.input} ${s.inputWithPrefix}`} name="whatsapp_numero" value={form.whatsapp_numero} onChange={handleChange} placeholder="18494324597" />
+                <input className={`${s.input} ${s.inputWithPrefix}`} name="whatsapp_numero" value={form.whatsapp_numero} onChange={handleChange} placeholder="51935790269" />
               </div>
             </div>
             <div className={s.field}>
