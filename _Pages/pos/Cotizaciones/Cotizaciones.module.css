@@ -106,6 +106,20 @@
 }
 :global([data-theme="dark"]) .tableWrap { background: #0d1f3c; border-color: rgba(255,255,255,0.06); }
 
+/* Laptop/tablet intermedio: mantener tabla y permitir scroll solo si no cabe */
+@media (max-width: 1280px) and (min-width: 769px) {
+  .tableWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .tableHead,
+  .row {
+    min-width: 860px;
+  }
+}
+
 .tableHead {
   display: grid;
   grid-template-columns: 80px 1fr 120px 140px 120px 180px;
@@ -311,13 +325,68 @@
 }
 .btnConfirmarEliminar:hover { background: #dc2626; }
 
+/* ─── RESPONSIVE ─────────────────────────────────── */
 @media (max-width: 768px) {
-  .tableHead, .row { grid-template-columns: 70px 1fr 100px 36px; }
-  .tableHead span:nth-child(3),
-  .tableHead span:nth-child(4),
-  .tableHead span:nth-child(5) { display: none; }
-  .rowFecha, .rowTotal, .rowEstado { display: none; }
-}.btnImprimir {
+  /* Header: stack search + filtro + botón full-width */
+  .header      { flex-direction: column; align-items: stretch; gap: 8px; }
+  .headerLeft  { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
+  .filtroEstado { width: 100%; }
+  .btnNueva    { width: 100%; justify-content: center; }
+
+  /* Tabla → tarjetas */
+  .tableHead { display: none; }
+  .tableHead,
+  .row { min-width: 0 !important; }
+  .tableWrap { background: transparent; border: none; overflow: visible; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "num    estado"
+      "cli    cli"
+      "fecha  total"
+      "acc    acc";
+    gap: 4px 10px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    margin: 0 0 8px;
+    border: 1.5px solid #f1f5f9 !important;
+    background: white;
+  }
+  :global([data-theme="dark"]) .row {
+    background: #0d1f3c;
+    border-color: rgba(255,255,255,0.06) !important;
+  }
+  .row:last-child { border-bottom: 1.5px solid #f1f5f9 !important; }
+  :global([data-theme="dark"]) .row:last-child { border-color: rgba(255,255,255,0.06) !important; }
+  .row:hover { background: #f0f7ff; }
+  :global([data-theme="dark"]) .row:hover { background: rgba(96,165,250,0.04); }
+
+  .rowNum      { grid-area: num; }
+  .rowCliente  { grid-area: cli; }
+  .rowFecha    { grid-area: fecha; display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .rowTotal    { grid-area: total; display: block; text-align: right; font-size: 14px; font-weight: 800; }
+  .rowEstado   { grid-area: estado; display: flex; justify-content: flex-end; }
+  .rowAcciones { grid-area: acc; justify-content: flex-end; margin-top: 2px; }
+}
+
+@media (max-width: 480px) {
+  .page { padding: 14px; }
+}
+
+/* Modal confirmar → bottom-sheet en móvil */
+@media (max-width: 600px) {
+  .overlay { align-items: flex-end; padding: 0; }
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+}
+
+.btnImprimir {
   width: 30px;
   height: 30px;
   border-radius: 8px;

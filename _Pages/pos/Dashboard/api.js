@@ -1,4 +1,4 @@
-const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+import { apiFetch } from "@/_EXTRAS/peticion"
 
 export async function getDashboardAdmin(empresaId) {
   try {

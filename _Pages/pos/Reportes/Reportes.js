@@ -109,6 +109,8 @@ async function getReporteGastos(empresaId, periodo, año, mes) {
 export default function Reportes() {
   const router                        = useRouter()
   const [empresaId, setEmpresaId]     = useState(null)
+  const [usuarioId, setUsuarioId]     = useState(null)
+  const [simbolo,   setSimbolo]       = useState("RD$")
   const [tab,        setTab]          = useState("ventas")
   const [periodo,    setPeriodo]      = useState("mes")
   const [año,        setAño]          = useState(AÑO_ACTUAL)
@@ -122,6 +124,7 @@ export default function Reportes() {
     const payload = getTokenPayload()
     if (!payload) { router.push("/login"); return }
     setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
   }, [])
 
   const cargar = useCallback(async () => {
@@ -145,6 +148,14 @@ export default function Reportes() {
   }, [empresaId, tab, periodo, año, mes])
 
   useEffect(() => { cargar() }, [cargar])
+
+  useEffect(() => {
+    if (!usuarioId) return
+    apiFetch(`/api/pos/header/${usuarioId}`)
+      .then(r => r.json())
+      .then(d => { if (d?.empresa?.moneda?.simbolo) setSimbolo(d.empresa.moneda.simbolo) })
+      .catch(() => {})
+  }, [usuarioId])
 
   async function handleExportar() {
     if (!data || exportando) return
@@ -241,17 +252,18 @@ export default function Reportes() {
         </div>
       ) : (
         <>
-          {tab === "ventas"    && <TabVentas    data={data} fmt={fmt} fmtFecha={fmtFecha} fmtDateTime={fmtDateTime} />}
-          {tab === "productos" && <TabProductos data={data} fmt={fmt} />}
-          {tab === "clientes"  && <TabClientes  data={data} fmt={fmt} />}
-          {tab === "gastos"    && <TabGastos    data={data} fmt={fmt} fmtDateTime={fmtDateTime} />}
+          {tab === "ventas"    && <TabVentas    data={data} fmt={fmt} simbolo={simbolo} fmtFecha={fmtFecha} fmtDateTime={fmtDateTime} />}
+          {tab === "productos" && <TabProductos data={data} fmt={fmt} simbolo={simbolo} />}
+          {tab === "clientes"  && <TabClientes  data={data} fmt={fmt} simbolo={simbolo} />}
+          {tab === "gastos"    && <TabGastos    data={data} fmt={fmt} simbolo={simbolo} fmtDateTime={fmtDateTime} />}
         </>
       )}
     </div>
   )
 }
 
-function TabVentas({ data, fmt, fmtFecha, fmtDateTime }) {
+function TabVentas({ data, fmt, fmtFecha, fmtDateTime, simbolo }) {
+  const mfmt = n => `${simbolo} ${fmt(n)}`
   const resumen         = data?.resumen         ?? { total: 0, subtotal: 0, itbis: 0, descuento: 0, cantidad: 0 }
   const ventasPorDia    = data?.ventasPorDia    ?? []
   const ventasPorMetodo = data?.ventasPorMetodo ?? []
@@ -261,10 +273,10 @@ function TabVentas({ data, fmt, fmtFecha, fmtDateTime }) {
   return (
     <>
       <div className={s.statsGrid}>
-        <StatCard icon="cash-outline"          label="Total ventas" valor={`RD$ ${fmt(resumen.total)}`}     sub={`${resumen.cantidad} transacciones`} color="#1d6fce" />
-        <StatCard icon="receipt-outline"       label="Subtotal"     valor={`RD$ ${fmt(resumen.subtotal)}`}  sub="Sin ITBIS ni descuentos"             color="#0ea5e9" />
-        <StatCard icon="pricetag-outline"      label="ITBIS"        valor={`RD$ ${fmt(resumen.itbis)}`}     sub="18% aplicado"                        color="#22c55e" />
-        <StatCard icon="trending-down-outline" label="Descuentos"   valor={`RD$ ${fmt(resumen.descuento)}`} sub="Total descontado"                    color="#f59e0b" />
+        <StatCard icon="cash-outline"          label="Total ventas" valor={mfmt(resumen.total)}     sub={`${resumen.cantidad} transacciones`} color="#1d6fce" />
+        <StatCard icon="receipt-outline"       label="Subtotal"     valor={mfmt(resumen.subtotal)}  sub="Sin ITBIS ni descuentos"             color="#0ea5e9" />
+        <StatCard icon="pricetag-outline"      label="ITBIS"        valor={mfmt(resumen.itbis)}     sub="18% aplicado"                        color="#22c55e" />
+        <StatCard icon="trending-down-outline" label="Descuentos"   valor={mfmt(resumen.descuento)} sub="Total descontado"                    color="#f59e0b" />
       </div>
 
       <div className={s.chartsRow}>
@@ -275,7 +287,7 @@ function TabVentas({ data, fmt, fmtFecha, fmtDateTime }) {
               <LineChart data={ventasPorDia} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                 <XAxis dataKey="fecha" tickFormatter={fmtFecha} tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={v => [`RD$ ${fmt(v)}`, "Total"]} labelFormatter={fmtFecha} />
+                <Tooltip formatter={v => [mfmt(v), "Total"]} labelFormatter={fmtFecha} />
                 <Line type="monotone" dataKey="total" stroke="#1d6fce" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -291,7 +303,7 @@ function TabVentas({ data, fmt, fmtFecha, fmtDateTime }) {
                   label={({ percent }) => `${(percent * 100).toFixed(0)}%`} labelLine={false}>
                   {ventasPorMetodo.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
                 </Pie>
-                <Tooltip formatter={v => `RD$ ${fmt(v)}`} />
+                <Tooltip formatter={v => mfmt(v)} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -319,9 +331,9 @@ function TabVentas({ data, fmt, fmtFecha, fmtDateTime }) {
                       <td>{v.usuario?.nombre_completo ?? "-"}</td>
                       <td>{v.metodo_pago?.nombre ?? "-"}</td>
                       <td>{v.comprobante?.codigo ?? "-"}</td>
-                      <td>RD$ {fmt(v.itbis)}</td>
-                      <td>RD$ {fmt(v.descuento)}</td>
-                      <td className={s.totalCell}>RD$ {fmt(v.total)}</td>
+                      <td>{mfmt(v.itbis)}</td>
+                      <td>{mfmt(v.descuento)}</td>
+                      <td className={s.totalCell}>{mfmt(v.total)}</td>
                       <td>
                         <span className={`${s.badge} ${
                           v.estado === "completada" ? s.badgeCompletada :
@@ -342,7 +354,8 @@ function TabVentas({ data, fmt, fmtFecha, fmtDateTime }) {
   )
 }
 
-function TabProductos({ data, fmt }) {
+function TabProductos({ data, fmt, simbolo }) {
+  const mfmt = n => `${simbolo} ${fmt(n)}`
   const topVendidos       = data?.topVendidos       ?? []
   const resumenCategorias = data?.resumenCategorias ?? []
   const pg = usePaginacion(topVendidos, 15)
@@ -358,7 +371,7 @@ function TabProductos({ data, fmt }) {
                 <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
                 <YAxis type="category" dataKey="nombre" tick={{ fontSize: 10 }} width={110}
                   tickFormatter={v => v.length > 14 ? v.slice(0, 14) + "..." : v} />
-                <Tooltip formatter={v => [`RD$ ${fmt(v)}`, "Total"]} />
+                <Tooltip formatter={v => [mfmt(v), "Total"]} />
                 <Bar dataKey="total" fill="#1d6fce" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -374,7 +387,7 @@ function TabProductos({ data, fmt }) {
                   label={({ percent }) => `${(percent * 100).toFixed(0)}%`} labelLine={false}>
                   {resumenCategorias.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
                 </Pie>
-                <Tooltip formatter={v => `RD$ ${fmt(v)}`} />
+                <Tooltip formatter={v => mfmt(v)} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -397,9 +410,9 @@ function TabProductos({ data, fmt }) {
                       <td><span className={s.topRank}>{(pg.pagina - 1) * 15 + i + 1}</span></td>
                       <td style={{ fontWeight: 600 }}>{p.nombre}</td>
                       <td className={s.fechaCell}>{p.categoria}</td>
-                      <td>RD$ {fmt(p.precio)}</td>
+                      <td>{mfmt(p.precio)}</td>
                       <td style={{ fontWeight: 700 }}>{p.cantidad} uds</td>
-                      <td className={s.totalCell}>RD$ {fmt(p.total)}</td>
+                      <td className={s.totalCell}>{mfmt(p.total)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -413,7 +426,8 @@ function TabProductos({ data, fmt }) {
   )
 }
 
-function TabClientes({ data, fmt }) {
+function TabClientes({ data, fmt, simbolo }) {
+  const mfmt = n => `${simbolo} ${fmt(n)}`
   const topClientes = data?.topClientes ?? []
   const pg = usePaginacion(topClientes, 15)
 
@@ -426,7 +440,7 @@ function TabClientes({ data, fmt }) {
             <BarChart data={topClientes.slice(0, 10)} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <XAxis dataKey="nombre" tick={{ fontSize: 10 }} tickFormatter={v => v.length > 10 ? v.slice(0, 10) + "..." : v} />
               <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={v => [`RD$ ${fmt(v)}`, "Total comprado"]} />
+              <Tooltip formatter={v => [mfmt(v), "Total comprado"]} />
               <Bar dataKey="total" fill="#1d6fce" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -449,7 +463,7 @@ function TabClientes({ data, fmt }) {
                       <td style={{ fontWeight: 600 }}>{c.nombre}</td>
                       <td className={s.fechaCell}>{c.telefono}</td>
                       <td style={{ fontWeight: 700 }}>{c.compras} compras</td>
-                      <td className={s.totalCell}>RD$ {fmt(c.total)}</td>
+                      <td className={s.totalCell}>{mfmt(c.total)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -463,7 +477,8 @@ function TabClientes({ data, fmt }) {
   )
 }
 
-function TabGastos({ data, fmt, fmtDateTime }) {
+function TabGastos({ data, fmt, fmtDateTime, simbolo }) {
+  const mfmt = n => `${simbolo} ${fmt(n)}`
   const resumen  = data?.resumen  ?? { total: 0, cantidad: 0 }
   const porTipo  = data?.porTipo  ?? []
   const detalles = data?.detalles ?? []
@@ -472,7 +487,7 @@ function TabGastos({ data, fmt, fmtDateTime }) {
   return (
     <>
       <div className={s.statsGrid}>
-        <StatCard icon="wallet-outline" label="Total gastos" valor={`RD$ ${fmt(resumen.total)}`} sub={`${resumen.cantidad} registros`} color="#ef4444" />
+        <StatCard icon="wallet-outline" label="Total gastos" valor={mfmt(resumen.total)} sub={`${resumen.cantidad} registros`} color="#ef4444" />
       </div>
 
       <div className={s.chartsRow}>
@@ -483,7 +498,7 @@ function TabGastos({ data, fmt, fmtDateTime }) {
               <BarChart data={porTipo} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                 <XAxis dataKey="tipo" tick={{ fontSize: 10 }} tickFormatter={v => v.length > 10 ? v.slice(0, 10) + "..." : v} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={v => [`RD$ ${fmt(v)}`, "Total"]} />
+                <Tooltip formatter={v => [mfmt(v), "Total"]} />
                 <Bar dataKey="total" fill="#ef4444" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -499,7 +514,7 @@ function TabGastos({ data, fmt, fmtDateTime }) {
                   label={({ percent }) => `${(percent * 100).toFixed(0)}%`} labelLine={false}>
                   {porTipo.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
                 </Pie>
-                <Tooltip formatter={v => `RD$ ${fmt(v)}`} />
+                <Tooltip formatter={v => mfmt(v)} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -523,7 +538,7 @@ function TabGastos({ data, fmt, fmtDateTime }) {
                       <td style={{ fontWeight: 600 }}>{g.concepto}</td>
                       <td className={s.fechaCell}>{g.tipo ?? "-"}</td>
                       <td>{g.usuario?.nombre_completo ?? "-"}</td>
-                      <td className={s.totalCell} style={{ color: "#ef4444" }}>RD$ {fmt(g.monto)}</td>
+                      <td className={s.totalCell} style={{ color: "#ef4444" }}>{mfmt(g.monto)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -23,8 +23,9 @@ function getTokenPayload() {
   } catch { return null }
 }
 
-function fmt(n) {
-  return `RD$ ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+function fmt(n, simbolo = "RD$") {
+  const simboloSeguro = (simbolo && String(simbolo).trim()) || "RD$"
+  return `${simboloSeguro} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 async function getConfigCatalogo(empresaId) {
@@ -99,9 +100,11 @@ function generarSlug(nombre) {
 export default function CatalogoOnline() {
   const router                        = useRouter()
   const [empresaId, setEmpresaId]     = useState(null)
+  const [usuarioId, setUsuarioId]     = useState(null)
   const [tab, setTab]                 = useState("config")
   const [config, setConfig]           = useState(CONFIG_VACIA)
   const [productos, setProductos]     = useState([])
+  const [simbolo, setSimbolo]         = useState("RD$")
   const [cargando, setCargando]       = useState(true)
   const [guardando, setGuardando]     = useState(false)
   const [alerta, setAlerta]           = useState(null)
@@ -113,12 +116,22 @@ export default function CatalogoOnline() {
   const fileRef                       = useRef(null)
 
   const urlCompleta = `${BASE_URL_CAT}${config.url_slug}`
+  const simboloMoneda = (simbolo && String(simbolo).trim()) || "RD$"
 
   useEffect(() => {
     const payload = getTokenPayload()
     if (!payload) { router.push("/login"); return }
     setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
   }, [])
+
+  useEffect(() => {
+    if (!usuarioId) return
+    apiFetch(`/api/pos/header/${usuarioId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setSimbolo(d?.empresa?.moneda?.simbolo || "RD$"))
+      .catch(() => {})
+  }, [usuarioId])
 
   const cargar = useCallback(async () => {
     if (!empresaId) return
@@ -420,6 +433,7 @@ export default function CatalogoOnline() {
       {tab === "productos" && (
         <div className={s.productosWrap}>
           <div className={s.tabla}>
+            <div className={s.tablaScroll}>
             <div className={s.tablaHeader}>
               <div className={s.colImagen} />
               <div className={s.colNombre}>Producto</div>
@@ -446,7 +460,7 @@ export default function CatalogoOnline() {
                     <span className={s.prodNombre}>{p.nombre}</span>
                     {p.codigo && <span className={s.prodCodigo}>{p.codigo}</span>}
                   </div>
-                  <div className={s.colPrecio}><span className={s.prodPrecio}>{fmt(p.precio)}</span></div>
+                  <div className={s.colPrecio}><span className={s.prodPrecio}>{fmt(p.precio, simboloMoneda)}</span></div>
                   <div className={s.colStock}><span className={s.prodStock}>{p.stock}</span></div>
                   <div className={s.colVisible}>
                     <button
@@ -467,6 +481,7 @@ export default function CatalogoOnline() {
                   </div>
                 </div>
               ))}
+            </div>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
+import JsBarcode from "jsbarcode"
 import {
   printerConnect,
   printerPrint,
@@ -60,9 +61,27 @@ export default function ImprimirVentaPage({ id }) {
   const [enviandoWA, setEnviandoWA] = useState(false)
   const [errorWA,    setErrorWA]    = useState("")
 
+  const barcodeRef = useRef(null)
+
   useEffect(() => {
     getVenta(id).then(data => { setVenta(data); setCargando(false) })
   }, [id])
+
+  useEffect(() => {
+    if (!venta || !barcodeRef.current) return
+    try {
+      JsBarcode(barcodeRef.current, String(venta.id).padStart(8, "0"), {
+        format:       "CODE128",
+        width:        ancho === "58" ? 1.2 : 1.5,
+        height:       ancho === "58" ? 36  : 44,
+        displayValue: true,
+        fontSize:     ancho === "58" ? 9   : 11,
+        margin:       4,
+        background:   "#ffffff",
+        lineColor:    "#000000",
+      })
+    } catch {}
+  }, [venta, opciones.mostrarCodigoBarras, ancho])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -354,7 +373,7 @@ export default function ImprimirVentaPage({ id }) {
 
         <div className={s.columnaDer}>
           <div className={s.preview}>
-            <div ref={boucherRef} className={`${s.recibo} ${ancho === "A4" ? s.reciboA4 : ""}`} id="recibo-print">
+            <div ref={boucherRef} className={`${s.recibo} ${ancho === "A4" ? s.reciboA4 : ""} ${ancho === "58" ? s.recibo58 : ""}`} id="recibo-print">
 
               {opciones.mostrarDatosEmpresa && (
                 <div className={s.reciboHeader}>
@@ -409,19 +428,17 @@ export default function ImprimirVentaPage({ id }) {
               <div className={s.sep} />
 
               <div className={s.itemsHeader}>
-                <span className={s.cDesc}>Descripcion</span>
-                <span className={s.cCant}>Cant</span>
-                <span className={s.cPrecio}>Precio</span>
-                <span className={s.cTotal}>Total</span>
+                <span>Producto</span>
+                <span className={s.itemHDer}>Cant × Precio = Total</span>
               </div>
               <div className={s.sepFino} />
 
               {venta.venta_detalles.map(d => (
                 <div key={d.id} className={s.itemRow}>
-                  <span className={s.cDesc}>{d.nombre_producto}</span>
-                  <span className={s.cCant}>{d.cantidad}</span>
-                  <span className={s.cPrecio}>{fmt(d.precio_unitario, simbolo)}</span>
-                  <span className={s.cTotal}>{fmt(d.subtotal, simbolo)}</span>
+                  <div className={s.itemNombre}>{d.nombre_producto}</div>
+                  <div className={s.itemMath}>
+                    {d.cantidad} &times; {fmt(d.precio_unitario, simbolo)} = {fmt(d.subtotal, simbolo)}
+                  </div>
                 </div>
               ))}
 
@@ -481,11 +498,7 @@ export default function ImprimirVentaPage({ id }) {
                 <>
                   <div className={s.sep} />
                   <div className={s.barraWrap}>
-                    <svg className={s.barraPlaceholder}>
-                      <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize="10" fill="#aaa">
-                        {String(venta.id).padStart(6, "0")}
-                      </text>
-                    </svg>
+                    <svg ref={barcodeRef} className={s.barrasvg} />
                   </div>
                 </>
               )}

@@ -248,11 +248,55 @@
 .empty ion-icon { font-size: 40px; }
 .empty p { font-size: 14px; font-weight: 500; }
 
+@media (max-width: 1100px) {
+  .bottomRow { grid-template-columns: 1fr; }
+  .sideCards { flex-direction: row; }
+  .sideCards > * { flex: 1; }
+}
+
 @media (max-width: 900px) {
   .chartsRow { grid-template-columns: 1fr; }
   .bottomRow { grid-template-columns: 1fr; }
+  .sideCards { flex-direction: row; }
+  .sideCards > * { flex: 1; min-width: 0; }
+  .tableHeader { grid-template-columns: 1fr 90px 90px 65px; }
+  .tableRow    { grid-template-columns: 1fr 90px 90px 65px; }
 }
+
 @media (max-width: 600px) {
-  .page { padding: 16px 14px; }
-  .statsGrid { grid-template-columns: 1fr 1fr; }
+  .page { padding: 14px 12px; }
+  .statsGrid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .statCard { padding: 14px 12px; gap: 10px; }
+  .statIcon { width: 36px; height: 36px; font-size: 17px; }
+  .statValor { font-size: 15px; }
+  .chartsRow { gap: 10px; }
+  .chartCard { padding: 14px; }
+  .bottomRow { gap: 10px; }
+  .sideCards { flex-direction: column; }
+  .tableCard { padding: 14px; }
+  .tableHeader { display: none; }
+  .tableRow {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 2px 8px;
+    padding: 10px 8px;
+    position: relative;
+  }
+  .tableRow > span:nth-child(1) { grid-column: 1; grid-row: 1; font-weight: 600; font-size: 13px; }
+  .tableRow > span:nth-child(2) { grid-column: 1; grid-row: 2; color: #94a3b8; font-size: 11px; }
+  .tableRow > span:nth-child(3) { grid-column: 1; grid-row: 2; color: #94a3b8; font-size: 11px; }
+  .totalCell { grid-column: 2; grid-row: 1; justify-self: end; font-size: 13px; }
+  .fechaCell { grid-column: 2; grid-row: 2; justify-self: end; }
+  .tableHeaderVendedor { display: none; }
+  .tableRowVendedor {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 2px 8px;
+    padding: 10px 8px;
+  }
+  .tableRowVendedor > span:nth-child(1) { grid-column: 1; grid-row: 1; font-weight: 600; font-size: 13px; }
+  .tableRowVendedor > span:nth-child(2) { grid-column: 1; grid-row: 2; color: #94a3b8; font-size: 11px; }
+  .metaCard { padding: 14px; }
+  .metaActual { font-size: 15px; }
+  .topItem { padding: 7px 8px; }
 }

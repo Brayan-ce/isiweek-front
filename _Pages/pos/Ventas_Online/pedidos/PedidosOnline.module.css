@@ -84,6 +84,19 @@
   border: 1.5px solid #e2e8f0; overflow: hidden;
 }
 :global([data-theme="dark"]) .tabla { background: #0d1f3c; border-color: rgba(255,255,255,0.07); }
+
+@media (max-width: 1280px) and (min-width: 769px) {
+  .tabla {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .tablaHeader,
+  .fila {
+    min-width: 980px;
+  }
+}
 .tablaHeader {
   display: grid;
   grid-template-columns: 60px 1.8fr 1.3fr 1.1fr 1fr 130px 48px;
@@ -324,18 +337,52 @@
   .resumenGrid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 768px) {
+  .tabla {
+    border: none;
+    background: transparent;
+    overflow: visible;
+  }
+  .tablaBody { gap: 10px; }
   .tablaHeader { display: none; }
   .fila {
     grid-template-columns: 1fr auto;
-    grid-template-rows: auto auto auto;
-    gap: 6px; padding: 12px 14px;
+    grid-template-areas:
+      "cliente estado"
+      "total acciones"
+      "fecha fecha";
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    border-bottom: none;
+    background: white;
+    min-width: 0;
   }
-  .colCliente  { grid-column: 1; grid-row: 1; }
-  .colEstado   { grid-column: 2; grid-row: 1; }
-  .colTotal    { grid-column: 1; grid-row: 2; }
-  .colFecha    { grid-column: 1; grid-row: 3; }
-  .colAcciones { grid-column: 2; grid-row: 2; justify-content: flex-end; }
+  :global([data-theme="dark"]) .fila {
+    background: #0d1f3c;
+    border-color: rgba(255,255,255,0.08);
+  }
+  .filaAlterna { background: white; }
+  :global([data-theme="dark"]) .filaAlterna { background: #0d1f3c; }
+  .colCliente  { grid-area: cliente; }
+  .colEstado   { grid-area: estado; justify-content: flex-end; }
+  .colTotal    { grid-area: total; }
+  .colFecha    { grid-area: fecha; }
+  .colAcciones { grid-area: acciones; justify-content: flex-end; }
   .colId, .colContacto { display: none; }
+  .clienteWrap { align-items: flex-start; }
+  .clienteNombre {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .contactoText {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
   .infoGrid { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {

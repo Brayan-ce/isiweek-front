@@ -81,6 +81,18 @@
 @media (max-width: 820px) {
   .layout { grid-template-columns: 1fr; }
   .page   { padding: 14px 12px 32px; }
+  .topBar { flex-wrap: wrap; }
+}
+
+@media (max-width: 540px) {
+  .topBar .btnImprimir { margin-left: 0; }
+  .btnImprimir, .btnWA {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+    padding: 10px 12px;
+  }
+  .topBar { gap: 8px; }
 }
 
 .columnaIzq { display: flex; flex-direction: column; gap: 14px; }

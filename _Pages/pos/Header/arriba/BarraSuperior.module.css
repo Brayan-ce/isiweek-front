@@ -1,0 +1,125 @@
+.topbar {
+  height: 54px;
+  background: white;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+:global([data-theme="dark"]) .topbar {
+  background: #050d18;
+  border-bottom-color: #0e2236;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+:global([data-theme="dark"]) .hamburger {
+  background: #07111e;
+  border-color: #0e2236;
+}
+.hamburger span {
+  width: 14px;
+  height: 1.5px;
+  background: #64748b;
+  border-radius: 2px;
+  display: block;
+}
+:global([data-theme="dark"]) .hamburger span { background: #4a7fa8; }
+
+.empresaBadge {
+  display: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #1d6fce;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.titulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+:global([data-theme="dark"]) .titulo { color: #c8e4f8; }
+
+.iconBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: #64748b;
+  transition: background 0.15s;
+}
+:global([data-theme="dark"]) .iconBtn {
+  background: #07111e;
+  border-color: #0e2236;
+  color: #4a7fa8;
+}
+.iconBtn:hover { background: #e2e8f0; color: #0f172a; }
+:global([data-theme="dark"]) .iconBtn:hover { background: #0a1f35; color: #a8d4f0; }
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1d6fce;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.avatar:hover { opacity: 0.85; }
+
+@media (max-width: 768px) {
+  .topbar { padding: 0 12px; }
+  .hamburger { display: flex; }
+  .empresaBadge { display: flex; }
+  .titulo { display: none; }
+}

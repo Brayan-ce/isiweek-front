@@ -19,8 +19,8 @@ function getTokenPayload() {
   } catch { return null }
 }
 
-function fmt(n) {
-  return `RD$ ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+function fmt(n, simbolo = "RD$") {
+  return `${simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function fmtFecha(f) {
@@ -210,6 +210,7 @@ export default function Gastos() {
   const [modal, setModal]                       = useState(null)
   const [confirmEliminar, setConfirmEliminar]   = useState(null)
   const [eliminando, setEliminando]             = useState(false)
+  const [simbolo, setSimbolo]                   = useState("RD$")
   const debounceRef                             = useRef(null)
 
   const cajaAbierta = caja?.sesion?.estado === "abierta"
@@ -235,6 +236,14 @@ export default function Gastos() {
     setPaginas(res.paginas ?? 1)
     setCargando(false)
   }, [empresaId, busqueda, tipoFiltro, pagina])
+
+  useEffect(() => {
+    if (!usuarioId) return
+    apiFetch(`/api/pos/header/${usuarioId}`)
+      .then(r => r.json())
+      .then(d => { if (d?.empresa?.moneda?.simbolo) setSimbolo(d.empresa.moneda.simbolo) })
+      .catch(() => {})
+  }, [usuarioId])
 
   useEffect(() => {
     if (!empresaId || !usuarioId) return
@@ -328,12 +337,12 @@ export default function Gastos() {
         <div className={s.resumenGrid}>
           <div className={s.resumenCard}>
             <span className={s.resumenLabel}>Gastos de hoy</span>
-            <span className={s.resumenValor}>{fmt(resumen.hoy.total)}</span>
+            <span className={s.resumenValor}>{fmt(resumen.hoy.total, simbolo)}</span>
             <span className={s.resumenSub}>{resumen.hoy.cantidad} registro{resumen.hoy.cantidad !== 1 ? "s" : ""}</span>
           </div>
           <div className={s.resumenCard}>
             <span className={s.resumenLabel}>Gastos del mes</span>
-            <span className={`${s.resumenValor} ${s.resumenRojo}`}>{fmt(resumen.mes.total)}</span>
+            <span className={`${s.resumenValor} ${s.resumenRojo}`}>{fmt(resumen.mes.total, simbolo)}</span>
             <span className={s.resumenSub}>{resumen.mes.cantidad} registro{resumen.mes.cantidad !== 1 ? "s" : ""}</span>
           </div>
           <div className={`${s.resumenCard} ${s.resumenCardTipos}`}>
@@ -345,7 +354,7 @@ export default function Gastos() {
                 {resumen.porTipo.slice(0, 3).map((t, i) => (
                   <div key={i} className={s.tipoItem}>
                     <span className={s.tipoNombre}>{t.tipo}</span>
-                    <span className={s.tipoMonto}>{fmt(t.total)}</span>
+                    <span className={s.tipoMonto}>{fmt(t.total, simbolo)}</span>
                   </div>
                 ))}
               </div>
@@ -437,7 +446,7 @@ export default function Gastos() {
                 <span className={s.horaText}>{fmtHora(g.created_at)}</span>
               </div>
               <div className={s.colMonto}>
-                <span className={s.montoText}>{fmt(g.monto)}</span>
+                <span className={s.montoText}>{fmt(g.monto, simbolo)}</span>
               </div>
               <div className={s.colAcciones}>
                 <button className={s.accionBtn} title="Editar" onClick={() => setModal({ tipo: "editar", gasto: g })}>
@@ -499,7 +508,7 @@ export default function Gastos() {
             <div className={s.confirmIcon}><ion-icon name="warning-outline" /></div>
             <div className={s.confirmTitle}>Eliminar gasto?</div>
             <p className={s.confirmDesc}>
-              Se eliminara el gasto <strong>{confirmEliminar.concepto}</strong> de <strong>{fmt(confirmEliminar.monto)}</strong>. Esta accion no se puede deshacer.
+              Se eliminara el gasto <strong>{confirmEliminar.concepto}</strong> de <strong>{fmt(confirmEliminar.monto, simbolo)}</strong>. Esta accion no se puede deshacer.
             </p>
             <div className={s.modalAcciones}>
               <button className={s.cancelarBtn} onClick={() => setConfirmEliminar(null)}>Cancelar</button>

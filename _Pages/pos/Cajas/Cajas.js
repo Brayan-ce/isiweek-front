@@ -20,6 +20,18 @@ function fmt(n, simbolo = "RD$") {
   return `${simbolo} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+function fmtNum(val) {
+  if (val === "" || val === null || val === undefined) return ""
+  const n = val.toString().replace(/[^0-9.]/g, "")
+  const parts = n.split(".")
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+  return parts.length > 1 ? parts[0] + "." + parts[1] : parts[0]
+}
+
+function parseNum(str) {
+  return str.toString().replace(/,/g, "")
+}
+
 function fmtFecha(f) {
   if (!f) return "—"
   return new Date(f).toLocaleString("es-DO", { day: "2-digit", month: "long", year: "numeric" })
@@ -104,6 +116,7 @@ export default function Cajas() {
   const [montoManual, setMontoManual]           = useState(false)
   const [montoCierreManual, setMontoCierreManual] = useState("")
   const [notasCierre, setNotasCierre]           = useState("")
+  const [simbolo, setSimbolo]                   = useState("RD$")
 
   useEffect(() => {
     const payload = getTokenPayload()
@@ -135,6 +148,14 @@ export default function Cajas() {
   useEffect(() => {
     if (tab === "historial") cargarHistorial(1)
   }, [tab, usuarioId, empresaId])
+
+  useEffect(() => {
+    if (!usuarioId) return
+    apiFetch(`/api/pos/header/${usuarioId}`)
+      .then(r => r.json())
+      .then(d => { if (d?.empresa?.moneda?.simbolo) setSimbolo(d.empresa.moneda.simbolo) })
+      .catch(() => {})
+  }, [usuarioId])
 
   function mostrarAlerta(tipo, msg) {
     setAlerta({ tipo, msg })
@@ -185,10 +206,12 @@ export default function Cajas() {
     cargar()
   }
 
-  const simbolo = "RD$"
   const { sesion, resumen, ventas, gastos, numeroCaja } = datos ?? {}
   const cajaAbierta = sesion?.estado === "abierta"
   const montoCalculado = resumen?.totalEnCaja ?? 0
+  const cajaDePrevioDia = cajaAbierta && sesion?.abierta_at
+    ? new Date(sesion.abierta_at).toDateString() !== new Date().toDateString()
+    : false
 
   if (!empresaId || cargando) return (
     <div className={s.page}>
@@ -214,7 +237,7 @@ export default function Cajas() {
           <ion-icon name="wallet-outline" /> Mi Caja
         </button>
         <button className={`${s.tab} ${tab === "historial" ? s.tabActivo : ""}`} onClick={() => setTab("historial")}>
-          <ion-icon name="time-outline" /> Historial
+          <ion-icon name="time-outline" /> Historial de cajas
         </button>
       </div>
 
@@ -243,6 +266,18 @@ export default function Cajas() {
           )}
           {cajaAbierta && (
             <>
+              {cajaDePrevioDia && (
+                <div className={s.alertaVieja}>
+                  <ion-icon name="warning-outline" />
+                  <div>
+                    <strong>Caja del día anterior sin cerrar</strong>
+                    <span>Esta caja fue abierta el {fmtFecha(sesion.abierta_at)}. Se recomienda cerrarla e iniciar una nueva sesión.</span>
+                  </div>
+                  <button className={s.alertaViejaCerrar} onClick={abrirModalCerrar}>
+                    <ion-icon name="lock-closed-outline" /> Cerrar ahora
+                  </button>
+                </div>
+              )}
               <div className={s.cajaHeader}>
                 <div className={s.cajaHeaderLeft}>
                   <div className={s.cajaHeaderIcono}>
@@ -405,7 +440,7 @@ export default function Cajas() {
       {tab === "historial" && (
         <div className={s.seccionCard}>
           <div className={s.seccionTitulo}>
-            <ion-icon name="time-outline" /> Historial de sesiones
+            <ion-icon name="time-outline" /> Historial de cajas
           </div>
           {cargandoHist ? (
             [...Array(4)].map((_, i) => <div key={i} className={s.skeletonRow} />)
@@ -413,22 +448,32 @@ export default function Cajas() {
             <div className={s.seccionVacio}>Sin sesiones registradas</div>
           ) : (
             <>
-              <div className={s.histTableHeader}>
-                <span>Fecha</span><span>Apertura</span><span>Cierre</span><span>Saldo apertura</span><span>Saldo cierre</span><span>Ventas</span><span>Estado</span>
-              </div>
-              {historial.map(ses => (
-                <div key={ses.id} className={s.histTableRow}>
-                  <span>{fmtFecha(ses.abierta_at)}</span>
-                  <span>{fmtHora(ses.abierta_at)}</span>
-                  <span>{ses.cerrada_at ? fmtHora(ses.cerrada_at) : "—"}</span>
-                  <span>{fmt(ses.saldo_apertura, simbolo)}</span>
-                  <span>{ses.saldo_cierre != null ? fmt(ses.saldo_cierre, simbolo) : "—"}</span>
-                  <span>{ses._count?.ventas ?? 0}</span>
-                  <span className={`${s.badge} ${ses.estado === "abierta" ? s.badgeAbierta : s.badgeCerrada}`}>
-                    {ses.estado}
-                  </span>
+              <div className={s.histTableWrap}>
+                <div className={s.histTableHeader}>
+                  <span>Fecha</span><span>Apertura</span><span>Cierre</span><span>Saldo apertura</span><span>Saldo cierre</span><span>Ventas</span><span>Estado</span><span>Acciones</span>
                 </div>
-              ))}
+                {historial.map(ses => (
+                  <div key={ses.id} className={s.histTableRow}>
+                    <span>{fmtFecha(ses.abierta_at)}</span>
+                    <span>{fmtHora(ses.abierta_at)}</span>
+                    <span>{ses.cerrada_at ? fmtHora(ses.cerrada_at) : "—"}</span>
+                    <span>{fmt(ses.saldo_apertura, simbolo)}</span>
+                    <span>{ses.saldo_cierre != null ? fmt(ses.saldo_cierre, simbolo) : "—"}</span>
+                    <span>{ses._count?.ventas ?? 0}</span>
+                    <span className={`${s.badge} ${ses.estado === "abierta" ? s.badgeAbierta : s.badgeCerrada}`}>
+                      {ses.estado}
+                    </span>
+                    <div className={s.histAcciones}>
+                      <button className={s.histBtnVer} title="Ver detalles" onClick={() => router.push(`/pos/cajas/ver/${ses.id}`)}>  
+                        <ion-icon name="eye-outline" />
+                      </button>
+                      <button className={s.histBtnEditar} title="Editar" onClick={() => router.push(`/pos/cajas/editar/${ses.id}`)}>
+                        <ion-icon name="create-outline" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
               {histPaginas > 1 && (
                 <div className={s.paginacion}>
                   <button disabled={histPagina === 1} onClick={() => cargarHistorial(histPagina - 1)}>
@@ -453,11 +498,11 @@ export default function Cajas() {
             <div className={s.modalField}>
               <label>Monto inicial en caja</label>
               <input
-                type="number"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 placeholder="0.00"
-                value={montoInicial}
-                onChange={e => setMontoInicial(e.target.value)}
+                value={fmtNum(montoInicial)}
+                onChange={e => setMontoInicial(parseNum(e.target.value))}
                 className={s.modalInput}
                 autoFocus
                 onKeyDown={e => e.key === "Enter" && handleAbrir()}
@@ -507,11 +552,11 @@ export default function Cajas() {
               <div className={s.modalField}>
                 <label>Monto final en caja</label>
                 <input
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="0.00"
-                  value={montoCierreManual}
-                  onChange={e => setMontoCierreManual(e.target.value)}
+                  value={fmtNum(montoCierreManual)}
+                  onChange={e => setMontoCierreManual(parseNum(e.target.value))}
                   className={s.modalInput}
                   autoFocus
                 />
@@ -570,11 +615,11 @@ export default function Cajas() {
             <div className={s.modalField}>
               <label>Monto</label>
               <input
-                type="number"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 placeholder="0.00"
-                value={gastoMonto}
-                onChange={e => setGastoMonto(e.target.value)}
+                value={fmtNum(gastoMonto)}
+                onChange={e => setGastoMonto(parseNum(e.target.value))}
                 className={s.modalInput}
                 onKeyDown={e => e.key === "Enter" && handleGasto()}
               />

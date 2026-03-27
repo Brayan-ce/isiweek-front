@@ -57,7 +57,8 @@ export default function DashboardVendedor() {
     </div>
   )
 
-  const { ventasHoy, totalHoy, meta, ultimasVentas, cajaActiva } = data
+  const { ventasHoy, totalHoy, meta, ultimasVentas, cajaActiva, simbolo } = data
+  const m = simbolo ?? "$"
   const progreso = meta > 0 ? Math.min((totalHoy / meta) * 100, 100) : 0
 
   return (
@@ -69,7 +70,7 @@ export default function DashboardVendedor() {
           </div>
           <div className={s.statInfo}>
             <div className={s.statLabel}>Mis ventas hoy</div>
-            <div className={s.statValor}>RD$ {fmt(totalHoy)}</div>
+            <div className={s.statValor}>{m} {fmt(totalHoy)}</div>
             <div className={s.statSub}>{ventasHoy} transacciones</div>
           </div>
         </div>
@@ -81,7 +82,7 @@ export default function DashboardVendedor() {
           <div className={s.statInfo}>
             <div className={s.statLabel}>Caja activa</div>
             <div className={s.statValor}>{cajaActiva ? cajaActiva.caja.nombre : "Sin caja"}</div>
-            <div className={s.statSub}>{cajaActiva ? `RD$ ${fmt(cajaActiva.caja.saldo_actual)}` : "Ninguna abierta"}</div>
+            <div className={s.statSub}>{cajaActiva ? `${m} ${fmt(cajaActiva.caja.saldo_actual)}` : "Ninguna abierta"}</div>
           </div>
         </div>
       </div>
@@ -91,8 +92,8 @@ export default function DashboardVendedor() {
           <div className={s.metaTop}>
             <div className={s.metaLabel}><ion-icon name="flag-outline" /> Meta diaria</div>
             <div className={s.metaValores}>
-              <span className={s.metaActual}>RD$ {fmt(totalHoy)}</span>
-              <span className={s.metaDe}>/ RD$ {fmt(meta)}</span>
+              <span className={s.metaActual}>{m} {fmt(totalHoy)}</span>
+              <span className={s.metaDe}>/ {m} {fmt(meta)}</span>
             </div>
           </div>
           <div className={s.progressBar}>
@@ -124,7 +125,7 @@ export default function DashboardVendedor() {
               <div key={v.id} className={`${s.tableRow} ${s.tableRowVendedor}`}>
                 <span>{v.cliente?.nombre ?? "Consumidor final"}</span>
                 <span>{v.metodo_pago?.nombre ?? "—"}</span>
-                <span className={s.totalCell}>RD$ {fmt(v.total)}</span>
+                <span className={s.totalCell}>{m} {fmt(v.total)}</span>
                 <span className={s.fechaCell}>{fmtHora(v.created_at)}</span>
               </div>
             ))}

@@ -65,8 +65,8 @@ async function eliminarCompra(empresaId, compraId) {
   } catch { return { error: "No se pudo conectar con el servidor" } }
 }
 
-function fmt(n) {
-  return `RD$ ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+function fmt(n, sym = "RD$") {
+  return `${sym} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function fmtFecha(d) {
@@ -82,7 +82,7 @@ const ESTADO_META = {
 
 const ITEM_VACIO = { producto_id: "", nombre_producto: "", cantidad: 1, precio_unitario: "" }
 
-function ModalCompra({ datos, inicial, onClose, onGuardado, mostrarAlerta, empresaId, usuarioId }) {
+function ModalCompra({ datos, inicial, onClose, onGuardado, mostrarAlerta, empresaId, usuarioId, simbolo }) {
   const esEditar = !!inicial
   const [proveedor_id, setProveedorId] = useState(inicial?.proveedor_id ?? "")
   const [estado, setEstado]            = useState(inicial?.estado ?? "completada")
@@ -181,57 +181,64 @@ function ModalCompra({ datos, inicial, onClose, onGuardado, mostrarAlerta, empre
               </div>
 
               <div className={s.itemsHead}>
-                <span>Producto</span>
+                <span>Nombre</span>
                 <span>Cant.</span>
                 <span>Precio costo</span>
-                <span></span>
               </div>
 
               <div className={s.itemsList}>
                 {items.map((item, i) => (
                   <div key={i} className={s.itemRow}>
-                    <select
-                      className={s.itemSelect}
-                      value={item.producto_id}
-                      onChange={e => setItem(i, "producto_id", e.target.value)}
-                    >
-                      <option value="">Libre / manual</option>
-                      {datos.productos.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-                    </select>
-                    {!item.producto_id && (
+                    <div className={s.itemRowTop}>
+                      <select
+                        className={s.itemSelect}
+                        value={item.producto_id}
+                        onChange={e => setItem(i, "producto_id", e.target.value)}
+                      >
+                        <option value="">Libre / manual</option>
+                        {datos.productos.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                      </select>
+                      <button className={s.removeItemBtn} onClick={() => removeItem(i)} disabled={items.length === 1}>
+                        <ion-icon name="trash-outline" />
+                      </button>
+                    </div>
+                    <div className={s.itemRowBottom}>
+                      {!item.producto_id ? (
+                        <input
+                          className={s.itemInput}
+                          placeholder="Nombre del producto"
+                          value={item.nombre_producto}
+                          onChange={e => setItem(i, "nombre_producto", e.target.value)}
+                        />
+                      ) : (
+                        <span className={s.itemNombreDisplay}>
+                          {datos.productos.find(p => String(p.id) === String(item.producto_id))?.nombre ?? ""}
+                        </span>
+                      )}
                       <input
-                        className={s.itemInput}
-                        placeholder="Nombre del producto"
-                        value={item.nombre_producto}
-                        onChange={e => setItem(i, "nombre_producto", e.target.value)}
+                        className={s.itemInputSm}
+                        type="number"
+                        min="1"
+                        placeholder="Cant."
+                        value={item.cantidad}
+                        onChange={e => setItem(i, "cantidad", e.target.value)}
                       />
-                    )}
-                    <input
-                      className={s.itemInputSm}
-                      type="number"
-                      min="1"
-                      placeholder="Cant."
-                      value={item.cantidad}
-                      onChange={e => setItem(i, "cantidad", e.target.value)}
-                    />
-                    <input
-                      className={s.itemInputSm}
-                      type="number"
-                      min="0"
-                      placeholder="0.00"
-                      value={item.precio_unitario}
-                      onChange={e => setItem(i, "precio_unitario", e.target.value)}
-                    />
-                    <button className={s.removeItemBtn} onClick={() => removeItem(i)} disabled={items.length === 1}>
-                      <ion-icon name="trash-outline" />
-                    </button>
+                      <input
+                        className={s.itemInputSm}
+                        type="number"
+                        min="0"
+                        placeholder="0.00"
+                        value={item.precio_unitario}
+                        onChange={e => setItem(i, "precio_unitario", e.target.value)}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
 
               <div className={s.totalRow}>
                 <span>Total estimado</span>
-                <span className={s.totalMonto}>{fmt(total)}</span>
+                <span className={s.totalMonto}>{fmt(total, simbolo)}</span>
               </div>
             </>
           )}
@@ -263,6 +270,7 @@ export default function Compras() {
   const [confirmEliminar, setConfirmEliminar]   = useState(null)
   const [eliminando, setEliminando]             = useState(false)
   const [filtros, setFiltros]                   = useState({ proveedor_id: "", estado: "", fecha_desde: "", fecha_hasta: "" })
+  const [simbolo, setSimbolo]                   = useState("RD$")
 
   useEffect(() => {
     const payload = getTokenPayload()
@@ -282,10 +290,14 @@ export default function Compras() {
   }, [empresaId, filtros, pagina])
 
   useEffect(() => {
-    if (!empresaId) return
+    if (!empresaId || !usuarioId) return
     cargar()
     getDatosCompra(empresaId).then(d => { if (d) setDatos(d) })
-  }, [empresaId])
+    apiFetch(`/api/pos/header/${usuarioId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.empresa?.moneda?.simbolo) setSimbolo(d.empresa.moneda.simbolo) })
+      .catch(() => {})
+  }, [empresaId, usuarioId])
 
   function mostrarAlerta(tipo, msg) {
     setAlerta({ tipo, msg })
@@ -397,7 +409,7 @@ export default function Compras() {
                 {c.proveedor?.rnc && <span className={s.provRnc}>{c.proveedor.rnc}</span>}
               </div>
               <span className={s.colItems}>{c.items_count} ítem{c.items_count !== 1 ? "s" : ""}</span>
-              <span className={s.colTotal}>{fmt(c.total)}</span>
+              <span className={s.colTotal}>{fmt(c.total, simbolo)}</span>
               <span className={`${s.estadoBadge} ${s[meta.cls]}`}>{meta.label}</span>
               <span className={s.colFecha}>{fmtFecha(c.created_at)}</span>
               <div className={s.colAcciones}>
@@ -439,6 +451,7 @@ export default function Compras() {
           mostrarAlerta={mostrarAlerta}
           empresaId={empresaId}
           usuarioId={usuarioId}
+          simbolo={simbolo}
         />
       )}
 

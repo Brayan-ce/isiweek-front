@@ -73,9 +73,43 @@ async function pagarCuota(empresaId, cuotaId, body) {
   } catch { return { error: "No se pudo conectar con el servidor" } }
 }
 
+async function pagarMultipleCuotasAPI(empresaId, ventaId, body) {
+  try {
+    const res = await apiFetch(`/api/pos/cuotas/pagar-multiple/${empresaId}/${ventaId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch { return { error: "No se pudo conectar con el servidor" } }
+}
+
+function calcularDistribucion(cuotas, monto) {
+  const pendientes = cuotas
+    .filter(c => c.estado === "pendiente" || c.estado === "parcial")
+    .sort((a, b) => Number(a.numero) - Number(b.numero))
+  let remaining = Number(monto) || 0
+  const result = []
+  for (const cuota of pendientes) {
+    if (remaining <= 0.005) break
+    const yaAbonado    = Number(cuota.monto_pagado ?? 0)
+    const montoFalta   = Number(cuota.monto) - yaAbonado
+    if (remaining >= montoFalta - 0.005) {
+      result.push({ cuota, tipo: "completa", montoFalta })
+      remaining = Number((remaining - montoFalta).toFixed(2))
+    } else {
+      result.push({ cuota, tipo: "parcial", montoPagado: remaining + yaAbonado, montoRestante: Number((montoFalta - remaining).toFixed(2)) })
+      remaining = 0
+    }
+  }
+  return result
+}
+
 export default function Cuotas() {
   const router = useRouter()
   const [empresaId, setEmpresaId]             = useState(null)
+  const [usuarioId, setUsuarioId]             = useState(null)
+  const [simbolo, setSimbolo]                 = useState("RD$")
   const [ventas, setVentas]                   = useState([])
   const [total, setTotal]                     = useState(0)
   const [paginas, setPaginas]                 = useState(1)
@@ -90,6 +124,10 @@ export default function Cuotas() {
   const [cajaSesionId, setCajaSesionId]       = useState("")
   const [pagando, setPagando]                 = useState(false)
   const [datos, setDatos]                     = useState(null)
+  const [modalPagoMultiple, setModalPagoMultiple] = useState(null)
+  const [montoPagoMultiple, setMontoPagoMultiple] = useState("")
+  const [cajaMultipleId, setCajaMultipleId]   = useState("")
+  const [pagandoMultiple, setPagandoMultiple] = useState(false)
 
   const [filtros, setFiltros] = useState({
     cliente_id: "",
@@ -103,7 +141,16 @@ export default function Cuotas() {
     const payload = getTokenPayload()
     if (!payload) { router.push("/login"); return }
     setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
   }, [])
+
+  useEffect(() => {
+    if (!usuarioId) return
+    apiFetch(`/api/pos/header/${usuarioId}`)
+      .then(r => r.json())
+      .then(d => { if (d?.empresa?.moneda?.simbolo) setSimbolo(d.empresa.moneda.simbolo) })
+      .catch(() => {})
+  }, [usuarioId])
 
   const cargar = useCallback(async (f = filtros, p = pagina) => {
     if (!empresaId) return
@@ -167,6 +214,31 @@ export default function Cuotas() {
     setCajaSesionId("")
     cargar()
   }
+
+  async function handlePagoMultiple() {
+    if (!modalPagoMultiple) return
+    const monto = Number(montoPagoMultiple)
+    if (!monto || monto <= 0) return mostrarAlerta("error", "Ingresa un monto valido")
+    setPagandoMultiple(true)
+    const res = await pagarMultipleCuotasAPI(empresaId, modalPagoMultiple.venta.id, {
+      monto,
+      caja_sesion_id: cajaMultipleId ? Number(cajaMultipleId) : null,
+    })
+    setPagandoMultiple(false)
+    if (res?.error) return mostrarAlerta("error", res.error)
+    mostrarAlerta("ok", "Pago registrado correctamente")
+    setModalPagoMultiple(null)
+    setMontoPagoMultiple("")
+    setCajaMultipleId("")
+    cargar()
+  }
+
+  const distPrev = modalPagoMultiple
+    ? calcularDistribucion(modalPagoMultiple.venta.venta_cuotas ?? [], montoPagoMultiple)
+    : []
+  const totalPendienteMultiple = modalPagoMultiple
+    ? (modalPagoMultiple.venta.venta_cuotas ?? []).filter(c => c.estado === "pendiente" || c.estado === "parcial").reduce((a, c) => a + Number(c.monto) - Number(c.monto_pagado ?? 0), 0)
+    : 0
 
   const hayFiltros = Object.values(filtros).some(v => v)
 
@@ -261,7 +333,7 @@ export default function Cuotas() {
                 </div>
 
                 <div className={s.ventaMontos}>
-                  <span className={s.montoPendiente}>{fmt(v.monto_pendiente)}</span>
+                  <span className={s.montoPendiente}>{fmt(v.monto_pendiente, simbolo)}</span>
                   <span className={s.montoPendienteLabel}>pendiente</span>
                 </div>
 
@@ -282,6 +354,17 @@ export default function Cuotas() {
 
               {abierto && (
                 <div className={s.cuotasDetalle}>
+                  {!completa && (
+                    <div className={s.pagoMultipleAccion}>
+                      <button
+                        className={s.pagoMultipleBtn}
+                        onClick={e => { e.stopPropagation(); setModalPagoMultiple({ venta: v }); setMontoPagoMultiple("") }}
+                      >
+                        <ion-icon name="cash-outline" />
+                        Pagar monto manualmente
+                      </button>
+                    </div>
+                  )}
                   <div className={s.cuotasDetalleHead}>
                     <span>Cuota</span>
                     <span>Monto</span>
@@ -292,17 +375,24 @@ export default function Cuotas() {
                   {v.venta_cuotas.map(c => (
                     <div key={c.id} className={`${s.cuotaDetalleRow} ${c.estado === "pagada" ? s.cuotaRowPagada : ""}`}>
                       <span className={s.cuotaDetalleNum}>#{c.numero}</span>
-                      <span className={s.cuotaDetalleMonto}>{fmt(c.monto)}</span>
-                      <span className={`${s.cuotaEstado} ${c.estado === "pagada" ? s.cuotaEstadoPagada : s.cuotaEstadoPendiente}`}>
-                        {c.estado === "pagada" ? "Pagada" : "Pendiente"}
+                      <span className={s.cuotaDetalleMonto}>{fmt(c.monto, simbolo)}</span>
+                      <span className={`${s.cuotaEstado} ${c.estado === "pagada" ? s.cuotaEstadoPagada : c.estado === "parcial" ? s.cuotaEstadoParcial : s.cuotaEstadoPendiente}`}>
+                        {c.estado === "pagada" ? "Pagada" : c.estado === "parcial" ? "Parcial" : "Pendiente"}
                       </span>
                       <span className={s.cuotaFecha}>{c.pagada_at ? fmtFecha(c.pagada_at) : "—"}</span>
                       <div className={s.cuotaAccion}>
-                        {c.estado === "pendiente" && (
-                          <button className={s.pagarBtn} onClick={() => setModalPago({ cuota: c, venta: v })}>
-                            <ion-icon name="cash-outline" />
-                            Pagar
-                          </button>
+                        {(c.estado === "pendiente" || c.estado === "parcial") && (
+                          <>
+                            {c.estado === "parcial" && (
+                              <span className={s.cuotaParcialInfo}>
+                                {fmt(Number(c.monto) - Number(c.monto_pagado ?? 0), simbolo)} restante
+                              </span>
+                            )}
+                            <button className={s.pagarBtn} onClick={() => setModalPago({ cuota: c, venta: v })}>
+                              <ion-icon name="cash-outline" />
+                              Pagar
+                            </button>
+                          </>
                         )}
                         <button className={s.editarBtn} onClick={() => setModalEditar({ cuota: c, venta: v })} title="Editar estado">
                           <ion-icon name="pencil-outline" />
@@ -314,10 +404,10 @@ export default function Cuotas() {
                     </div>
                   ))}
                   <div className={s.cuotasResumen}>
-                    <span>Total: {fmt(v.total)}</span>
-                    <span>Pagado: {fmt(v.monto_pagado)}</span>
+                    <span>Total: {fmt(v.total, simbolo)}</span>
+                    <span>Pagado: {fmt(v.monto_pagado, simbolo)}</span>
                     <span className={v.monto_pendiente > 0 ? s.resumenPendiente : s.resumenOk}>
-                      Pendiente: {fmt(v.monto_pendiente)}
+                      Pendiente: {fmt(v.monto_pendiente, simbolo)}
                     </span>
                   </div>
                 </div>
@@ -357,7 +447,7 @@ export default function Cuotas() {
               </div>
               <div className={s.modalInfoRow}>
                 <span>Monto</span>
-                <strong className={s.modalMonto}>{fmt(modalEditar.cuota.monto)}</strong>
+                <strong className={s.modalMonto}>{fmt(modalEditar.cuota.monto, simbolo)}</strong>
               </div>
               <div className={s.modalInfoRow}>
                 <span>Estado actual</span>
@@ -399,9 +489,17 @@ export default function Cuotas() {
                 <strong>#{modalPago.cuota.numero} de {modalPago.venta.cuotas_total}</strong>
               </div>
               <div className={s.modalInfoRow}>
-                <span>Monto</span>
-                <strong className={s.modalMonto}>{fmt(modalPago.cuota.monto)}</strong>
+                <span>{modalPago.cuota.estado === "parcial" ? "Monto restante" : "Monto"}</span>
+                <strong className={s.modalMonto}>
+                  {fmt(Number(modalPago.cuota.monto) - Number(modalPago.cuota.monto_pagado ?? 0), simbolo)}
+                </strong>
               </div>
+              {modalPago.cuota.estado === "parcial" && (
+                <div className={s.modalInfoRow}>
+                  <span>Ya abonado</span>
+                  <strong style={{ color: "#16a34a" }}>{fmt(Number(modalPago.cuota.monto_pagado ?? 0), simbolo)}</strong>
+                </div>
+              )}
             </div>
             <div className={s.modalCajaWrap}>
               <label className={s.label}>Registrar en caja (opcional)</label>
@@ -420,6 +518,74 @@ export default function Cuotas() {
               <button className={s.cancelarBtn} onClick={() => setModalPago(null)}>Cancelar</button>
               <button className={s.confirmarBtn} onClick={handlePagarCuota} disabled={pagando}>
                 {pagando ? <span className={s.spinner} /> : <><ion-icon name="checkmark-circle-outline" /> Confirmar pago</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalPagoMultiple && (
+        <div className={s.overlay} onClick={e => e.target === e.currentTarget && setModalPagoMultiple(null)}>
+          <div className={s.modal}>
+            <button className={s.modalClose} onClick={() => setModalPagoMultiple(null)}>
+              <ion-icon name="close-outline" />
+            </button>
+            <div className={s.modalTitle}>Pagar monto manualmente</div>
+            <div className={s.modalInfo}>
+              <div className={s.modalInfoRow}>
+                <span>Cliente</span>
+                <strong>{modalPagoMultiple.venta.cliente?.nombre}</strong>
+              </div>
+              <div className={s.modalInfoRow}>
+                <span>Pendiente total</span>
+                <strong className={s.modalMonto}>{fmt(totalPendienteMultiple, simbolo)}</strong>
+              </div>
+            </div>
+            <div className={s.modalCajaWrap}>
+              <label className={s.label}>Monto recibido</label>
+              <input
+                type="number"
+                className={s.filtroInput}
+                placeholder="0.00"
+                value={montoPagoMultiple}
+                min="0"
+                step="0.01"
+                onChange={e => setMontoPagoMultiple(e.target.value)}
+                autoFocus
+              />
+            </div>
+            {distPrev.length > 0 && (
+              <div className={s.distPreview}>
+                <div className={s.distTitle}>Como se distribuye:</div>
+                {distPrev.map(d => (
+                  <div key={d.cuota.id} className={`${s.distRow} ${d.tipo === "completa" ? s.distCompleta : s.distParcial}`}>
+                    <span>Cuota #{d.cuota.numero}{d.cuota.estado === "parcial" ? " (parcial)" : ""}</span>
+                    {d.tipo === "completa" ? (
+                      <span className={s.distMonto}>{fmt(d.montoFalta, simbolo)} <ion-icon name="checkmark-circle" /></span>
+                    ) : (
+                      <span className={s.distMonto}>{fmt(d.montoPagado - Number(d.cuota.monto_pagado ?? 0), simbolo)} <span className={s.distResto}>(restan {fmt(d.montoRestante, simbolo)})</span></span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className={s.modalCajaWrap}>
+              <label className={s.label}>Registrar en caja (opcional)</label>
+              <select
+                className={s.filtroSelect}
+                value={cajaMultipleId}
+                onChange={e => setCajaMultipleId(e.target.value)}
+              >
+                <option value="">No registrar en caja</option>
+                {(datos?.cajas ?? []).map(cs => (
+                  <option key={cs.id} value={cs.id}>{cs.caja?.nombre ?? `Caja #${cs.id}`}</option>
+                ))}
+              </select>
+            </div>
+            <div className={s.modalAcciones}>
+              <button className={s.cancelarBtn} onClick={() => setModalPagoMultiple(null)}>Cancelar</button>
+              <button className={s.confirmarBtn} onClick={handlePagoMultiple} disabled={pagandoMultiple || !montoPagoMultiple}>
+                {pagandoMultiple ? <span className={s.spinner} /> : <><ion-icon name="cash-outline" /> Confirmar pago</>}
               </button>
             </div>
           </div>

@@ -24,8 +24,8 @@ async function getCompra(empresaId, compraId) {
   } catch { return null }
 }
 
-function fmt(n) {
-  return `RD$ ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+function fmt(n, sym = "RD$") {
+  return `${sym} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function fmtFecha(d) {
@@ -44,6 +44,7 @@ export default function VerCompra({ id }) {
   const [empresaId, setEmpresaId]   = useState(null)
   const [compra,    setCompra]      = useState(null)
   const [cargando,  setCargando]    = useState(true)
+  const [simbolo,   setSimbolo]     = useState("RD$")
 
   useEffect(() => {
     const payload = getTokenPayload()
@@ -53,7 +54,14 @@ export default function VerCompra({ id }) {
 
   useEffect(() => {
     if (!empresaId) return
-    getCompra(empresaId, id).then(d => { setCompra(d); setCargando(false) })
+    Promise.all([
+      getCompra(empresaId, id),
+      apiFetch(`/api/pos/configuracion/${empresaId}`).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([d, cfg]) => {
+      setCompra(d)
+      if (cfg?.moneda?.simbolo) setSimbolo(cfg.moneda.simbolo)
+      setCargando(false)
+    })
   }, [empresaId, id])
 
   if (!empresaId || cargando) return (
@@ -73,6 +81,7 @@ export default function VerCompra({ id }) {
 
   const meta     = ESTADO_META[compra.estado] ?? ESTADO_META.pendiente
   const subtotal = compra.compra_detalles.reduce((a, d) => a + Number(d.subtotal), 0)
+  const mfmt     = n => fmt(n, simbolo)
 
   return (
     <div className={s.page}>
@@ -115,18 +124,18 @@ export default function VerCompra({ id }) {
                   {d.producto?.codigo && <span className={s.detalleCodigo}>{d.producto.codigo}</span>}
                 </div>
                 <span className={s.detalleCant}>{d.cantidad}</span>
-                <span className={s.detallePrecio}>{fmt(d.precio_unitario)}</span>
-                <span className={s.detalleSubtotal}>{fmt(d.subtotal)}</span>
+                <span className={s.detallePrecio}>{mfmt(d.precio_unitario)}</span>
+                <span className={s.detalleSubtotal}>{mfmt(d.subtotal)}</span>
               </div>
             ))}
             <div className={s.totalWrap}>
               <div className={s.totalRow}>
                 <span>Subtotal</span>
-                <span>{fmt(subtotal)}</span>
+                <span>{mfmt(subtotal)}</span>
               </div>
               <div className={`${s.totalRow} ${s.totalFinal}`}>
                 <span>Total</span>
-                <span>{fmt(compra.total)}</span>
+                <span>{mfmt(compra.total)}</span>
               </div>
             </div>
           </div>
@@ -177,7 +186,7 @@ export default function VerCompra({ id }) {
 
           <div className={s.resumenCard}>
             <div className={s.resumenLabel}>Total de la compra</div>
-            <div className={s.resumenMonto}>{fmt(compra.total)}</div>
+            <div className={s.resumenMonto}>{mfmt(compra.total)}</div>
           </div>
         </div>
       </div>

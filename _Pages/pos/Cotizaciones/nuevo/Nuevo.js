@@ -212,14 +212,16 @@ export default function Nuevo() {
                 {items.map((item, idx) => (
                   <div key={idx} className={s.itemRow}>
                     <span className={s.itemNombre}>{item.nombre_producto}</span>
-                    <input type="number" min="1" className={s.itemInput} value={item.cantidad}
-                      onChange={e => actualizarItem(idx, "cantidad", e.target.value)} />
-                    <input type="number" min="0" className={s.itemInput} value={item.precio_unitario}
-                      onChange={e => actualizarItem(idx, "precio_unitario", e.target.value)} />
-                    <span className={s.itemTotal}>{fmt(item.precio_unitario * item.cantidad, simbolo)}</span>
-                    <button className={s.itemQuitarBtn} onClick={() => quitarItem(idx)}>
-                      <ion-icon name="trash-outline" />
-                    </button>
+                    <div className={s.itemCtrls}>
+                      <input type="number" min="1" className={s.itemInput} value={item.cantidad}
+                        onChange={e => actualizarItem(idx, "cantidad", e.target.value)} />
+                      <input type="number" min="0" className={s.itemInput} value={item.precio_unitario}
+                        onChange={e => actualizarItem(idx, "precio_unitario", e.target.value)} />
+                      <span className={s.itemTotal}>{fmt(item.precio_unitario * item.cantidad, simbolo)}</span>
+                      <button className={s.itemQuitarBtn} onClick={() => quitarItem(idx)}>
+                        <ion-icon name="trash-outline" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

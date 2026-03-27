@@ -27,6 +27,7 @@
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 .topBar .btnImprimir,
 .topBar .btnWA {
@@ -34,6 +35,25 @@
 }
 .topBar .btnWA {
   margin-left: 0;
+}
+
+@media (max-width: 500px) {
+  .topBar {
+    gap: 8px;
+  }
+  .topBar .btnVolver {
+    flex: 1 1 100%;
+  }
+  .topBar .btnImprimir,
+  .topBar .btnWA {
+    flex: 1;
+    margin-left: 0;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
 }
 
 .btnVolver {
@@ -345,14 +365,24 @@
   width: 100%;
   max-width: 320px;
   background: white;
-  padding: 20px 16px;
+  padding: 14px 10px;
   font-family: 'Courier New', Courier, monospace;
   font-size: 12px;
   color: #000;
   line-height: 1.5;
   border-radius: 4px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
-.reciboA4 { max-width: 600px; font-size: 13px; }
+.reciboA4 { max-width: 600px; font-size: 13px; padding: 20px 24px; }
+
+/* 58mm: ancho útil ~200px, márgenes 2-3mm = ~8px */
+.recibo58 {
+  max-width: 210px;
+  padding: 10px 8px;
+  font-size: 10px;
+  line-height: 1.45;
+}
 
 .reciboHeader { text-align: center; margin-bottom: 4px; }
 
@@ -391,30 +421,47 @@
 .infoLabel { font-weight: 700; min-width: 72px; color: #555; flex-shrink: 0; }
 
 .itemsHeader {
-  display: grid;
-  grid-template-columns: 1fr 28px 78px 72px;
-  gap: 2px;
-  font-size: 10px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   color: #555;
   padding-bottom: 2px;
 }
+.itemHDer { text-align: right; }
+
 .itemRow {
-  display: grid;
-  grid-template-columns: 1fr 28px 78px 72px;
-  gap: 2px;
-  font-size: 11px;
-  padding: 2px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 0;
   border-bottom: 1px dotted #eee;
 }
 .itemRow:last-child { border-bottom: none; }
 
-.cDesc   { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cCant   { text-align: center; }
-.cPrecio { text-align: right; }
-.cTotal  { text-align: right; font-weight: 700; }
+.itemNombre {
+  font-size: 11px;
+  font-weight: 700;
+  color: #000;
+  line-height: 1.35;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.itemMath {
+  font-size: 10.5px;
+  color: #333;
+  text-align: right;
+  white-space: nowrap;
+  overflow: visible;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* 58mm: fuente más pequeña en items */
+.recibo58 .itemNombre { font-size: 10px; }
+.recibo58 .itemMath   { font-size: 9px; }
 
 .totalesWrap { display: flex; flex-direction: column; gap: 3px; }
 .totalRow { display: flex; justify-content: space-between; font-size: 12px; color: #222; }
@@ -424,6 +471,7 @@
 .notas { font-size: 11px; color: #444; }
 
 .barraWrap { display: flex; justify-content: center; padding: 8px 0; }
+.barrasvg  { max-width: 100%; height: auto; }
 .barraPlaceholder {
   width: 180px;
   height: 40px;
@@ -609,19 +657,25 @@
   .recibo {
     max-width: 100% !important;
     width: 100% !important;
-    padding: 0 !important;
+    padding: 4px 6px !important;
     margin: 0 !important;
     font-size: 10px !important;
     line-height: 1.4 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    word-break: break-word !important;
   }
+  .recibo58 {
+    font-size: 9px !important;
+    padding: 3px 4px !important;
+  }
+  .recibo58 .itemNombre { font-size: 9px !important; }
+  .recibo58 .itemMath   { font-size: 8.5px !important; }
   .empresaNombre { font-size: 12px !important; }
   .reciboTitulo  { font-size: 11px !important; }
   .totalFinal    { font-size: 12px !important; }
-  .itemsHeader,
-  .itemRow { font-size: 9px !important; grid-template-columns: 1fr 22px 60px 54px !important; }
   .sep     { border-top-color: #000 !important; margin: 5px 0 !important; }
   .sepFino { border-top-color: #ccc !important; margin: 3px 0 !important; }
   .overlay { display: none !important; }
+  .barrasvg { max-width: 160px !important; }
 }

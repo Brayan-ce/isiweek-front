@@ -2,6 +2,7 @@
   padding: 24px 28px;
   background: #f8fafc;
   min-height: calc(100vh - 56px);
+  overflow-x: hidden;
 }
 :global([data-theme="dark"]) .page { background: #070f1e; }
 
@@ -57,6 +58,24 @@
   position: relative;
   display: flex;
   align-items: center;
+  min-width: 0;
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.selectWrap:focus-within {
+  border-color: #1d6fce;
+  box-shadow: 0 0 0 3px rgba(29,111,206,0.1);
+}
+:global([data-theme="dark"]) .selectWrap {
+  background: #0d1f3c;
+  border-color: rgba(255,255,255,0.1);
+}
+:global([data-theme="dark"]) .selectWrap:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
 }
 .selectWrap > ion-icon:first-child {
   position: absolute;
@@ -78,8 +97,8 @@
 .select {
   padding: 9px 34px 9px 34px;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: white;
+  border: none;
+  background: transparent;
   font-size: 13px;
   font-weight: 600;
   color: #374151;
@@ -88,16 +107,19 @@
   -webkit-appearance: none;
   outline: none;
   min-width: 155px;
+  width: 100%;
+  box-sizing: border-box;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .select:hover { border-color: #cbd5e1; }
-.select:focus { border-color: #1d6fce; box-shadow: 0 0 0 3px rgba(29,111,206,0.1); }
+.select:focus { border-color: transparent; box-shadow: none; }
 :global([data-theme="dark"]) .select {
-  background: #0d1f3c;
-  border-color: rgba(255,255,255,0.1);
+  background: transparent;
+  border-color: transparent;
   color: #e2e8f0;
 }
-:global([data-theme="dark"]) .select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+:global([data-theme="dark"]) .select:focus { border-color: transparent; box-shadow: none; }
+:global([data-theme="dark"]) .select option { background: #0d1f3c; color: #e2e8f0; }
 :global([data-theme="dark"]) .selectWrap > ion-icon:first-child { color: #60a5fa; }
 :global([data-theme="dark"]) .selectArrow { color: #60a5fa !important; }
 
@@ -376,16 +398,69 @@
 }
 .emptyChart ion-icon { font-size: 28px; opacity: 0.4; }
 
+/* ---- 900px ---- */
 @media (max-width: 900px) {
   .chartsRow { grid-template-columns: 1fr; }
 }
+
+/* ---- 700px: tabs scrollable + filtros apilados ---- */
+@media (max-width: 700px) {
+  /* tabs scroll horizontal sin wrap */
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex-shrink: 0; }
+
+  /* filtros: grid 2 cols arriba, exportar abajo full */
+  .filtros {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    align-items: stretch;
+  }
+  /* el btn exportar ocupa todo el ancho en la última fila */
+  .btnExportar {
+    grid-column: 1 / -1;
+    margin-left: 0;
+    justify-content: center;
+    padding: 12px 20px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+  .selectWrap {
+    width: 100%;
+    border-radius: 12px;
+  }
+  .select {
+    min-width: unset;
+    width: 100%;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 34px 12px 36px;
+    border-radius: 12px;
+  }
+  .selectWrap > ion-icon:first-child { font-size: 16px; }
+}
+
+/* ---- 600px ---- */
 @media (max-width: 600px) {
   .page { padding: 16px 14px; }
   .statsGrid { grid-template-columns: 1fr 1fr; }
-  .filtros { gap: 8px; }
-  .selectWrap { flex: 1; }
-  .select { min-width: unset; width: 100%; }
-  .btnExportar { margin-left: 0; width: 100%; justify-content: center; }
-  .tabs { gap: 4px; }
+  .statValor { font-size: 15px; }
   .tab { padding: 7px 12px; font-size: 12px; }
+  /* paginacion responsive */
+  .paginacion { flex-direction: column; align-items: center; gap: 8px; }
+  .paginacion > span { text-align: center; }
+}
+
+/* ---- 420px ---- */
+@media (max-width: 420px) {
+  .statsGrid { grid-template-columns: 1fr; }
+  .statCard { padding: 14px; }
+  .statValor { font-size: 17px; }
 }

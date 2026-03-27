@@ -30,6 +30,20 @@
 }
 :global([data-theme="dark"]) .tabla { background: #0d1f3c; border-color: rgba(255,255,255,0.07); }
 
+/* Laptop/tablet intermedio: mantener tabla y permitir scroll solo si no cabe */
+@media (max-width: 1280px) and (min-width: 769px) {
+  .tabla {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .tablaHead,
+  .fila {
+    min-width: 920px;
+  }
+}
+
 .tablaHead {
   display: grid;
   grid-template-columns: 1fr 1fr 120px 1fr 60px 80px;
@@ -253,14 +267,70 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-@media (max-width: 900px) {
-  .tablaHead, .fila { grid-template-columns: 1fr 120px 1fr 60px 80px; }
-  .tablaHead span:nth-child(2), .fila > .cellGris:first-of-type { display: none; }
-}
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .page { padding: 12px; }
-  .tablaHead, .fila { grid-template-columns: 1fr 120px 60px 44px; }
-  .tablaHead span:nth-child(4), .fila > .modosCell { display: none; }
+
+  .topBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topStats {
+    flex-wrap: wrap;
+  }
+
+  .btnNuevo {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tabla {
+    background: transparent;
+    border: none;
+    overflow: visible;
+    box-shadow: none;
+  }
+
+  .tablaBody {
+    gap: 8px;
+  }
+
+  .tablaHead { display: none; }
+  .tablaHead,
+  .fila { min-width: 0 !important; }
+
+  .fila {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "usuario estado"
+      "email email"
+      "rol modos"
+      "toggle acciones";
+    gap: 8px 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    border-bottom: 1.5px solid #e2e8f0;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin: 0;
+  }
+  :global([data-theme="dark"]) .fila {
+    background: #0d1f3c;
+    border-color: rgba(255,255,255,0.07);
+    border-bottom-color: rgba(255,255,255,0.07);
+    box-shadow: none;
+  }
+  .fila:last-child { border-bottom: 1.5px solid #e2e8f0; }
+  :global([data-theme="dark"]) .fila:last-child { border-bottom-color: rgba(255,255,255,0.07); }
+
+  .usuarioCell { grid-area: usuario; }
+  .fila > .cellGris { grid-area: email; }
+  .fila > .rolBadge { grid-area: rol; }
+  .fila > .modosCell { grid-area: modos; }
+  .fila > .toggleBtn { grid-area: toggle; justify-self: start; }
+  .fila > .acciones { grid-area: acciones; justify-self: end; }
+
   .modalGrid { grid-template-columns: 1fr; }
   .spanFull { grid-column: 1; }
 }

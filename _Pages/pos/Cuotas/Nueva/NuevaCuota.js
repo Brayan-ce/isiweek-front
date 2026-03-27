@@ -263,6 +263,31 @@ export default function NuevaCuota() {
       <div className={s.layout}>
         <div className={s.leftCol}>
           <div className={s.card}>
+            <div className={s.cardTitle}><ion-icon name="person-outline" />Cliente</div>
+            <button className={s.clienteBtn} onClick={() => setModalCliente(true)}>
+              {clienteId ? (
+                <>
+                  <div className={s.clienteAvatar}>{clienteNombre.charAt(0).toUpperCase()}</div>
+                  <span className={s.clienteNombreSeleccionado}>{clienteNombre}</span>
+                </>
+              ) : (
+                <><ion-icon name="person-add-outline" /><span className={s.clientePlaceholder}>Seleccionar cliente</span></>
+              )}
+              <ion-icon name="chevron-forward-outline" />
+            </button>
+          </div>
+
+          <div className={s.card}>
+            <div className={s.cardTitle}><ion-icon name="document-text-outline" />Concepto</div>
+            <input
+              className={s.input}
+              placeholder="Ej: Televisor Samsung 55 pulgadas"
+              value={concepto}
+              onChange={e => setConcepto(e.target.value)}
+            />
+          </div>
+
+          <div className={s.card}>
             <div className={s.cardTitle}><ion-icon name="search-outline" />Productos</div>
             <div className={s.searchWrap}>
               <ion-icon name="search-outline" />
@@ -317,33 +342,6 @@ export default function NuevaCuota() {
               </div>
             )}
           </div>
-        </div>
-
-        <div className={s.rightCol}>
-          <div className={s.card}>
-            <div className={s.cardTitle}><ion-icon name="person-outline" />Cliente</div>
-            <button className={s.clienteBtn} onClick={() => setModalCliente(true)}>
-              {clienteId ? (
-                <>
-                  <div className={s.clienteAvatar}>{clienteNombre.charAt(0).toUpperCase()}</div>
-                  <span className={s.clienteNombreSeleccionado}>{clienteNombre}</span>
-                </>
-              ) : (
-                <><ion-icon name="person-add-outline" /><span className={s.clientePlaceholder}>Seleccionar cliente</span></>
-              )}
-              <ion-icon name="chevron-forward-outline" />
-            </button>
-          </div>
-
-          <div className={s.card}>
-            <div className={s.cardTitle}><ion-icon name="document-text-outline" />Concepto</div>
-            <input
-              className={s.input}
-              placeholder="Ej: Televisor Samsung 55 pulgadas"
-              value={concepto}
-              onChange={e => setConcepto(e.target.value)}
-            />
-          </div>
 
           <div className={s.card}>
             <div className={s.cardTitle}><ion-icon name="cart-outline" />Carrito</div>
@@ -373,7 +371,9 @@ export default function NuevaCuota() {
               </>
             )}
           </div>
+        </div>
 
+        <div className={s.rightCol}>
           <div className={s.card}>
             <div className={s.cardTitle}><ion-icon name="albums-outline" />Cuotas</div>
             <div className={s.cantCuotasRow}>

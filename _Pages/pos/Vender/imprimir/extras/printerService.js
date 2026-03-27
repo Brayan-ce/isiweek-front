@@ -174,6 +174,112 @@ export async function printerPrint(venta, ancho, opciones) {
   await writeBluetooth(_btConn.characteristic, bytes)
 }
 
+export async function printerPrintCuota(venta, ancho, opciones) {
+  if (!_btConn) throw new Error("No hay impresora conectada")
+  const bytes = buildCuotaTicket(venta, ancho, opciones)
+  await writeBluetooth(_btConn.characteristic, bytes)
+}
+
+function buildCuotaTicket(venta, ancho, opciones) {
+  const bytes = []
+  const sim   = venta.empresa?.moneda?.simbolo ?? "RD$"
+
+  function fmt(n) {
+    return `${sim} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+  function line(text = "")  { return [...textToBytes(text + "\n")] }
+  function sep()             { return line("-".repeat(ancho)) }
+  function center(text)      { const p = Math.max(0, Math.floor((ancho - text.length) / 2)); return line(" ".repeat(p) + text) }
+  function row(left, right)  { const sp = Math.max(1, ancho - left.length - right.length); return line(left + " ".repeat(sp) + right) }
+
+  const cuotas      = venta.venta_cuotas ?? []
+  const detalles    = venta.venta_detalles ?? []
+  const pagadas     = cuotas.filter(c => c.estado === "pagada")
+  const montoPagado = pagadas.reduce((a, c) => a + Number(c.monto), 0)
+  const montoPend   = cuotas.filter(c => c.estado === "pendiente").reduce((a, c) => a + Number(c.monto), 0)
+
+  bytes.push(ESC, 0x40)
+
+  if (opciones.mostrarDatosEmpresa) {
+    if (venta.empresa?.nombre)    bytes.push(...center(venta.empresa.nombre.toUpperCase()))
+    if (venta.empresa?.rnc)       bytes.push(...line(`RNC: ${venta.empresa.rnc}`))
+    if (venta.empresa?.telefono)  bytes.push(...line(venta.empresa.telefono))
+    if (venta.empresa?.direccion) bytes.push(...line(venta.empresa.direccion))
+  }
+
+  bytes.push(...sep())
+  bytes.push(...center("ESTADO DE CUOTAS"))
+  bytes.push(...center(`#${String(venta.id).padStart(6, "0")}`))
+  bytes.push(...line(new Date(venta.created_at).toLocaleString("es-DO")))
+  bytes.push(...sep())
+
+  if (opciones.mostrarDatosCliente) {
+    if (venta.cliente?.nombre)     bytes.push(...line(`Cliente: ${venta.cliente.nombre}`))
+    if (venta.cliente?.cedula_rnc) bytes.push(...line(`Ced/RNC: ${venta.cliente.cedula_rnc}`))
+  }
+  if (venta.comprobante) bytes.push(...line(`NCF: ${venta.comprobante.codigo}`))
+  if (opciones.mostrarVendedor && venta.usuario?.nombre_completo) {
+    bytes.push(...line(`Vendedor: ${venta.usuario.nombre_completo}`))
+  }
+
+  if (opciones.mostrarProductos && detalles.length > 0) {
+    bytes.push(...sep())
+    for (const d of detalles) {
+      bytes.push(...line(String(d.nombre_producto).substring(0, ancho)))
+      bytes.push(...row(`  ${d.cantidad}x ${fmt(d.precio_unitario)}`, fmt(d.subtotal)))
+    }
+    bytes.push(...sep())
+    bytes.push(...row("Subtotal:", fmt(venta.subtotal)))
+    if (Number(venta.itbis) > 0) bytes.push(...row("ITBIS:", fmt(venta.itbis)))
+    if (Number(venta.descuento) > 0) bytes.push(...row("Descuento:", `-${fmt(venta.descuento)}`))
+  }
+
+  bytes.push(...sep())
+  bytes.push(ESC, 0x45, 0x01)
+  bytes.push(...row("TOTAL:", fmt(venta.total)))
+  bytes.push(ESC, 0x45, 0x00)
+  bytes.push(...sep())
+
+  if (opciones.mostrarMetodoPago && venta.metodo_pago?.nombre) {
+    bytes.push(...row("Metodo:", venta.metodo_pago.nombre))
+    bytes.push(...sep())
+  }
+
+  bytes.push(...row("Total venta:", fmt(venta.total)))
+  bytes.push(...row("Pagado:",     fmt(montoPagado)))
+  bytes.push(...row("Pendiente:",  fmt(montoPend)))
+  bytes.push(...row("Cuotas:",     `${pagadas.length}/${cuotas.length}`))
+  bytes.push(...sep())
+
+  const colNum   = 4
+  const colMonto = Math.floor(ancho / 3)
+  const colEst   = 10
+  const header   = "#".padEnd(colNum) + "Monto".padEnd(colMonto) + "Estado".padEnd(colEst) + "Fecha"
+  bytes.push(...line(header))
+  bytes.push(...sep())
+  for (const c of cuotas) {
+    const num   = String(c.numero).padEnd(colNum)
+    const monto = fmt(c.monto).padEnd(colMonto)
+    const est   = (c.estado === "pagada" ? "Pagada" : "Pendiente").padEnd(colEst)
+    const fecha = c.pagada_at
+      ? new Date(c.pagada_at).toLocaleDateString("es-DO", { day: "2-digit", month: "short", year: "numeric" })
+      : "—"
+    bytes.push(...line(`${num}${monto}${est}${fecha}`))
+  }
+
+  if (opciones.mostrarMensajeFinal) {
+    bytes.push(...sep())
+    bytes.push(...center("Gracias por su preferencia"))
+  }
+
+  bytes.push(...line(""))
+  bytes.push(...line(""))
+  bytes.push(...line(""))
+  bytes.push(GS, 0x56, 0x41, 0x10)
+
+  return new Uint8Array(bytes)
+}
+
 export async function printerDisconnect() {
   if (_btConn?.device?.gatt?.connected) _btConn.device.gatt.disconnect()
   _btConn = null

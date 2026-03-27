@@ -159,14 +159,21 @@
   border: 1px solid #f1f5f9;
   box-shadow: 0 2px 10px rgba(0,0,0,0.04);
   overflow: hidden;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
 }
 :global([data-theme="dark"]) .tableWrap { background: #0d1f3c; border-color: rgba(255,255,255,0.05); }
 
+.desktopTable { display: block; min-width: 0; }
+.mobileList { display: none; }
+
 .tableHeader {
   display: grid;
-  grid-template-columns: 80px 160px 1fr 1fr 110px 120px 110px 60px;
-  gap: 10px;
-  padding: 11px 16px;
+  grid-template-columns: 78px 145px minmax(130px, 1.2fr) minmax(130px, 1.1fr) minmax(95px, 0.9fr) minmax(110px, 0.9fr) 96px 44px;
+  gap: 8px;
+  padding: 11px 12px;
+  min-width: 840px;
   background: #f8fafc;
   font-size: 11px;
   font-weight: 700;
@@ -178,9 +185,10 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: 80px 160px 1fr 1fr 110px 120px 110px 60px;
-  gap: 10px;
-  padding: 12px 16px;
+  grid-template-columns: 78px 145px minmax(130px, 1.2fr) minmax(130px, 1.1fr) minmax(95px, 0.9fr) minmax(110px, 0.9fr) 96px 44px;
+  gap: 8px;
+  padding: 12px;
+  min-width: 840px;
   font-size: 12px;
   color: #374151;
   border-top: 1px solid #f8fafc;
@@ -196,7 +204,7 @@
 .fecha { font-size: 11px; color: #64748b; }
 .cliente { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vendedor { color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.metodo { color: #64748b; }
+.metodo { color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .totalCell { font-weight: 800; color: #0f172a; }
 :global([data-theme="dark"]) .totalCell { color: #f1f5f9; }
 
@@ -214,6 +222,87 @@
 .estadoPendiente  { background: rgba(245,158,11,0.1); color: #d97706; }
 
 .acciones { display: flex; gap: 6px; justify-content: flex-end; }
+
+@media (max-width: 1200px) {
+  .desktopTable {
+    min-width: max-content;
+  }
+
+  .tableHeader,
+  .tableRow {
+    grid-template-columns: 70px 130px minmax(120px, 1.2fr) minmax(120px, 1fr) minmax(85px, 0.8fr) minmax(105px, 0.8fr) 88px 40px;
+    gap: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+    min-width: 760px;
+  }
+
+  .tableHeader {
+    font-size: 10px;
+  }
+
+  .tableRow {
+    font-size: 11px;
+  }
+
+  .fecha,
+  .ventaId {
+    font-size: 10px;
+  }
+}
+
+.mobileCard {
+  border-top: 1px solid #f1f5f9;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+:global([data-theme="dark"]) .mobileCard { border-top-color: rgba(255,255,255,0.05); }
+
+.mobileTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mobileGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mobileItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mobileLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.mobileValue {
+  font-size: 12px;
+  color: #334155;
+  font-weight: 600;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: clip;
+  word-break: break-word;
+}
+:global([data-theme="dark"]) .mobileValue { color: #cbd5e1; }
+
+.mobileActions {
+  display: flex;
+  justify-content: flex-end;
+}
 
 .accionBtn {
   width: 30px;
@@ -514,14 +603,105 @@
 
 @media (max-width: 900px) {
   .page { padding: 16px 14px; }
-  .tableHeader { display: none; }
-  .tableRow {
+
+  .topBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .topBarRight {
+    width: 100%;
+    display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto;
-    gap: 6px;
+  }
+
+  .btnPrimario,
+  .btnSecundario {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .desktopTable { display: none; }
+  .mobileList { display: block; }
+}
+
+@media (max-width: 600px) {
+  .filtros {
+    gap: 10px;
     padding: 12px;
   }
-  .vendedor { display: none; }
+
+  .filtroGrupo {
+    width: 100%;
+  }
+
+  .filtroInput,
+  .filtroSelect {
+    width: 100%;
+  }
+
+  .limpiarFiltros {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mobileGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mobileCard {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .mobileItem {
+    padding-bottom: 6px;
+    border-bottom: 1px dashed #e2e8f0;
+  }
+
+  :global([data-theme="dark"]) .mobileItem {
+    border-bottom-color: rgba(255,255,255,0.08);
+  }
+
+  .paginacion {
+    flex-wrap: wrap;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+  }
+
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92dvh;
+    border-radius: 22px 22px 0 0;
+    padding: 20px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .reciboWrap {
+    overflow-x: auto;
+  }
+
+  .detalleHeader,
+  .detalleRow {
+    min-width: 420px;
+  }
+
+  .modalAcciones {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .imprimirBtn,
+  .cancelarVentaBtn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media print {

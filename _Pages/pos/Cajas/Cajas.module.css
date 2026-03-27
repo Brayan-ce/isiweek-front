@@ -61,6 +61,40 @@
 .tabActivo:hover { color: white; }
 :global([data-theme="dark"]) .tabActivo { background: #1d6fce; }
 
+.alertaVieja {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fffbeb;
+  border: 1.5px solid #fcd34d;
+  border-radius: 14px;
+  padding: 14px 18px;
+  color: #92400e;
+}
+:global([data-theme="dark"]) .alertaVieja { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.3); color: #fbbf24; }
+.alertaVieja ion-icon { font-size: 22px; color: #f59e0b; flex-shrink: 0; }
+.alertaVieja div { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.alertaVieja strong { font-size: 13px; font-weight: 800; }
+.alertaVieja span { font-size: 12px; opacity: 0.85; }
+.alertaViejaCerrar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1.5px solid rgba(245,158,11,0.5);
+  border-radius: 10px;
+  background: rgba(245,158,11,0.1);
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.alertaViejaCerrar:hover { background: rgba(245,158,11,0.2); border-color: #f59e0b; }
+:global([data-theme="dark"]) .alertaViejaCerrar { color: #fbbf24; border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); }
+
 .sinCajaWrap {
   display: flex;
   flex-direction: column;
@@ -262,6 +296,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
 }
 :global([data-theme="dark"]) .seccionCard { background: #0d1f3c; border-color: rgba(255,255,255,0.05); }
 
@@ -392,9 +427,16 @@
 .gastoMonto { font-size: 13px; font-weight: 800; color: #dc2626; }
 .gastoHora { font-size: 11px; color: #94a3b8; }
 
+.histTableWrap {
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
 .histTableHeader {
   display: grid;
-  grid-template-columns: 140px 80px 80px 130px 130px 60px 90px;
+  grid-template-columns: 140px 80px 80px 130px 130px 60px 90px 80px;
   gap: 8px;
   padding: 8px 0;
   font-size: 10px;
@@ -403,20 +445,40 @@
   text-transform: uppercase;
   letter-spacing: 0.4px;
   border-bottom: 1px solid #f1f5f9;
+  min-width: 820px;
 }
 :global([data-theme="dark"]) .histTableHeader { border-bottom-color: rgba(255,255,255,0.06); }
 
 .histTableRow {
   display: grid;
-  grid-template-columns: 140px 80px 80px 130px 130px 60px 90px;
+  grid-template-columns: 140px 80px 80px 130px 130px 60px 90px 80px;
   gap: 8px;
   padding: 10px 0;
   font-size: 12px;
   color: #374151;
   border-bottom: 1px solid #f8fafc;
   align-items: center;
+  min-width: 820px;
 }
 :global([data-theme="dark"]) .histTableRow { color: #cbd5e1; border-bottom-color: rgba(255,255,255,0.03); }
+
+.histAcciones { display: flex; gap: 5px; }
+.histBtnVer {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1.5px solid rgba(29,111,206,0.25); background: rgba(29,111,206,0.06);
+  color: #1d6fce; cursor: pointer; font-size: 14px; transition: all 0.15s;
+}
+.histBtnVer:hover { background: rgba(29,111,206,0.15); border-color: #1d6fce; }
+:global([data-theme="dark"]) .histBtnVer { border-color: rgba(96,165,250,0.2); background: rgba(96,165,250,0.06); color: #60a5fa; }
+.histBtnEditar {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1.5px solid rgba(245,158,11,0.25); background: rgba(245,158,11,0.06);
+  color: #d97706; cursor: pointer; font-size: 14px; transition: all 0.15s;
+}
+.histBtnEditar:hover { background: rgba(245,158,11,0.15); border-color: #f59e0b; }
+:global([data-theme="dark"]) .histBtnEditar { border-color: rgba(245,158,11,0.2); background: rgba(245,158,11,0.06); color: #fbbf24; }
 
 .paginacion {
   display: flex;
@@ -694,17 +756,103 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-@media (max-width: 900px) {
+/* ---- 1100px: laptop con sidebar ---- */
+@media (max-width: 1100px) {
+  .page { padding: 20px 18px; }
   .resumenGrid { grid-template-columns: 1fr 1fr; }
   .bottomGrid  { grid-template-columns: 1fr; }
 }
-@media (max-width: 600px) {
-  .page { padding: 16px 14px; }
+
+/* ---- 900px ---- */
+@media (max-width: 900px) {
   .resumenGrid { grid-template-columns: 1fr 1fr; }
+  .seccionCard { padding: 16px 16px; }
+  .resumenCard { padding: 14px 16px; }
+}
+
+/* ---- 700px ---- */
+@media (max-width: 700px) {
+  .page { padding: 16px 14px; }
+  .tabs { width: 100%; }
+  .tab  { flex: 1; justify-content: center; }
+  .resumenValor { font-size: 15px; }
+  /* botones caja: Vender arriba full, Gasto + Cerrar lado a lado */
   .cajaHeaderBtns { width: 100%; }
-  .histTableHeader, .histTableRow { grid-template-columns: 1fr 70px 70px 90px; }
-  .histTableHeader span:nth-child(4),
-  .histTableHeader span:nth-child(5),
-  .histTableRow span:nth-child(4),
-  .histTableRow span:nth-child(5) { display: none; }
+  .btnVender { flex: 1 1 100%; order: -1; justify-content: center; }
+  .btnGasto, .btnCerrar { flex: 1; justify-content: center; }
+}
+
+/* ---- 600px: tablas → tarjetas + modals bottom-sheet ---- */
+@media (max-width: 600px) {
+  /* ventas del turno → tarjetas */
+  .ventasTableHeader { display: none; }
+  .ventasTableRow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1.5px solid #f1f5f9;
+    margin-bottom: 6px;
+    background: white;
+    align-items: start;
+  }
+  :global([data-theme="dark"]) .ventasTableRow {
+    background: #0a1628;
+    border-color: rgba(255,255,255,0.06);
+  }
+  /* 1:id  2:cliente  3:metodo  4:total  5:hora  6:estado */
+  .ventasTableRow > span:nth-child(1) { grid-column: 1; grid-row: 1; }
+  .ventasTableRow > span:nth-child(5) { grid-column: 2; grid-row: 1; text-align: right; }
+  .ventasTableRow > span:nth-child(2) { grid-column: 1 / -1; grid-row: 2; font-size: 13px; font-weight: 600; }
+  .ventasTableRow > span:nth-child(3) { grid-column: 1; grid-row: 3; font-size: 11px; color: #94a3b8; }
+  .ventasTableRow > span:nth-child(6) { grid-column: 2; grid-row: 3; align-self: center; }
+  .ventasTableRow > span:nth-child(4) {
+    grid-column: 1 / -1; grid-row: 4;
+    font-size: 15px; font-weight: 900;
+    padding-top: 6px; border-top: 1px solid #f1f5f9; margin-top: 2px;
+  }
+  :global([data-theme="dark"]) .ventasTableRow > span:nth-child(4) { border-top-color: rgba(255,255,255,0.06); }
+
+  /* historial → tarjetas */
+  /* 1:fecha  2:apertura  3:cierre  4:saldo-apertura  5:saldo-cierre  6:ventas  7:estado */
+  .histTableHeader { display: none; }
+  .histTableRow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1.5px solid #f1f5f9;
+    margin-bottom: 6px;
+    background: white;
+    align-items: start;
+  }
+  :global([data-theme="dark"]) .histTableRow {
+    background: #0a1628;
+    border-color: rgba(255,255,255,0.06);
+  }
+  .histTableRow > span:nth-child(1) { grid-column: 1; grid-row: 1; font-weight: 700; }
+  .histTableRow > span:nth-child(7) { grid-column: 2; grid-row: 1; }
+  .histTableRow > span:nth-child(2) { grid-column: 1; grid-row: 2; font-size: 11px; color: #94a3b8; }
+  .histTableRow > span:nth-child(3) { grid-column: 2; grid-row: 2; font-size: 11px; color: #94a3b8; text-align: right; }
+  .histTableRow > span:nth-child(4) { display: none; }
+  .histTableRow > span:nth-child(5) {
+    grid-column: 1 / -1; grid-row: 3;
+    font-size: 15px; font-weight: 900;
+    padding-top: 6px; border-top: 1px solid #f1f5f9; margin-top: 2px;
+  }
+  :global([data-theme="dark"]) .histTableRow > span:nth-child(5) { border-top-color: rgba(255,255,255,0.06); }
+  .histTableRow > span:nth-child(6) { grid-column: 1; grid-row: 4; font-size: 11px; color: #94a3b8; }
+
+  /* modals → bottom-sheet */
+  .overlay { align-items: flex-end; padding: 0; }
+  .modal {
+    border-radius: 24px 24px 0 0;
+    width: 100%; max-width: 100%;
+    max-height: 92dvh;
+    overflow-y: auto;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+  :global([data-theme="dark"]) .modal { border-radius: 24px 24px 0 0; }
 }

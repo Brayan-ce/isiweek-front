@@ -418,6 +418,7 @@ export default function LoginPage() {
                     <div className={s.featureCardBody}>
                       <span className={s.featureCardLabel}>{f.label}</span>
                       <span className={s.featureCardDesc}>{f.desc}</span>
+
                     </div>
                     <div className={s.featureCardArrow}><ion-icon name="chevron-forward-outline" /></div>
                   </div>
@@ -674,6 +675,8 @@ export default function LoginPage() {
               <div className={s.featureModalTitles}>
                 <span className={s.featureModalTitle}>{featurePopup.label}</span>
                 <span className={s.featureModalDesc}>{featurePopup.desc}</span>
+
+                
               </div>
               <button className={s.closeBtn} onClick={() => setFeaturePopup(null)} type="button">
                 <ion-icon name="close-outline" />

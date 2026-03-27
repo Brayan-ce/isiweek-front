@@ -382,30 +382,96 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ---- 900px ---- */
 @media (max-width: 900px) {
   .resumenGrid { grid-template-columns: 1fr 1fr; }
   .resumenCardTipos { grid-column: 1 / -1; }
 }
+
+/* ---- 768px: tabla → tarjetas ---- */
 @media (max-width: 768px) {
   .tablaHeader { display: none; }
+  .tabla { background: transparent; border: none; box-shadow: none; }
   .fila {
+    display: grid;
+    grid-template-areas:
+      "concepto  acciones"
+      "monto     monto   "
+      "meta      meta    ";
     grid-template-columns: 1fr auto;
-    grid-template-rows: auto auto auto;
-    gap: 6px; padding: 12px 14px;
+    gap: 6px;
+    padding: 12px 14px;
+    background: white;
+    border-radius: 12px;
+    border: 1.5px solid #f1f5f9;
+    margin-bottom: 8px;
   }
-  .colConcepto { grid-column: 1; }
-  .colAcciones { grid-column: 2; grid-row: 1; align-items: flex-start; }
-  .colMonto    { grid-column: 1; grid-row: 2; }
-  .colTipo     { grid-column: 1; grid-row: 3; }
-  .colUsuario, .colFecha, .colHora { display: none; }
+  :global([data-theme="dark"]) .fila { background: #0d1f3c; border-color: rgba(255,255,255,0.07); }
+  .fila:hover { background: #fff8f8; }
+  :global([data-theme="dark"]) .fila:hover { background: rgba(239,68,68,0.04); }
+  .filaAlterna { background: white; }
+  :global([data-theme="dark"]) .filaAlterna { background: #0d1f3c; }
+  .colConcepto { grid-area: concepto; align-items: center; }
+  .colAcciones { grid-area: acciones; align-items: flex-start; }
+  .colMonto    { grid-area: monto; }
+  .montoText   { font-size: 16px; }
+  /* meta: tipo + usuario + fecha en una fila */
+  .colTipo     { grid-area: unset; }
+  .colUsuario  { grid-area: unset; }
+  .colFecha    { grid-area: unset; }
+  .colHora     { display: none; }
+  /* usar un wrapper para la fila meta */
+  .colTipo, .colUsuario, .colFecha {
+    grid-area: meta;
+    display: inline-flex;
+    align-items: center;
+  }
+  /* mostrar los tres como flex row */
+  .fila > .colTipo     { grid-column: 1; grid-row: 3; }
+  .fila > .colUsuario  { display: none; }
+  .fila > .colFecha    { display: none; }
 }
+
+/* ---- 600px ---- */
 @media (max-width: 600px) {
-  .page { padding: 16px; }
+  .page { padding: 16px 14px; }
+  .resumenGrid { grid-template-columns: 1fr 1fr; }
+
+  /* topBar apilado */
   .topBar { flex-direction: column; align-items: stretch; }
   .searchWrap { max-width: 100%; }
   .topRight { flex-wrap: wrap; }
-  .modal { max-width: 100%; border-radius: 16px 16px 0 0; align-self: flex-end; }
+  .select { flex: 1; }
+  .nuevaBtn { flex: 1 1 100%; justify-content: center; }
+
+  /* modales → bottom-sheet */
   .overlay { align-items: flex-end; padding: 0; }
+  .modal {
+    border-radius: 24px 24px 0 0;
+    max-width: 100%;
+    max-height: 92dvh;
+    overflow-y: auto;
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+  :global([data-theme="dark"]) .modal { border-radius: 24px 24px 0 0; }
+  .modalAcciones {
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+    flex-shrink: 0;
+  }
+  .modalConfirm {
+    border-radius: 24px 24px 0 0;
+    width: 100%; max-width: 100%;
+    padding-bottom: max(28px, env(safe-area-inset-bottom));
+  }
+
+  /* paginación compacta */
   .paginacion { gap: 4px; }
   .paginaBtn, .paginaActiva, .paginacion > button { min-width: 30px; height: 30px; font-size: 12px; }
+}
+
+/* ---- 420px ---- */
+@media (max-width: 420px) {
+  .resumenGrid { grid-template-columns: 1fr; }
+  .resumenCardTipos { grid-column: unset; }
+  .resumenValor { font-size: 18px; }
 }

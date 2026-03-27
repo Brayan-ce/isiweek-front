@@ -85,6 +85,8 @@ export default function MisVentas() {
   const [ventaDetalle, setVentaDetalle] = useState(null)
   const [cancelando, setCancelando]     = useState(null)
   const [alerta, setAlerta]             = useState(null)
+  const [simbolo, setSimbolo]           = useState("RD$")
+  const simboloMoneda                   = (simbolo && String(simbolo).trim()) || "RD$"
 
   useEffect(() => {
     const payload = getTokenPayload()
@@ -97,6 +99,7 @@ export default function MisVentas() {
     if (!usuarioId) return
     obtenerDatosHeader(usuarioId).then(d => {
       setTipoUsuario(d?.usuario?.tipo_usuario_id ?? 3)
+      setSimbolo(d?.empresa?.moneda?.simbolo || "RD$")
     })
   }, [usuarioId])
 
@@ -135,8 +138,6 @@ export default function MisVentas() {
     setVentaDetalle(null)
     cargar(pagina)
   }
-
-  const simbolo = "RD$"
 
   if (!empresaId || !usuarioId || cargando) return (
     <div className={s.page}>
@@ -192,39 +193,89 @@ export default function MisVentas() {
       </div>
 
       <div className={s.tableWrap}>
-        <div className={s.tableHeader}>
-          <span>#</span>
-          <span>Fecha</span>
-          <span>Cliente</span>
-          <span>Vendedor</span>
-          <span>Método</span>
-          <span>Total</span>
-          <span>Estado</span>
-          <span></span>
-        </div>
-
         {ventas.length === 0 ? (
           <div className={s.empty}>
             <ion-icon name="receipt-outline" />
             <p>Sin ventas con los filtros aplicados</p>
           </div>
         ) : (
-          ventas.map(v => (
-            <div key={v.id} className={s.tableRow}>
-              <span className={s.ventaId}>#{String(v.id).padStart(6, "0")}</span>
-              <span className={s.fecha}>{fmtFecha(v.created_at)}</span>
-              <span className={s.cliente}>{v.cliente?.nombre ?? "Consumidor final"}</span>
-              <span className={s.vendedor}>{v.usuario?.nombre_completo ?? "—"}</span>
-              <span className={s.metodo}>{v.metodo_pago?.nombre ?? "—"}</span>
-              <span className={s.totalCell}>{fmt(v.total, simbolo)}</span>
-              <span className={`${s.estado} ${ESTADO_STYLE[v.estado] ?? ""}`}>{v.estado}</span>
-              <div className={s.acciones}>
-                <button className={s.accionBtn} title="Ver detalle" onClick={() => setVentaDetalle(v)}>
-                  <ion-icon name="eye-outline" />
-                </button>
+          <>
+            <div className={s.desktopTable}>
+              <div className={s.tableHeader}>
+                <span>#</span>
+                <span>Fecha</span>
+                <span>Cliente</span>
+                <span>Vendedor</span>
+                <span>Método</span>
+                <span>Total</span>
+                <span>Estado</span>
+                <span></span>
               </div>
+
+              {ventas.map(v => (
+                <div key={v.id} className={s.tableRow}>
+                  <span className={s.ventaId}>#{String(v.id).padStart(6, "0")}</span>
+                  <span className={s.fecha}>{fmtFecha(v.created_at)}</span>
+                  <span className={s.cliente}>{v.cliente?.nombre ?? "Consumidor final"}</span>
+                  <span className={s.vendedor}>{v.usuario?.nombre_completo ?? "—"}</span>
+                  <span className={s.metodo}>{v.metodo_pago?.nombre ?? "—"}</span>
+                  <span className={s.totalCell}>{fmt(v.total, simboloMoneda)}</span>
+                  <span className={`${s.estado} ${ESTADO_STYLE[v.estado] ?? ""}`}>{v.estado}</span>
+                  <div className={s.acciones}>
+                    <button className={s.accionBtn} title="Ver detalle" onClick={() => setVentaDetalle(v)}>
+                      <ion-icon name="eye-outline" />
+                    </button>
+                    <button className={s.accionBtn} title="Imprimir" onClick={() => router.push(`/pos/vender/imprimir/${v.id}`)}>
+                      <ion-icon name="print-outline" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))
+
+            <div className={s.mobileList}>
+              {ventas.map(v => (
+                <div key={`m-${v.id}`} className={s.mobileCard}>
+                  <div className={s.mobileTop}>
+                    <span className={s.ventaId}>#{String(v.id).padStart(6, "0")}</span>
+                    <span className={`${s.estado} ${ESTADO_STYLE[v.estado] ?? ""}`}>{v.estado}</span>
+                  </div>
+
+                  <div className={s.mobileGrid}>
+                    <div className={s.mobileItem}>
+                      <span className={s.mobileLabel}>Fecha</span>
+                      <span className={s.mobileValue}>{fmtFecha(v.created_at)}</span>
+                    </div>
+                    <div className={s.mobileItem}>
+                      <span className={s.mobileLabel}>Cliente</span>
+                      <span className={s.mobileValue}>{v.cliente?.nombre ?? "Consumidor final"}</span>
+                    </div>
+                    <div className={s.mobileItem}>
+                      <span className={s.mobileLabel}>Vendedor</span>
+                      <span className={s.mobileValue}>{v.usuario?.nombre_completo ?? "—"}</span>
+                    </div>
+                    <div className={s.mobileItem}>
+                      <span className={s.mobileLabel}>Metodo</span>
+                      <span className={s.mobileValue}>{v.metodo_pago?.nombre ?? "—"}</span>
+                    </div>
+                    <div className={s.mobileItem}>
+                      <span className={s.mobileLabel}>Total</span>
+                      <span className={`${s.mobileValue} ${s.totalCell}`}>{fmt(v.total, simboloMoneda)}</span>
+                    </div>
+                  </div>
+
+                  <div className={s.mobileActions}>
+                    <button className={s.accionBtn} title="Ver detalle" onClick={() => setVentaDetalle(v)}>
+                      <ion-icon name="eye-outline" />
+                    </button>
+                    <button className={s.accionBtn} title="Imprimir" onClick={() => router.push(`/pos/vender/imprimir/${v.id}`)}>
+                      <ion-icon name="print-outline" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -251,7 +302,7 @@ export default function MisVentas() {
       {ventaDetalle && (
         <ModalDetalle
           venta={ventaDetalle}
-          simbolo={simbolo}
+          simbolo={simboloMoneda}
           cancelando={cancelando === ventaDetalle.id}
           onCancelar={() => handleCancelar(ventaDetalle)}
           onClose={() => setVentaDetalle(null)}

@@ -1,9 +1,7 @@
 "use client"
-import { apiFetch } from "@/_EXTRAS/peticion"
-
 import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import s from "./Sidebar.module.css"
+import s from "./Navegacion.module.css"
 
 const GRUPOS = [
   {
@@ -101,7 +99,7 @@ const SLUG_ICON = {
   "configuracion":                "settings-outline",
 }
 
-export default function Sidebar({ data, open, onClose, onToggleDark, darkMode }) {
+export default function Sidebar({ data, open, onClose }) {
   const pathname = usePathname()
   const router   = useRouter()
 
@@ -118,8 +116,18 @@ export default function Sidebar({ data, open, onClose, onToggleDark, darkMode })
     return init
   })
 
+  const [sheetGrupo, setSheetGrupo] = useState(null)
+
   function toggleGrupo(id) {
     setAbiertos(p => ({ ...p, [id]: !p[id] }))
+  }
+
+  function abrirSheet(g) {
+    setSheetGrupo(g)
+  }
+
+  function cerrarSheet() {
+    setSheetGrupo(null)
   }
 
   function navegar(slug) {
@@ -154,8 +162,11 @@ export default function Sidebar({ data, open, onClose, onToggleDark, darkMode })
 
         <div className={s.sidebarTop}>
           <div className={s.perfilRow}>
-            <div className={s.perfilAvatar}>
-              {usuario.nombre_completo?.charAt(0).toUpperCase()}
+            <div className={`${s.perfilAvatar} ${empresa.logo ? s.perfilAvatarSinFondo : ""}`}>
+              {empresa.logo
+                ? <img src={`${process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"}${empresa.logo}`} alt={empresa.nombre} className={s.perfilAvatarImg} />
+                : usuario.nombre_completo?.charAt(0).toUpperCase()
+              }
             </div>
             <div className={s.perfilInfo}>
               <span className={s.perfilNombre}>{usuario.nombre_completo}</span>
@@ -224,10 +235,6 @@ export default function Sidebar({ data, open, onClose, onToggleDark, darkMode })
         </nav>
 
         <div className={s.sidebarBottom}>
-          <button className={s.darkBtn} onClick={onToggleDark}>
-            <ion-icon name={darkMode ? "sunny-outline" : "moon-outline"} />
-            <span>{darkMode ? "Modo claro" : "Modo oscuro"}</span>
-          </button>
           <button className={s.logoutBtn} onClick={() => router.push("/login")}>
             <ion-icon name="log-out-outline" />
             <span>Cerrar sesion</span>
@@ -235,6 +242,57 @@ export default function Sidebar({ data, open, onClose, onToggleDark, darkMode })
         </div>
 
       </aside>
+
+      <nav className={s.bottomNav}>
+        {tieneVender && (
+          <button
+            className={`${s.bnItem} ${isActivo("vender") ? s.bnItemActive : ""}`}
+            onClick={() => navegar("vender")}
+          >
+            <ion-icon name="storefront-outline" />
+            <span>Vender</span>
+          </button>
+        )}
+        {gruposFiltrados.slice(0, tieneVender ? 4 : 5).map(g => (
+          <button
+            key={g.id}
+            className={`${s.bnItem} ${g.hijos.some(sl => isActivo(sl)) ? s.bnItemActive : ""}`}
+            onClick={() => abrirSheet(g)}
+          >
+            <ion-icon name={g.icon} />
+            <span>{g.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {sheetGrupo && (
+        <>
+          <div className={s.sheetOverlay} onClick={cerrarSheet} />
+          <div className={s.sheet}>
+            <div className={s.sheetHeader}>
+              <ion-icon name={sheetGrupo.icon} />
+              <span>{sheetGrupo.label}</span>
+              <button className={s.sheetClose} onClick={cerrarSheet}>
+                <ion-icon name="close-outline" />
+              </button>
+            </div>
+            <div className={s.sheetGrid}>
+              {sheetGrupo.hijos.map(sl => (
+                <button
+                  key={sl}
+                  className={`${s.sheetItem} ${isActivo(sl) ? s.sheetItemActive : ""}`}
+                  onClick={() => { navegar(sl); cerrarSheet() }}
+                >
+                  <div className={s.sheetItemIcon}>
+                    <ion-icon name={SLUG_ICON[sl] ?? "ellipse-outline"} />
+                  </div>
+                  <span>{SLUG_LABEL[sl]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </>
   )
 }

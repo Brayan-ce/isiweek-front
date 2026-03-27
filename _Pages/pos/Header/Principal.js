@@ -3,9 +3,9 @@ import { apiFetch } from "@/_EXTRAS/peticion"
 
 import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import Sidebar from "./Sidebar"
-import Topbar from "./Topbar"
-import s from "./PosLayout.module.css"
+import Navegacion from "./abajo/Navegacion"
+import BarraSuperior from "./arriba/BarraSuperior"
+import s from "./Principal.module.css"
 
 const PRIMER_SLUG_POR_GRUPO = [
   "mis-ventas",
@@ -72,19 +72,22 @@ export default function PosLayout({ children }) {
 
   const slug = pathname.split("/")[2] ?? ""
 
-  if (!data) return null
+  if (!data) return (
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", background: dark ? "#070f1e" : "#f8fafc" }}>
+      <div style={{ width:36, height:36, border:"3px solid #1e6fff", borderTopColor:"transparent", borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  )
 
   return (
     <div className={s.layout}>
-      <Sidebar
+      <Navegacion
         data={data}
         open={open}
         onClose={() => setOpen(false)}
-        onToggleDark={toggleDark}
-        darkMode={dark}
       />
       <div className={s.main}>
-        <Topbar onOpenSidebar={() => setOpen(true)} titulo={slug} />
+        <BarraSuperior onOpenSidebar={() => setOpen(true)} titulo={slug} data={data} darkMode={dark} onToggleDark={toggleDark} />
         <div className={s.content}>{children}</div>
       </div>
     </div>

@@ -262,6 +262,13 @@
 }
 :global([data-theme="dark"]) .tabla { background: #0d1f3c; border-color: rgba(255,255,255,0.07); }
 
+.tablaScroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  width: 100%;
+}
+
 .tablaHeader {
   display: grid;
   grid-template-columns: 48px 1fr 140px 80px 80px 90px;
@@ -270,6 +277,7 @@
   font-size: 11px; font-weight: 700; color: #64748b;
   text-transform: uppercase; letter-spacing: 0.5px; gap: 10px;
   align-items: center;
+  min-width: 580px;
 }
 :global([data-theme="dark"]) .tablaHeader { background: #0a1628; border-bottom-color: rgba(255,255,255,0.07); }
 
@@ -280,6 +288,7 @@
   grid-template-columns: 48px 1fr 140px 80px 80px 90px;
   padding: 10px 16px; gap: 10px; align-items: center;
   border-bottom: 1px solid #f1f5f9; transition: background 0.12s;
+  min-width: 580px;
 }
 .fila:last-child { border-bottom: none; }
 .fila:hover { background: #f8fafc; }
@@ -288,8 +297,11 @@
 .filaAlterna { background: #fafbfc; }
 :global([data-theme="dark"]) .filaAlterna { background: rgba(255,255,255,0.015); }
 
-.colImagen, .colNombre, .colPrecio, .colStock, .colVisible, .colDestacado {
+.colImagen, .colPrecio, .colStock, .colVisible, .colDestacado {
   display: flex; align-items: center; min-width: 0;
+}
+.colNombre {
+  display: flex; flex-direction: column; justify-content: center; min-width: 0; gap: 2px;
 }
 
 .prodImg { width: 38px; height: 38px; border-radius: 8px; object-fit: cover; }
@@ -385,12 +397,38 @@
 @media (max-width: 768px) {
   .statsRow { grid-template-columns: 1fr 1fr; }
   .colDerecha { grid-template-columns: 1fr; }
+  .tabla {
+    border: none;
+    background: transparent;
+    overflow: visible;
+  }
+  .tablaScroll { overflow: visible; }
+  .tablaBody { gap: 10px; }
   .tablaHeader { display: none; }
-  .fila { grid-template-columns: 48px 1fr auto; grid-template-rows: auto auto; }
-  .colNombre { grid-column: 2; }
-  .colVisible { grid-column: 3; grid-row: 1; }
-  .colPrecio { grid-column: 2; grid-row: 2; }
-  .colDestacado { grid-column: 3; grid-row: 2; }
+  .fila {
+    grid-template-columns: 48px 1fr auto;
+    grid-template-areas:
+      "imagen nombre visible"
+      "imagen precio destacado";
+    gap: 8px;
+    padding: 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    border-bottom: none;
+    background: white;
+    min-width: 0;
+  }
+  :global([data-theme="dark"]) .fila {
+    background: #0d1f3c;
+    border-color: rgba(255,255,255,0.08);
+  }
+  .filaAlterna { background: white; }
+  :global([data-theme="dark"]) .filaAlterna { background: #0d1f3c; }
+  .colImagen { grid-area: imagen; }
+  .colNombre { grid-area: nombre; }
+  .colVisible { grid-area: visible; justify-content: flex-end; }
+  .colPrecio { grid-area: precio; }
+  .colDestacado { grid-area: destacado; justify-content: flex-end; }
   .colStock { display: none; }
   .slugRow { flex-wrap: wrap; }
   .slugBase { width: 100%; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 8px; }

@@ -27,8 +27,9 @@ function getTokenPayload() {
   } catch { return null }
 }
 
-function fmt(n) {
-  return `RD$ ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+function fmt(n, simbolo = "RD$") {
+  const simboloSeguro = (simbolo && String(simbolo).trim()) || "RD$"
+  return `${simboloSeguro} ${Number(n ?? 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function fmtFecha(f) {
@@ -90,7 +91,7 @@ function EstadoBadge({ estado }) {
   )
 }
 
-function ModalDetalle({ pedidoId, empresaId, onClose, onCambioEstado, mostrarAlerta }) {
+function ModalDetalle({ pedidoId, empresaId, simboloMoneda, onClose, onCambioEstado, mostrarAlerta }) {
   const [pedido, setPedido]       = useState(null)
   const [cargando, setCargando]   = useState(true)
   const [cambiando, setCambiando] = useState(false)
@@ -150,13 +151,13 @@ function ModalDetalle({ pedidoId, empresaId, onClose, onCambioEstado, mostrarAle
                       }
                       <span className={s.itemNombre}>{item.nombre_producto}</span>
                       <span className={s.itemCant}>x{item.cantidad}</span>
-                      <span className={s.itemSubtotal}>{fmt(item.subtotal)}</span>
+                      <span className={s.itemSubtotal}>{fmt(item.subtotal, simboloMoneda)}</span>
                     </div>
                   ))}
                 </div>
                 <div className={s.totalRow}>
                   <span>Total</span>
-                  <span className={s.totalVal}>{fmt(pedido.total)}</span>
+                  <span className={s.totalVal}>{fmt(pedido.total, simboloMoneda)}</span>
                 </div>
               </div>
               <div className={s.seccion}>
@@ -186,6 +187,7 @@ function ModalDetalle({ pedidoId, empresaId, onClose, onCambioEstado, mostrarAle
 export default function PedidosOnline() {
   const router                    = useRouter()
   const [empresaId, setEmpresaId] = useState(null)
+  const [usuarioId, setUsuarioId] = useState(null)
   const [pedidos, setPedidos]     = useState([])
   const [total, setTotal]         = useState(0)
   const [paginas, setPaginas]     = useState(1)
@@ -197,13 +199,24 @@ export default function PedidosOnline() {
   const [cargando, setCargando]   = useState(true)
   const [alerta, setAlerta]       = useState(null)
   const [modalId, setModalId]     = useState(null)
+  const [simbolo, setSimbolo]     = useState("RD$")
   const debounceRef               = useRef(null)
+  const simboloMoneda             = (simbolo && String(simbolo).trim()) || "RD$"
 
   useEffect(() => {
     const payload = getTokenPayload()
     if (!payload) { router.push("/login"); return }
     setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
   }, [])
+
+  useEffect(() => {
+    if (!usuarioId) return
+    apiFetch(`/api/pos/header/${usuarioId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setSimbolo(d?.empresa?.moneda?.simbolo || "RD$"))
+      .catch(() => {})
+  }, [usuarioId])
 
   const cargar = useCallback(async (opts = {}) => {
     if (!empresaId) return
@@ -299,7 +312,7 @@ export default function PedidosOnline() {
           </div>
           <div className={s.resumenCard}>
             <span className={s.resumenLabel}>Total este mes</span>
-            <span className={`${s.resumenValor} ${s.resumenAzul}`}>{fmt(resumen.total_mes)}</span>
+            <span className={`${s.resumenValor} ${s.resumenAzul}`}>{fmt(resumen.total_mes, simboloMoneda)}</span>
           </div>
         </div>
       )}
@@ -369,7 +382,7 @@ export default function PedidosOnline() {
                   <span className={s.horaText}>{fmtHora(p.created_at)}</span>
                 </div>
               </div>
-              <div className={s.colTotal}><span className={s.totalText}>{fmt(p.total)}</span></div>
+              <div className={s.colTotal}><span className={s.totalText}>{fmt(p.total, simboloMoneda)}</span></div>
               <div className={s.colEstado}><EstadoBadge estado={p.estado} /></div>
               <div className={s.colAcciones}>
                 <button className={s.verBtn} onClick={() => setModalId(p.id)}>
@@ -409,6 +422,7 @@ export default function PedidosOnline() {
         <ModalDetalle
           pedidoId={modalId}
           empresaId={empresaId}
+          simboloMoneda={simboloMoneda}
           onClose={() => setModalId(null)}
           onCambioEstado={handleCambioEstado}
           mostrarAlerta={mostrarAlerta}

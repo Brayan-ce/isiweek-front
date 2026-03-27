@@ -123,6 +123,20 @@
 }
 :global([data-theme="dark"]) .tableCard { background: #0d1f3c; border-color: rgba(255,255,255,0.05); }
 
+/* Laptop/tablet intermedio: mantener tabla y permitir scroll horizontal solo cuando no cabe */
+@media (max-width: 1200px) and (min-width: 641px) {
+  .tableCard {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .tableHeader,
+  .tableRow {
+    min-width: 980px;
+  }
+}
+
 .tableHeader {
   display: grid;
   grid-template-columns: 2fr 120px 1fr 110px 110px 70px 80px 90px 80px;
@@ -198,6 +212,23 @@
 .badgeInactivo { background: rgba(148,163,184,0.1); color: #64748b; }
 
 .acciones { display: flex; gap: 6px; justify-content: flex-end; }
+
+.btnVer {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(14,165,233,0.25);
+  background: rgba(14,165,233,0.06);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #0ea5e9;
+  transition: all 0.15s;
+}
+.btnVer:hover { border-color: #0ea5e9; background: rgba(14,165,233,0.12); }
+:global([data-theme="dark"]) .btnVer { background: rgba(14,165,233,0.08); border-color: rgba(14,165,233,0.2); color: #38bdf8; }
 
 .btnEdit {
   width: 30px;
@@ -578,22 +609,27 @@
 }
 
 .barcodeBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: none;
-  border: none;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(29,111,206,.06);
+  border: 1.5px solid rgba(29,111,206,.15);
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 600;
-  color: #1d6fce;
   font-family: inherit;
-  padding: 0;
-  transition: opacity 0.15s;
+  transition: all 0.15s;
+  text-align: left;
 }
-.barcodeBtn:hover { opacity: 0.7; }
-.barcodeBtn ion-icon { font-size: 16px; }
-:global([data-theme="dark"]) .barcodeBtn { color: #60a5fa; }
+.barcodeBtn:hover { background: rgba(29,111,206,.12); border-color: #1d6fce; transform: translateY(-1px); }
+.barcodeBtn ion-icon { font-size: 20px; color: #1d6fce; flex-shrink: 0; }
+:global([data-theme="dark"]) .barcodeBtn { background: rgba(96,165,250,.08); border-color: rgba(96,165,250,.2); }
+:global([data-theme="dark"]) .barcodeBtn ion-icon { color: #60a5fa; }
+
+.barcodeBtnInner { display: flex; flex-direction: column; gap: 1px; }
+.barcodeBtnLabel { font-size: 11px; font-weight: 700; color: #1d6fce; line-height: 1.2; }
+:global([data-theme="dark"]) .barcodeBtnLabel { color: #60a5fa; }
+.barcodeBtnCode  { font-size: 10px; color: #94a3b8; font-family: monospace; line-height: 1.2; }
 
 .itbisHeader {
   display: flex;
@@ -740,23 +776,96 @@
 }
 .barcodeDescargar:hover { box-shadow: 0 4px 14px rgba(29,111,206,0.35); }
 
-@media (max-width: 1024px) {
+/* ── 1100px: ocultar ITBIS ───────────────────────────── */
+@media (max-width: 1100px) {
   .tableHeader, .tableRow {
-    grid-template-columns: 2fr 1fr 100px 80px 70px 90px 80px;
+    grid-template-columns: 2fr 120px 1fr 110px 80px 90px 80px;
+    min-width: 840px;
   }
-  .tableHeader span:nth-child(4),
-  .tableRow span:nth-child(4) { display: none; }
+  .tableHeader > *:nth-child(6),
+  .tableRow    > *:nth-child(6) { display: none; }
 }
-@media (max-width: 768px) {
+
+/* ── 820px: ocultar Categoria + ITBIS ───────────────── */
+@media (max-width: 820px) {
   .page { padding: 16px 14px; }
-  .searchInput { width: 180px; }
   .tableHeader, .tableRow {
-    grid-template-columns: 2fr 100px 70px 90px 60px;
+    grid-template-columns: 2fr 120px 110px 80px 90px 80px;
+    min-width: 700px;
   }
-  .tableHeader span:nth-child(2),
-  .tableHeader span:nth-child(4),
-  .tableHeader span:nth-child(5),
-  .tableRow span:nth-child(2),
-  .tableRow span:nth-child(4),
-  .tableRow span:nth-child(5) { display: none; }
+  .tableHeader > *:nth-child(3),
+  .tableHeader > *:nth-child(6),
+  .tableRow    > *:nth-child(3),
+  .tableRow    > *:nth-child(6) { display: none; }
+}
+
+/* ── 768px: CARDS ────────────────────────────────────── */
+@media (max-width: 768px) {
+  .page { padding: 12px 10px; gap: 12px; }
+
+  /* topBar apilado */
+  .topBar      { flex-direction: column; align-items: stretch; }
+  .topBarRight { flex-wrap: wrap; }
+  .searchWrap  { flex: 1 1 auto; }
+  .searchInput { width: 100%; }
+  .btnNuevo    { width: 100%; justify-content: center; }
+
+  /* tableCard → lista de cards */
+  .tableHeader { display: none; }
+  .tableHeader,
+  .tableRow { min-width: 0 !important; }
+  .tableCard {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    overflow: visible;          /* evita que corte sombras/bordes de cards */
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* cada fila → card */
+  .tableRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    grid-template-areas:
+      "prod    prod     acciones"
+      "precio  stock    badge   "
+      "barcode barcode  barcode ";
+    row-gap: 10px;
+    column-gap: 8px;
+    padding: 14px 16px;
+    border-radius: 14px !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-bottom: 1.5px solid #e2e8f0 !important;
+    background: white !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  :global([data-theme="dark"]) .tableRow {
+    background: #0d1f3c !important;
+    border-color: rgba(255,255,255,.07) !important;
+    border-bottom-color: rgba(255,255,255,.07) !important;
+    box-shadow: none;
+  }
+  .tableRow:hover                              { background: white !important; }
+  :global([data-theme="dark"]) .tableRow:hover { background: #0d1f3c !important; }
+
+  /* asignar áreas por posición DOM */
+  .tableRow > *:nth-child(1) { grid-area: prod;     min-width: 0; }
+  .tableRow > *:nth-child(2) { grid-area: barcode;  padding-top: 8px; border-top: 1px solid #f1f5f9; }
+  .tableRow > *:nth-child(3) { display: none; }  /* categoria */
+  .tableRow > *:nth-child(4) { grid-area: precio;   font-size: 15px !important; font-weight: 900 !important; color: #1d6fce !important; align-self: center; }
+  .tableRow > *:nth-child(5) { grid-area: stock;    font-size: 13px !important; font-weight: 700 !important; text-align: center; align-self: center; }
+  .tableRow > *:nth-child(6) { display: none; }  /* itbis */
+  .tableRow > *:nth-child(7) { grid-area: badge;    align-self: center; justify-self: end; }
+  .tableRow > *:nth-child(8) { grid-area: acciones; flex-direction: row !important; gap: 4px !important; align-self: start; }
+
+  :global([data-theme="dark"]) .tableRow > *:nth-child(2) { border-top-color: rgba(255,255,255,.06); }
+
+  /* acciones en fila horizontal */
+  .acciones { flex-direction: row !important; gap: 4px !important; }
+
+  /* barcode chip ocupa toda la fila inferior */
+  .barcodeBtn { width: 100%; justify-content: flex-start; }
 }

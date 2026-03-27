@@ -67,6 +67,7 @@ export default function Cotizaciones() {
   const router = useRouter()
 
   const [empresaId, setEmpresaId] = useState(null)
+  const [usuarioId, setUsuarioId] = useState(null)
   const [data,     setData]     = useState({ cotizaciones: [], total: 0, paginas: 1 })
   const [loading,  setLoading]  = useState(true)
   const [busqueda, setBusqueda] = useState("")
@@ -74,11 +75,13 @@ export default function Cotizaciones() {
   const [pagina,   setPagina]   = useState(1)
   const [alerta,   setAlerta]   = useState(null)
   const [confirm,  setConfirm]  = useState(null)
+  const [simbolo,  setSimbolo]  = useState("RD$")
 
   useEffect(() => {
     const payload = getTokenPayload()
     if (!payload) { router.push("/login"); return }
     setEmpresaId(payload.empresa_id)
+    setUsuarioId(payload.id)
   }, [])
 
   const cargar = useCallback(async (q = "", est = "", pag = 1) => {
@@ -93,6 +96,14 @@ export default function Cotizaciones() {
     if (!empresaId) return
     cargar()
   }, [cargar, empresaId])
+
+  useEffect(() => {
+    if (!usuarioId) return
+    apiFetch(`/api/pos/header/${usuarioId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.empresa?.moneda?.simbolo) setSimbolo(d.empresa.moneda.simbolo) })
+      .catch(() => {})
+  }, [usuarioId])
 
   useEffect(() => {
     const t = setTimeout(() => { cargar(busqueda, estado, 1); setPagina(1) }, 350)
@@ -187,7 +198,7 @@ export default function Cotizaciones() {
                 {c.cliente?.cedula_rnc && <span className={s.clienteCedula}>{c.cliente.cedula_rnc}</span>}
               </div>
               <span className={s.rowFecha}>{new Date(c.created_at).toLocaleDateString("es-DO")}</span>
-              <span className={s.rowTotal}>{fmt(c.total)}</span>
+              <span className={s.rowTotal}>{fmt(c.total, simbolo)}</span>
               <div className={s.rowEstado}>
                 <span className={`${s.estadoBadge} ${s[ESTADO_CLASS[c.estado]]}`}>
                   {ESTADO_LABEL[c.estado]}
