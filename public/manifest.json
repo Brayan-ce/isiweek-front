@@ -1,0 +1,17 @@
+{
+  "name": "Ambrysoft",
+  "short_name": "Ambrysoft",
+  "description": "Sistema de Gestión Empresarial",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
