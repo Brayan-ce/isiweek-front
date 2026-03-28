@@ -37,7 +37,9 @@ const NAV = [
 const PAGOS = [
   { nombre: "Visa",       icono: "card-outline"             },
   { nombre: "Mastercard", icono: "card-outline"             },
-  { nombre: "PayPal",     icono: "logo-paypal"              },
+  /*
+  { nombre: "Stripe",     icono: "shield-checkmark-outline" },
+  { nombre: "PayPal",     icono: "logo-paypal"              },*/
 ]
 
 export default function Footer() {
