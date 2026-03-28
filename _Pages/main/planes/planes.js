@@ -1,9 +1,22 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import Script from "next/script"
 import s from "./planes.module.css"
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001"
+
+// ── Paddle price IDs ──────────────────────────────────────────
+const PADDLE_PRICES = {
+  "pos-mensual":      "pri_01kmtz48ztzqk1tkf32761rayg",
+  "pos-anual":        "pri_01kmtz5ryfhccsjf7tzqbdmra7",
+  "online-mensual":   "pri_01kmtzeqvy126px0sh685b81d4",
+  "online-anual":     "pri_01kmtzgbpw1d6zhsz2gvq86kyf",
+  "creditos-mensual": "pri_01kmtzhzjdffkmacpx1cfx2tdf",
+  "creditos-anual":   "pri_01kmtzk1b20z3n0fep5hp76mjh",
+  "obras-mensual":    "pri_01kmtzm4q903rwv3nk8wdrx5r9",
+  "obras-anual":      "pri_01kmtzmzzjs78c0by3hm9613ge",
+}
 
 const MODULOS = {
   pos:      { id:"pos",      icono:"cart-outline",       label:"POS avanzado",     desc:"Ventas, caja, inventario, reportes",     grupo:"comercial", mes:15, anio:12 },
@@ -83,6 +96,7 @@ function calcBundle(b, ciclo) {
 
 export default function PlanesPage() {
   const canvasRef             = useRef()
+  const paddleReady           = useRef(false)
   const [ciclo, setCiclo]     = useState("mes")
   const [config, setConfig]   = useState({})
   const [tab, setTab]         = useState("planes")
@@ -94,6 +108,25 @@ export default function PlanesPage() {
 
   useEffect(() => {
     fetch(`${API}/api/auth/config`).then(r=>r.ok?r.json():{}).then(setConfig).catch(()=>{})
+  }, [])
+
+  // Inicializar Paddle cuando el script carga
+  const onPaddleLoad = useCallback(() => {
+    if (typeof window === "undefined" || !window.Paddle) return
+    const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
+    if (!token) { console.warn("NEXT_PUBLIC_PADDLE_CLIENT_TOKEN no configurado"); return }
+    window.Paddle.Setup({ token })
+    paddleReady.current = true
+  }, [])
+
+  // Abrir checkout de Paddle para uno o varios price IDs
+  const abrirCheckout = useCallback((priceIds) => {
+    if (!paddleReady.current || !window.Paddle) {
+      console.warn("Paddle no está listo aún")
+      return
+    }
+    const items = priceIds.map(id => ({ priceId: id, quantity: 1 }))
+    window.Paddle.Checkout.open({ items })
   }, [])
 
   useEffect(() => {
@@ -195,6 +228,11 @@ export default function PlanesPage() {
 
   return (
     <div className={s.page}>
+      <Script
+        src="https://cdn.paddle.com/paddle/v2/paddle.js"
+        strategy="lazyOnload"
+        onLoad={onPaddleLoad}
+      />
       <canvas ref={canvasRef} className={s.canvas} />
       <div className={s.inner}>
 
@@ -213,7 +251,7 @@ export default function PlanesPage() {
         </div>
 
         {tab === "planes" && (
-          <PlanesTab ciclo={ciclo} setCiclo={setCiclo} waLink={waLink} waMsgDemo={waMsgDemo} waMsgPagar={waMsgPagar} />
+          <PlanesTab ciclo={ciclo} setCiclo={setCiclo} waLink={waLink} waMsgDemo={waMsgDemo} waMsgPagar={waMsgPagar} abrirCheckout={abrirCheckout} />
         )}
 
         {tab === "personalizado" && (
@@ -223,7 +261,8 @@ export default function PlanesPage() {
             toggleNavPill={toggleNavPill} toggleNavOpen={toggleNavOpen}
             precioMes={precioMes} precioAnio={precioAnio} ahorroAnio={ahorroAnio}
             precioDisplay={precioDisplay} resumenMods={resumenMods}
-            waLink={waLink} waMsgDemoPersonalizado={waMsgDemoPersonalizado} waMsgPagarPersonalizado={waMsgPagarPersonalizado}
+            waLink={waLink} waMsgDemoPersonalizado={waMsgDemoPersonalizado}
+            abrirCheckout={abrirCheckout}
             duracion={duracion} setDuracion={setDuracion}
             unidad={unidad} setUnidad={setUnidad}
           />
@@ -247,7 +286,7 @@ export default function PlanesPage() {
   )
 }
 
-function PlanesTab({ ciclo, setCiclo, waLink, waMsgDemo, waMsgPagar }) {
+function PlanesTab({ ciclo, setCiclo, waLink, waMsgDemo, waMsgPagar, abrirCheckout }) {
   return (
     <div className={s.planesWrap}>
 
@@ -257,14 +296,14 @@ function PlanesTab({ ciclo, setCiclo, waLink, waMsgDemo, waMsgPagar }) {
       </div>
       <div className={s.moduloGrid}>
         {["pos","creditos","online"].map(id => (
-          <ModuloCard key={id} id={id} ciclo={ciclo} waLink={waLink} waMsgDemo={waMsgDemo} waMsgPagar={waMsgPagar} />
+          <ModuloCard key={id} id={id} ciclo={ciclo} waLink={waLink} waMsgDemo={waMsgDemo} abrirCheckout={abrirCheckout} />
         ))}
       </div>
 
       <div className={s.divider} />
 
       <div className={s.sectionLabel}><ion-icon name="construct-outline" />Sistema de obras</div>
-      <ModuloCard id="obras" ciclo={ciclo} waLink={waLink} waMsgDemo={waMsgDemo} waMsgPagar={waMsgPagar} />
+      <ModuloCard id="obras" ciclo={ciclo} waLink={waLink} waMsgDemo={waMsgDemo} abrirCheckout={abrirCheckout} />
 
       <div className={s.divider} />
 
@@ -272,6 +311,7 @@ function PlanesTab({ ciclo, setCiclo, waLink, waMsgDemo, waMsgPagar }) {
       <div className={s.bundleGrid}>
         {BUNDLES.map(b => {
           const { precio, sufijo, nota, ahorro } = calcBundle(b, ciclo)
+          const bundlePriceIds = b.modulos.map(mid => PADDLE_PRICES[`${mid}-${ciclo === "anio" ? "anual" : "mensual"}`]).filter(Boolean)
           return (
             <div key={b.id} className={`${s.bundleCard} ${b.popular?s.bundleCardPop:""}`}>
               {b.popular && <div className={s.popularBadge}><ion-icon name="star-outline" />Más popular</div>}
@@ -294,9 +334,9 @@ function PlanesTab({ ciclo, setCiclo, waLink, waMsgDemo, waMsgPagar }) {
                 <a href={waLink(waMsgDemo(b.label))} target="_blank" rel="noopener noreferrer" className={s.demoBtn}>
                   <ion-icon name="play-outline" />Solicitar demo
                 </a>
-                <a href={waLink(waMsgPagar(b.label, `$${precio}`, ciclo))} target="_blank" rel="noopener noreferrer" className={s.waBtn}>
-                  <ion-icon name="logo-whatsapp" />Pagar
-                </a>
+                <button type="button" className={s.waBtn} onClick={() => abrirCheckout(bundlePriceIds)}>
+                  <ion-icon name="card-outline" />Contratar
+                </button>
               </div>
             </div>
           )
@@ -307,10 +347,11 @@ function PlanesTab({ ciclo, setCiclo, waLink, waMsgDemo, waMsgPagar }) {
   )
 }
 
-function ModuloCard({ id, ciclo, waLink, waMsgDemo, waMsgPagar }) {
+function ModuloCard({ id, ciclo, waLink, waMsgDemo, abrirCheckout }) {
   const m        = MODULOS[id]
   const price    = ciclo === "mes" ? m.mes : m.anio
   const anioDesc = Math.round(m.mes * 12 * 0.8)
+  const priceId  = PADDLE_PRICES[`${id}-${ciclo === "anio" ? "anual" : "mensual"}`]
   return (
     <div className={s.moduloCard}>
       <div className={s.moduloCardTop}>
@@ -333,15 +374,15 @@ function ModuloCard({ id, ciclo, waLink, waMsgDemo, waMsgPagar }) {
         <a href={waLink(waMsgDemo(m.label))} target="_blank" rel="noopener noreferrer" className={s.demoBtn}>
           <ion-icon name="play-outline" />Solicitar demo
         </a>
-        <a href={waLink(waMsgPagar(m.label, `$${price}`, ciclo))} target="_blank" rel="noopener noreferrer" className={s.waBtn}>
-          <ion-icon name="logo-whatsapp" />Pagar
-        </a>
+        <button type="button" className={s.waBtn} onClick={() => abrirCheckout([priceId])}>
+          <ion-icon name="card-outline" />Contratar
+        </button>
       </div>
     </div>
   )
 }
 
-function PersonalizadoTab({ ciclo, setCiclo, navSel, navOpen, toggleNavPill, toggleNavOpen, precioMes, precioAnio, ahorroAnio, precioDisplay, resumenMods, waLink, waMsgDemoPersonalizado, waMsgPagarPersonalizado, duracion, setDuracion, unidad, setUnidad }) {
+function PersonalizadoTab({ ciclo, setCiclo, navSel, navOpen, toggleNavPill, toggleNavOpen, precioMes, precioAnio, ahorroAnio, precioDisplay, resumenMods, waLink, waMsgDemoPersonalizado, abrirCheckout, duracion, setDuracion, unidad, setUnidad }) {
   const factorActual  = UNIDADES.find(u => u.id === unidad)?.factor ?? 1
   const mesesTotal    = duracion * factorActual
   const totalProyect  = Math.round((ciclo === "anio" ? precioAnio / 12 : precioMes) * mesesTotal)
@@ -504,9 +545,17 @@ function PersonalizadoTab({ ciclo, setCiclo, navSel, navOpen, toggleNavPill, tog
                 <a href={waLink(waMsgDemoPersonalizado(modLabels))} target="_blank" rel="noopener noreferrer" className={s.summaryDemoBtn}>
                   <ion-icon name="play-outline" />Solicitar demo
                 </a>
-                <a href={waLink(waMsgPagarPersonalizado(modLabels, `$${precioDisplay}`, ciclo))} target="_blank" rel="noopener noreferrer" className={s.summaryWaBtn}>
-                  <ion-icon name="logo-whatsapp" />Pagar — ${precioDisplay}/{ciclo==="anio"?"año":"mes"}
-                </a>
+                <button
+                  type="button"
+                  className={s.summaryWaBtn}
+                  onClick={() => {
+                    const cicloKey = ciclo === "anio" ? "anual" : "mensual"
+                    const ids = resumenMods.map(id => PADDLE_PRICES[`${id}-${cicloKey}`]).filter(Boolean)
+                    abrirCheckout(ids)
+                  }}
+                >
+                  <ion-icon name="card-outline" />Contratar — ${precioDisplay}/{ciclo==="anio"?"año":"mes"}
+                </button>
               </div>
             </>
           )}
