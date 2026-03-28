@@ -37,6 +37,7 @@ const NAV = [
 const PAGOS = [
   { nombre: "Visa",       icono: "card-outline"             },
   { nombre: "Mastercard", icono: "card-outline"             },
+  { nombre: "Paddle",     icono: "shield-checkmark-outline" }
   /*
   { nombre: "Stripe",     icono: "shield-checkmark-outline" },
   { nombre: "PayPal",     icono: "logo-paypal"              },*/
