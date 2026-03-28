@@ -8,12 +8,12 @@ const SITIO  = "https://pos.ambrysoft.com"
 const CORREO = "ambrysoft@gmail.com"
 
 const TABLA_COOKIES = [
-  { nombre: "session_token",     tipo: "Esencial",    duracion: "Sesión",   descripcion: "Mantiene la sesión del usuario autenticado en la plataforma." },
-  { nombre: "ambrysoft_token",   tipo: "Esencial",    duracion: "30 días",  descripcion: "Almacena un token de autenticación seguro del usuario (configurado con medidas de seguridad como HttpOnly y Secure)." },
-  { nombre: "data-theme",        tipo: "Preferencia", duracion: "1 año",    descripcion: "Guarda la preferencia de tema (claro u oscuro) del usuario." },
-  { nombre: "_ga, _gid",        tipo: "Analítica",   duracion: "2 años",   descripcion: "Cookies de Google Analytics para análisis anónimo del uso de la plataforma." },
-  { nombre: "dlocalgo_*",        tipo: "Pago",        duracion: "Sesión",   descripcion: "Cookies establecidas por dLocal Go durante el proceso de pago seguro." },
-  { nombre: "g_state, g_csrf_*", tipo: "Autenticación", duracion: "Sesión", descripcion: "Cookies de Google Sign-In para la autenticación con cuenta Google." },
+  { nombre: "session_token",     tipo: "Esencial",       duracion: "Sesión",   descripcion: "Mantiene la sesión del usuario autenticado en la plataforma." },
+  { nombre: "ambrysoft_token",   tipo: "Esencial",       duracion: "30 días",  descripcion: "Almacena un token de autenticación seguro del usuario (configurado con medidas de seguridad como HttpOnly y Secure)." },
+  { nombre: "data-theme",        tipo: "Preferencia",    duracion: "1 año",    descripcion: "Guarda la preferencia de tema (claro u oscuro) del usuario." },
+  { nombre: "_ga, _gid",         tipo: "Analítica",      duracion: "2 años",   descripcion: "Cookies de Google Analytics para análisis anónimo del uso de la plataforma." },
+  { nombre: "paddle_*",          tipo: "Pago",           duracion: "Sesión",   descripcion: "Cookies establecidas por Paddle.com durante el proceso de pago seguro como Merchant of Record." },
+  { nombre: "g_state, g_csrf_*", tipo: "Autenticación",  duracion: "Sesión",   descripcion: "Cookies de Google Sign-In para la autenticación con cuenta Google." },
 ]
 
 export default function CookiesPage() {
@@ -37,7 +37,7 @@ export default function CookiesPage() {
     {
       icono: "layers-outline",
       titulo: "2. Tipos de cookies que utilizamos",
-      texto: `${nombre} utiliza los siguientes tipos de cookies: (a) Cookies esenciales: necesarias para el funcionamiento básico de la plataforma; sin ellas, no es posible acceder ni usar el servicio. (b) Cookies de preferencias: recuerdan las configuraciones del usuario, como el tema visual seleccionado. (c) Cookies analíticas: recopilan información anónima sobre cómo se usa la plataforma, con el fin de mejorarla. (d) Cookies de pago: establecidas por dLocal Go durante los procesos de pago seguro. (e) Cookies de autenticación: utilizadas por Google Sign-In para el inicio de sesión con cuenta Google.`,
+      texto: `${nombre} utiliza los siguientes tipos de cookies: (a) Cookies esenciales: necesarias para el funcionamiento básico de la plataforma; sin ellas, no es posible acceder ni usar el servicio. (b) Cookies de preferencias: recuerdan las configuraciones del usuario, como el tema visual seleccionado. (c) Cookies analíticas: recopilan información anónima sobre cómo se usa la plataforma, con el fin de mejorarla. (d) Cookies de pago: establecidas por Paddle.com durante los procesos de pago seguro como Merchant of Record. (e) Cookies de autenticación: utilizadas por Google Sign-In para el inicio de sesión con cuenta Google.`,
     },
     {
       icono: "list-outline",
@@ -53,7 +53,7 @@ export default function CookiesPage() {
     {
       icono: "share-social-outline",
       titulo: "5. Cookies de terceros",
-      texto: `${nombre} integra servicios de terceros que pueden establecer sus propias cookies: Google Analytics (análisis anónimo de tráfico), Google Sign-In (autenticación) y dLocal Go (procesamiento de pagos). Cada uno de estos proveedores tiene su propia política de cookies y privacidad, a la cual ${nombre} no tiene acceso ni control. Le recomendamos revisar las políticas de privacidad de estos servicios directamente en sus sitios oficiales.`,
+      texto: `${nombre} integra servicios de terceros que pueden establecer sus propias cookies: Google Analytics (análisis anónimo de tráfico), Google Sign-In (autenticación) y Paddle.com (procesamiento de pagos como Merchant of Record). Cada uno de estos proveedores tiene su propia política de cookies y privacidad, a la cual ${nombre} no tiene acceso ni control. Le recomendamos revisar las políticas de privacidad de estos servicios directamente en sus sitios oficiales.`,
     },
     {
       icono: "create-outline",
@@ -77,7 +77,7 @@ export default function CookiesPage() {
           </div>
           <div>
             <h1 className={s.titulo}>Política de Cookies</h1>
-            <p className={s.meta}>Última actualización: 24 de marzo de 2026 · {nombre}</p>
+            <p className={s.meta}>Última actualización: 28 de marzo de 2026 · {nombre}</p>
           </div>
         </div>
 

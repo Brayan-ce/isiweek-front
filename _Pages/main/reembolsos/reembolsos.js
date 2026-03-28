@@ -9,6 +9,12 @@ const CORREO = "ambrysoft@gmail.com"
 
 const CASOS = [
   {
+    icono: "timer-outline",
+    color: "verde",
+    titulo: "Desistimiento dentro de los 14 días",
+    desc: "El cliente puede solicitar la cancelación y reembolso completo dentro de los 14 días naturales siguientes a la primera contratación, siempre que no haya hecho uso activo de la plataforma durante ese período.",
+  },
+  {
     icono: "alert-circle-outline",
     color: "verde",
     titulo: "Falla técnica grave",
@@ -23,8 +29,8 @@ const CASOS = [
   {
     icono: "close-circle-outline",
     color: "rojo",
-    titulo: "Arrepentimiento tras activación",
-    desc: "No se realizan reembolsos por desistimiento una vez habilitado el acceso al servicio digital.",
+    titulo: "Arrepentimiento tras uso activo",
+    desc: "No se realizan reembolsos por desistimiento si el cliente ha hecho uso activo de la plataforma durante el período de desistimiento.",
   },
   {
     icono: "close-circle-outline",
@@ -41,10 +47,10 @@ const CASOS = [
 ]
 
 const PASOS = [
-  { num: "01", titulo: "Envía tu solicitud",       desc: `Escribe a ${CORREO} o contacta por WhatsApp con el asunto: \"Solicitud de reembolso\".` },
+  { num: "01", titulo: "Envía tu solicitud",       desc: `Escribe a ${CORREO} o contacta por WhatsApp con el asunto: "Solicitud de reembolso".` },
   { num: "02", titulo: "Describe el motivo",       desc: "Indica el motivo de la solicitud, la fecha del cargo y adjunta el comprobante de pago si lo tienes disponible." },
   { num: "03", titulo: "Evaluación en 3 días",     desc: "Ambrysoft evaluará la solicitud en un plazo máximo de 3 días hábiles y te notificará el resultado por correo." },
-  { num: "04", titulo: "Procesamiento del reembolso", desc: "Si procede, el reembolso se gestiona a través de dLocal Go. Los tiempos de acreditación dependen del método de pago original y del banco del cliente." },
+  { num: "04", titulo: "Procesamiento del reembolso", desc: "Si procede, el reembolso se gestiona a través de Paddle.com como Merchant of Record. Los tiempos de acreditación dependen del método de pago original y del banco del cliente." },
 ]
 
 export default function ReembolsosPage() {
@@ -71,12 +77,12 @@ export default function ReembolsosPage() {
           </div>
           <div>
             <h1 className={s.titulo}>Política de Reembolsos</h1>
-            <p className={s.meta}>Última actualización: 24 de marzo de 2026 · {nombre}</p>
+            <p className={s.meta}>Última actualización: 28 de marzo de 2026 · {nombre}</p>
           </div>
         </div>
 
         <div className={s.intro}>
-          <strong>{nombre}</strong> es un servicio digital de acceso inmediato. Por la naturaleza del servicio, los reembolsos son limitados y se evalúan caso por caso según los criterios establecidos en esta política, en línea con lo que exige dLocal Go para comercios verificados.
+          <strong>{nombre}</strong> es un servicio digital de acceso inmediato. Los reembolsos son limitados y se evalúan caso por caso según los criterios establecidos en esta política, en cumplimiento de los requisitos de Paddle.com como Merchant of Record.
         </div>
 
         <div className={s.seccion}>
@@ -123,7 +129,7 @@ export default function ReembolsosPage() {
             Plazos y tiempos de acreditación
           </h2>
           <p className={s.secTexto}>
-            Las solicitudes de reembolso deben presentarse dentro de los <strong>7 días naturales</strong> siguientes a la fecha del cargo. Pasado ese plazo, no se aceptarán solicitudes. Una vez aprobado el reembolso, el importe se procesa a través de <strong>dLocal Go</strong>. Los tiempos de acreditación varían según el método de pago original: para tarjetas de crédito o débito, el reembolso puede demorar entre 5 y 15 días hábiles dependiendo del banco emisor; para transferencias bancarias, el plazo habitual es de 3 a 7 días hábiles. Estos plazos son responsabilidad de dLocal Go y del banco del cliente, y están fuera del control directo de {nombre}.
+            Las solicitudes de reembolso por falla técnica o cobro duplicado deben presentarse dentro de los <strong>7 días naturales</strong> siguientes a la fecha del cargo. El derecho de desistimiento puede ejercerse dentro de los <strong>14 días naturales</strong> desde la primera contratación. Una vez aprobado el reembolso, el importe se procesa a través de <strong>Paddle.com</strong>. Los tiempos de acreditación varían según el método de pago original: para tarjetas de crédito o débito, el reembolso puede demorar entre 5 y 15 días hábiles dependiendo del banco emisor; para transferencias bancarias, el plazo habitual es de 3 a 7 días hábiles. Estos plazos son responsabilidad de Paddle.com y del banco del cliente, y están fuera del control directo de {nombre}.
           </p>
         </div>
 
@@ -140,10 +146,10 @@ export default function ReembolsosPage() {
         <div className={s.seccion}>
           <h2 className={s.secTitulo}>
             <ion-icon name="card-outline" />
-            Chargebacks y disputas con dLocal Go
+            Chargebacks y disputas con Paddle
           </h2>
           <p className={s.secTexto}>
-            Si el cliente inicia una disputa o contracargo (chargeback) directamente con su banco o con dLocal Go sin antes contactar a {nombre}, el caso será tratado conforme a los procedimientos de dLocal Go. {nombre} colaborará con la evidencia necesaria para demostrar la prestación del servicio. Se recomienda siempre contactar primero a {nombre} antes de iniciar cualquier disputa, ya que la mayoría de los casos se resuelven de forma directa y más rápida.
+            Si el cliente inicia una disputa o contracargo (chargeback) directamente con su banco o con Paddle.com sin antes contactar a {nombre}, el caso será tratado conforme a los procedimientos de Paddle como Merchant of Record. {nombre} colaborará con la evidencia necesaria para demostrar la prestación del servicio. Se recomienda siempre contactar primero a {nombre} antes de iniciar cualquier disputa, ya que la mayoría de los casos se resuelven de forma directa y más rápida.
           </p>
         </div>
 

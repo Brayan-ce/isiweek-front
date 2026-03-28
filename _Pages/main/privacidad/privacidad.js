@@ -30,17 +30,17 @@ export default function PrivacidadPage() {
     {
       icono: "server-outline",
       titulo: "2. Datos que recopilamos",
-      texto: `Recopilamos únicamente los datos necesarios para prestar el servicio: (a) Datos de identificación: nombre completo, número de documento de identidad o RUC, correo electrónico y número de teléfono o WhatsApp. (b) Datos de acceso: correo electrónico y contraseña cifrada para el inicio de sesión. (c) Datos de uso: actividad dentro de la plataforma, módulos utilizados, fechas de acceso y acciones realizadas, con fines de mejora del servicio y soporte técnico. (d) Datos de pago: ${nombre} no almacena datos de tarjetas; estos son procesados íntegramente por dLocal Go bajo sus propios estándares de seguridad.`,
+      texto: `Recopilamos únicamente los datos necesarios para prestar el servicio: (a) Datos de identificación: nombre completo, número de documento de identidad o RUC, correo electrónico y número de teléfono o WhatsApp. (b) Datos de acceso: correo electrónico y contraseña cifrada para el inicio de sesión. (c) Datos de uso: actividad dentro de la plataforma, módulos utilizados, fechas de acceso y acciones realizadas, con fines de mejora del servicio y soporte técnico. (d) Datos de pago: ${nombre} no almacena datos de tarjetas; estos son procesados íntegramente por Paddle.com bajo sus propios estándares de seguridad y cumplimiento normativo (PCI DSS).`,
     },
     {
       icono: "options-outline",
       titulo: "3. Finalidad del tratamiento",
-      texto: `Sus datos personales son utilizados exclusivamente para: (a) Gestionar el registro y acceso a la plataforma. (b) Prestar el servicio contratado y brindar soporte técnico. (c) Procesar pagos a través de la pasarela dLocal Go. (d) Enviar comunicaciones relacionadas con el servicio, actualizaciones y cambios en las condiciones. (e) Cumplir con obligaciones legales aplicables en la República del Perú. No utilizamos sus datos para publicidad de terceros ni los vendemos o cedemos a personas ajenas a ${nombre}.`,
+      texto: `Sus datos personales son utilizados exclusivamente para: (a) Gestionar el registro y acceso a la plataforma. (b) Prestar el servicio contratado y brindar soporte técnico. (c) Procesar pagos a través de Paddle.com. (d) Enviar comunicaciones relacionadas con el servicio, actualizaciones y cambios en las condiciones. (e) Cumplir con obligaciones legales aplicables en la República del Perú. No utilizamos sus datos para publicidad de terceros ni los vendemos o cedemos a personas ajenas a ${nombre}.`,
     },
     {
       icono: "share-social-outline",
       titulo: "4. Transferencia de datos a terceros",
-      texto: `${nombre} comparte datos personales únicamente con los siguientes proveedores indispensables para la prestación del servicio: dLocal Go (procesamiento de pagos), Google LLC (autenticación mediante Google Sign-In, de forma opcional). Estos proveedores actúan como encargados del tratamiento bajo sus propias políticas de privacidad y estándares de seguridad. No realizamos transferencias de datos a terceros con fines distintos a los mencionados sin el consentimiento previo y expreso del titular.`,
+      texto: `${nombre} comparte datos personales únicamente con los siguientes proveedores indispensables para la prestación del servicio: Paddle.com (procesamiento de pagos como Merchant of Record) y Google LLC (autenticación mediante Google Sign-In, de forma opcional). Paddle.com actúa como responsable del tratamiento de los datos de pago bajo sus propias políticas de privacidad y estándares de seguridad. No realizamos transferencias de datos a terceros con fines distintos a los mencionados sin el consentimiento previo y expreso del titular.`,
     },
     {
       icono: "time-outline",
@@ -84,7 +84,7 @@ export default function PrivacidadPage() {
           </div>
           <div>
             <h1 className={s.titulo}>Política de Privacidad</h1>
-            <p className={s.meta}>Última actualización: 24 de marzo de 2026 · {nombre}</p>
+            <p className={s.meta}>Última actualización: 28 de marzo de 2026 · {nombre}</p>
           </div>
         </div>
 

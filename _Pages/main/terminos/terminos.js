@@ -31,8 +31,8 @@ export default function TerminosPage() {
       texto: `${nombre} ofrece módulos de software en la nube accesibles mediante suscripción, que incluyen: Sistema POS avanzado (punto de venta, caja, inventario y reportes), Cartera de créditos (contratos, cuotas y control de mora), Ventas online (catálogo público, pedidos y WhatsApp integrado) y Gestión de obras (proyectos, asistencia, gastos y reportes). El servicio es de naturaleza digital e intangible y se presta de forma continua durante el período contratado y pagado.`,
     },
     {
-      titulo: "3. Proceso de contratación",
-      texto: `La contratación se realiza de forma online a través de ${SITIO}, o directamente por WhatsApp (${waUrl}) o correo electrónico (${CORREO}). El cliente elige el plan o los módulos que desea activar, revisa el precio correspondiente y procede al pago. Una vez acreditado el pago a través de la pasarela dLocal Go, ${nombre} habilita el acceso al servicio contratado en un plazo máximo de 24 horas hábiles. La relación contractual queda formalizada desde la confirmación del pago.`,
+      titulo: "3. Proceso de contratación y procesador de pagos",
+      texto: `La contratación se realiza de forma online a través de ${SITIO}, o directamente por WhatsApp (${waUrl}) o correo electrónico (${CORREO}). El proceso de pedido es gestionado por Paddle.com, revendedor online autorizado de ${nombre}. Paddle.com actúa como Merchant of Record para todos los pedidos realizados a través de la plataforma. Paddle gestiona todas las consultas de atención al cliente relacionadas con pagos y tramita las devoluciones correspondientes. Una vez acreditado el pago, ${nombre} habilita el acceso al servicio contratado en un plazo máximo de 24 horas hábiles. La relación contractual queda formalizada desde la confirmación del pago.`,
     },
     {
       titulo: "4. Planes, precios y facturación",
@@ -40,7 +40,7 @@ export default function TerminosPage() {
     },
     {
       titulo: "5. Métodos de pago",
-      texto: `Los pagos se procesan a través de dLocal Go, pasarela de pagos certificada que opera en Perú y más de 35 mercados emergentes. dLocal Go permite el pago mediante tarjetas de crédito y débito (Visa, Mastercard, entre otras), transferencias bancarias locales y otros métodos de pago disponibles según el país del cliente. Adicionalmente, se acepta pago coordinado directamente por WhatsApp para acuerdos puntuales. ${nombre} no almacena datos de tarjetas; dicho procesamiento es realizado íntegramente por dLocal Go bajo sus propios estándares de seguridad y cumplimiento normativo.`,
+      texto: `Los pagos se procesan a través de Paddle.com, plataforma certificada que actúa como Merchant of Record y opera en más de 200 países y territorios. Paddle permite el pago mediante tarjetas de crédito y débito (Visa, Mastercard, entre otras), transferencias bancarias locales y otros métodos de pago disponibles según el país del cliente. ${nombre} no almacena datos de tarjetas; dicho procesamiento es realizado íntegramente por Paddle bajo sus propios estándares de seguridad y cumplimiento normativo (PCI DSS).`,
     },
     {
       titulo: "6. Cancelación y vigencia",
@@ -48,7 +48,7 @@ export default function TerminosPage() {
     },
     {
       titulo: "7. Política de reembolsos",
-      texto: `Dado que ${nombre} es un servicio digital de acceso inmediato, no se realizan reembolsos una vez habilitado el acceso a la plataforma. Excepcionalmente, se evaluarán solicitudes de reembolso en los siguientes casos: (a) falla técnica grave comprobable imputable a ${nombre} que impida el uso del servicio por más de 72 horas consecutivas; (b) cobro duplicado por error del sistema. Las solicitudes deben presentarse dentro de los 7 días naturales siguientes al cargo, mediante correo a ${CORREO}. En caso de proceder, el reembolso se gestionará a través de dLocal Go dentro de los plazos que dicha pasarela establezca.`,
+      texto: `Dado que ${nombre} es un servicio digital de acceso inmediato, los reembolsos son limitados y se evalúan caso por caso. El cliente tiene derecho a solicitar la cancelación y reembolso dentro de los 14 días naturales siguientes a la primera contratación del servicio, siempre que no haya hecho uso activo de la plataforma durante ese período. Fuera de ese plazo, se evaluarán solicitudes de reembolso excepcionalmente en los siguientes casos: (a) falla técnica grave comprobable imputable a ${nombre} que impida el uso del servicio por más de 72 horas consecutivas; (b) cobro duplicado por error del sistema. Las solicitudes deben presentarse a ${CORREO} dentro de los 7 días naturales siguientes al cargo. En caso de proceder, el reembolso se gestionará a través de Paddle dentro de los plazos que dicha plataforma establezca.`,
     },
     {
       titulo: "8. Uso aceptable",
@@ -94,7 +94,7 @@ export default function TerminosPage() {
           </div>
           <div>
             <h1 className={s.titulo}>Términos y Condiciones</h1>
-            <p className={s.meta}>Última actualización: 24 de marzo de 2026 · {nombre}</p>
+            <p className={s.meta}>Última actualización: 28 de marzo de 2026 · {nombre}</p>
           </div>
         </div>
 
